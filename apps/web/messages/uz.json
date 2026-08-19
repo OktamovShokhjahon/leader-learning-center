@@ -1,0 +1,363 @@
+{
+  "meta": {
+    "defaultTitle": "Leader Learning Centre — Urganchdagi til va matematika o'quv markazi",
+    "defaultDescription": "2018 yildan beri Urganchda ingliz tili, IELTS, rus va turk tillari hamda matematikadan tayyorlov. Kichik guruhlar, shaxsiy kabinet, ota-onalar uchun to'liq shaffoflik."
+  },
+  "nav": {
+    "courses": "Kurslar",
+    "teachers": "O'qituvchilar",
+    "results": "Natijalar",
+    "branches": "Filiallar",
+    "about": "Biz haqimizda",
+    "news": "Yangiliklar",
+    "contact": "Aloqa",
+    "gallery": "Galereya",
+    "faq": "Savol-javob",
+    "offer": "Ommaviy oferta",
+    "privacy": "Maxfiylik siyosati",
+    "login": "Shaxsiy kabinet",
+    "apply": "Ro'yxatdan o'tish",
+    "openMenu": "Menyuni ochish",
+    "closeMenu": "Menyuni yopish",
+    "changeLanguage": "Tilni o'zgartirish",
+    "skipToContent": "Asosiy qismga o'tish"
+  },
+  "common": {
+    "learnMore": "Batafsil",
+    "apply": "Ro'yxatdan o'tish",
+    "trialLesson": "Bepul sinov darsi",
+    "allCourses": "Barcha kurslar",
+    "allTeachers": "Barcha o'qituvchilar",
+    "allNews": "Barcha yangiliklar",
+    "perMonth": "oyiga",
+    "months": "oy",
+    "lessonsPerWeek": "haftasiga {count} dars",
+    "groupSize": "guruhda {count} kishigacha",
+    "level": "Daraja",
+    "age": "Yosh",
+    "duration": "Davomiyligi",
+    "price": "Narxi",
+    "phone": "Telefon",
+    "address": "Manzil",
+    "workingHours": "Ish vaqti",
+    "soon": "Tez orada",
+    "comingSoon": "Ma'lumot tayyorlanmoqda",
+    "contentPending": "Ushbu bo'lim uchun ma'lumotlar o'quv markazi tomonidan taqdim etilishi kutilmoqda."
+  },
+  "home": {
+    "hero": {
+      "eyebrow": "2018 yildan beri — Urganch, Xorazm",
+      "title": "Ingliz tili, IELTS va matematika — Urganchda",
+      "subtitle": "Xorazm yoshlarini xalqaro imtihonlarga tayyorlaymiz. Kichik guruhlar, malakali o'qituvchilar va ota-onalar uchun to'liq shaffof shaxsiy kabinet.",
+      "ctaPrimary": "Ro'yxatdan o'tish",
+      "ctaSecondary": "Bepul sinov darsi",
+      "callUs": "Qo'ng'iroq qiling"
+    },
+    "trust": {
+      "title": "Rasmiy hamkorliklar"
+    },
+    "numbers": {
+      "title": "Raqamlarda",
+      "years": "yil tajriba",
+      "graduates": "bitiruvchi",
+      "band": "o'rtacha IELTS ball",
+      "branches": "filial"
+    },
+    "courses": {
+      "eyebrow": "Kurslar",
+      "title": "Nimani o'rganmoqchisiz?",
+      "subtitle": "Har bir kurs daraja testi bilan boshlanadi va har oy nazorat ishi bilan tekshiriladi."
+    },
+    "why": {
+      "eyebrow": "Nega Leader",
+      "title": "Bizni tanlashning oltita sababi",
+      "items": {
+        "teachers": {
+          "title": "Malakali o'qituvchilar",
+          "body": "Sertifikatlangan va imtihon formatini ichidan biladigan ustozlar."
+        },
+        "groups": {
+          "title": "Kichik guruhlar",
+          "body": "Guruhda 8–14 kishi: har bir o'quvchiga dars davomida vaqt yetadi."
+        },
+        "cabinet": {
+          "title": "Shaxsiy kabinet",
+          "body": "Davomat, natijalar, kutubxona va to'lovlar — hammasi bitta joyda."
+        },
+        "parents": {
+          "title": "Ota-onalar uchun shaffoflik",
+          "body": "Farzandingiz darsga kelmasa, siz xabar olasiz. Davomat kalendari doim ochiq."
+        },
+        "mock": {
+          "title": "Imtihon formatidagi testlar",
+          "body": "Haqiqiy imtihon sharoitida mock testlar — natija kutilmagan bo'lmaydi."
+        },
+        "certificate": {
+          "title": "Sertifikat",
+          "body": "Kursni tugatganingizda QR-kod bilan tasdiqlanadigan sertifikat olasiz."
+        }
+      }
+    },
+    "results": {
+      "eyebrow": "Natijalar",
+      "title": "O'quvchilarimizning natijalari",
+      "subtitle": "Har bir ball — aniq o'quvchining mehnati.",
+      "empty": "Natijalar devori o'quv markazi ma'lumotlarini taqdim etgach to'ldiriladi.",
+      "filterAll": "Barchasi"
+    },
+    "teachers": {
+      "eyebrow": "Jamoa",
+      "title": "O'qituvchilarimiz",
+      "experience": "{years} yil tajriba"
+    },
+    "how": {
+      "eyebrow": "Qanday boshlanadi",
+      "title": "To'rtta qadam",
+      "steps": {
+        "apply": {
+          "title": "Ariza qoldiring",
+          "body": "Saytdagi qisqa shaklni to'ldiring — biz 24 soat ichida bog'lanamiz."
+        },
+        "trial": {
+          "title": "Bepul sinov darsi",
+          "body": "Guruhga qo'shilib ko'ring. Hech qanday majburiyatsiz."
+        },
+        "test": {
+          "title": "Daraja testi",
+          "body": "Bilim darajangizni aniqlaymiz va mos guruhni tanlaymiz."
+        },
+        "start": {
+          "title": "O'qishni boshlang",
+          "body": "Shaxsiy kabinet ochiladi, dars jadvali va materiallar sizda."
+        }
+      }
+    },
+    "cabinet": {
+      "eyebrow": "Shaxsiy kabinet",
+      "title": "O'qish jarayoni kaftingizda",
+      "subtitle": "Har bir o'quvchi va ota-ona uchun alohida kabinet: davomat, natijalar, kutubxona va to'lovlar tarixi.",
+      "cta": "Shaxsiy kabinet",
+      "features": {
+        "attendance": "Davomat kalendari",
+        "library": "Kutubxona, audio va video",
+        "ranking": "Reyting va nazorat natijalari",
+        "payments": "To'lovlar va qarzdorlik"
+      }
+    },
+    "testimonials": {
+      "eyebrow": "Fikrlar",
+      "title": "O'quvchilar nima deydi",
+      "empty": "Sharhlar o'quv markazi ma'lumotlarini taqdim etgach qo'shiladi."
+    },
+    "branches": {
+      "eyebrow": "Filiallar",
+      "title": "Bizni qayerdan topasiz",
+      "viewOnMap": "Xaritada ko'rish",
+      "coursesHere": "Shu filialdagi kurslar"
+    },
+    "news": {
+      "eyebrow": "Yangiliklar",
+      "title": "O'quv markazi hayoti",
+      "empty": "Yangiliklar tez orada chop etiladi."
+    },
+    "faq": {
+      "eyebrow": "Savol-javob",
+      "title": "Ko'p so'raladigan savollar"
+    },
+    "form": {
+      "eyebrow": "Ariza",
+      "title": "Bepul sinov darsiga yoziling",
+      "subtitle": "Ismingiz va telefon raqamingizni qoldiring — qolganini o'zimiz hal qilamiz.",
+      "name": "Ism va familiya",
+      "namePlaceholder": "Ism Familiya",
+      "phone": "Telefon raqam",
+      "course": "Qaysi kurs qiziqtiradi?",
+      "coursePlaceholder": "Kursni tanlang",
+      "submit": "Ariza yuborish",
+      "submitting": "Yuborilmoqda...",
+      "success": "Arizangiz qabul qilindi. Tez orada bog'lanamiz.",
+      "error": "Ariza yuborilmadi. Iltimos, qaytadan urinib ko'ring.",
+      "consent": "Shaxsiy ma'lumotlarim qayta ishlanishiga roziman",
+      "consentLink": "Maxfiylik siyosati",
+      "fullFormLink": "To'liq shaklni to'ldirish"
+    }
+  },
+  "faqItems": {
+    "q1": {
+      "q": "Darslar qachon boshlanadi?",
+      "a": "Yangi guruhlar har oy ochiladi. Aniq sana uchun ariza qoldiring — menejer sizga eng yaqin guruh haqida ma'lumot beradi."
+    },
+    "q2": {
+      "q": "Sinov darsi haqiqatan bepulmi?",
+      "a": "Ha. Sinov darsi to'liq bepul va hech qanday majburiyat yuklamaydi. Undan keyin o'zingiz qaror qilasiz."
+    },
+    "q3": {
+      "q": "To'lovni qanday amalga oshirish mumkin?",
+      "a": "Naqd pul, plastik karta, bank o'tkazmasi, shuningdek Payme, Click va Uzum orqali — shaxsiy kabinetdan turib ham to'lash mumkin."
+    },
+    "q4": {
+      "q": "Farzandimning davomatini qanday kuzataman?",
+      "a": "Ota-ona uchun alohida kabinet ochiladi. U yerda davomat kalendari, nazorat natijalari va to'lovlar tarixi ko'rinadi. Farzandingiz darsga kelmasa, sizga xabar yuboriladi."
+    },
+    "q5": {
+      "q": "Guruhda nechta o'quvchi bo'ladi?",
+      "a": "Kursga qarab 8 tadan 14 tagacha. Suhbat klubida — 8 tagacha."
+    },
+    "q6": {
+      "q": "Darsni o'tkazib yuborsam nima bo'ladi?",
+      "a": "Davomat tizimda belgilanadi va kabinetda ko'rinadi. Sababli qoldirilgan darslar alohida belgilanadi; o'qituvchi bilan qo'shimcha mashg'ulotni kelishish mumkin."
+    }
+  },
+  "footer": {
+    "tagline": "Urganchdagi til va matematika o'quv markazi. 2018 yildan beri.",
+    "learn": "O'qish",
+    "centre": "Markaz",
+    "legal": "Hujjatlar",
+    "social": "Ijtimoiy tarmoqlar",
+    "rights": "Barcha huquqlar himoyalangan.",
+    "language": "Til"
+  },
+  "notFound": {
+    "title": "Sahifa topilmadi",
+    "body": "Siz izlagan sahifa mavjud emas yoki ko'chirilgan.",
+    "home": "Bosh sahifaga qaytish"
+  },
+  "pages": {
+    "courses": {
+      "title": "Kurslar",
+      "subtitle": "Har bir kurs daraja testi bilan boshlanadi, har oy nazorat ishi bilan tekshiriladi va sertifikat bilan yakunlanadi.",
+      "metaDescription": "Leader Learning Centre kurslari: ingliz tili, IELTS, Kids, suhbat klubi, rus va turk tillari, matematika, milliy sertifikat, yozgi maktab va onlayn kurslar."
+    },
+    "courseDetail": {
+      "programme": "Dastur haqida",
+      "whatYouGet": "Nimalarga ega bo‘lasiz",
+      "details": "Kurs tafsilotlari",
+      "applyTitle": "Shu kursga yozilmoqchimisiz?",
+      "applyBody": "Ariza qoldiring — menejer eng yaqin guruh haqida ma’lumot beradi.",
+      "otherCourses": "Boshqa kurslar"
+    },
+    "teachers": {
+      "title": "O‘qituvchilar",
+      "subtitle": "Sertifikatlangan ustozlar — har biri o‘z yo‘nalishida.",
+      "metaDescription": "Leader Learning Centre o‘qituvchilari: tajriba, sertifikatlar va yo‘nalishlar."
+    },
+    "results": {
+      "title": "Natijalar",
+      "subtitle": "O‘quvchilarimizning imtihon natijalari va hikoyalari.",
+      "metaDescription": "Leader Learning Centre o‘quvchilarining IELTS va CEFR natijalari, muvaffaqiyat hikoyalari."
+    },
+    "branches": {
+      "title": "Filiallar",
+      "subtitle": "Bizni Urganchda toping.",
+      "metaDescription": "Leader Learning Centre filiallari: manzillar, telefonlar va ish vaqti."
+    },
+    "about": {
+      "title": "Biz haqimizda",
+      "subtitle": "2018 yildan beri Xorazmda bilim ulashamiz.",
+      "metaDescription": "2018 yildan beri Urganchda faoliyat yuritayotgan Leader Learning Centre haqida: tarix, missiya va hamkorliklar.",
+      "historyTitle": "Tariximiz",
+      "historyBody": "Leader Learning Centre 2018 yilda Urganchda bitta xonadan boshlangan. Bugun bir nechta filial, o‘nlab guruh va har oy yangi bitiruvchilar — lekin asosiy tamoyil o‘zgarmadi: har bir o‘quvchiga vaqt ajratish.",
+      "missionTitle": "Missiyamiz",
+      "missionBody": "Xorazm yoshlariga xalqaro darajadagi til va matematika ta’limini uydan uzoqlashmasdan berish. Ta’lim jarayoni ota-ona uchun ham, o‘quvchi uchun ham to‘liq shaffof bo‘lishi kerak.",
+      "valuesTitle": "Qadriyatlarimiz",
+      "values": {
+        "transparency": {
+          "title": "Shaffoflik",
+          "body": "Davomat, natijalar va to‘lovlar — hammasi ochiq va tekshirib bo‘ladigan."
+        },
+        "quality": {
+          "title": "Sifat",
+          "body": "Kichik guruhlar va muntazam nazorat ishlari. Natija tasodifiy bo‘lmaydi."
+        },
+        "care": {
+          "title": "E’tibor",
+          "body": "Har bir o‘quvchi ismi bilan taniladi va har bir ota-ona xabardor bo‘ladi."
+        }
+      }
+    },
+    "news": {
+      "title": "Yangiliklar",
+      "subtitle": "O‘quv markazi hayoti, tadbirlar va e’lonlar.",
+      "metaDescription": "Leader Learning Centre yangiliklari, tadbirlari va e’lonlari."
+    },
+    "gallery": {
+      "title": "Galereya",
+      "subtitle": "Darslar, tadbirlar va bitiruv marosimlari.",
+      "metaDescription": "Leader Learning Centre foto va video galereyasi.",
+      "empty": "Foto va videolar o‘quv markazi tomonidan taqdim etilgach joylanadi."
+    },
+    "contact": {
+      "title": "Aloqa",
+      "subtitle": "Savolingiz bormi? Yozing yoki qo‘ng‘iroq qiling.",
+      "metaDescription": "Leader Learning Centre bilan bog‘lanish: telefon, manzil va aloqa shakli.",
+      "formTitle": "Xabar yuborish",
+      "message": "Xabaringiz",
+      "messagePlaceholder": "Savolingizni yozing...",
+      "send": "Yuborish"
+    },
+    "register": {
+      "title": "Ro‘yxatdan o‘tish",
+      "subtitle": "Uchta qadam — bir necha daqiqa.",
+      "metaDescription": "Leader Learning Centre kurslariga onlayn ro‘yxatdan o‘tish va bepul sinov darsiga yozilish.",
+      "step": "Qadam {current} / {total}",
+      "steps": {
+        "who": "Siz kim?",
+        "what": "Nimani o‘rganasiz?",
+        "confirm": "Tasdiqlash"
+      },
+      "fields": {
+        "age": "Yosh",
+        "schoolClass": "Sinf",
+        "branch": "Filial",
+        "branchPlaceholder": "Filialni tanlang",
+        "preferredDays": "Qulay kunlar",
+        "preferredTime": "Qulay vaqt",
+        "source": "Biz haqimizda qayerdan bildingiz?",
+        "comment": "Izoh",
+        "commentPlaceholder": "Qo‘shimcha ma’lumot (ixtiyoriy)"
+      },
+      "days": {
+        "har_kun": "Har kuni",
+        "toq": "Toq kunlar",
+        "juft": "Juft kunlar"
+      },
+      "times": {
+        "morning": "Ertalab",
+        "afternoon": "Kunduzi",
+        "evening": "Kechqurun"
+      },
+      "sources": {
+        "instagram": "Instagram",
+        "friend": "Do‘st tavsiyasi",
+        "passing_by": "Yonidan o‘tib",
+        "telegram": "Telegram",
+        "other": "Boshqa"
+      },
+      "next": "Keyingi",
+      "back": "Orqaga",
+      "submit": "Arizani yuborish",
+      "successTitle": "Arizangiz qabul qilindi",
+      "successBody": "Menejerimiz 24 soat ichida siz bilan bog‘lanadi."
+    },
+    "faq": {
+      "title": "Savol-javob",
+      "subtitle": "Eng ko‘p so‘raladigan savollarga javoblar.",
+      "metaDescription": "Leader Learning Centre haqida ko‘p so‘raladigan savollar va javoblar."
+    },
+    "login": {
+      "title": "Shaxsiy kabinet",
+      "subtitle": "Telefon raqamingiz va parolingiz bilan kiring.",
+      "metaDescription": "Leader Learning Centre shaxsiy kabinetiga kirish.",
+      "phone": "Telefon raqam",
+      "password": "Parol",
+      "submit": "Kirish",
+      "forgot": "Parolni unutdingizmi?",
+      "pending": "Shaxsiy kabinet ishga tushirilmoqda. Hozircha kirish uchun o‘quv markazi bilan bog‘laning."
+    },
+    "legal": {
+      "offerTitle": "Ommaviy oferta",
+      "privacyTitle": "Maxfiylik siyosati",
+      "pending": "Ushbu hujjat matni o‘quv markazining yuristi tomonidan tayyorlanmoqda va onlayn to‘lovlar ishga tushirilishidan oldin joylashtiriladi."
+    }
+  }
+}

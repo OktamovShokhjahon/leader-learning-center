@@ -1,0 +1,86 @@
+# TZ §28 — local/staging services.
+#
+# MongoDB runs as a SINGLE-NODE REPLICA SET, not a standalone: payment and
+# invoice writes run inside transactions (§26.4) and Mongo requires a replica
+# set for those, even with one node.
+#
+#   docker compose -f infra/docker-compose.yml up -d
+#   # then in apps/api/.env:
+#   MONGO_URL=mongodb://localhost:27017/leader?replicaSet=rs0&directConnection=true
+
+services:
+  mongo:
+    image: mongo:8
+    container_name: leader-mongo
+    command: ['--replSet', 'rs0', '--bind_ip_all']
+    ports:
+      - '27017:27017'
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: ['CMD', 'mongosh', '--quiet', '--eval', "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  # Runs once to initiate the replica set, then exits.
+  mongo-init:
+    image: mongo:8
+    container_name: leader-mongo-init
+    depends_on:
+      mongo:
+        condition: service_healthy
+    restart: 'no'
+    entrypoint:
+      - bash
+      - -c
+      - |
+        mongosh --host mongo:27017 --quiet --eval '
+          try {
+            rs.status();
+            print("replica set already initiated");
+          } catch (e) {
+            rs.initiate({ _id: "rs0", members: [{ _id: 0, host: "localhost:27017" }] });
+            print("replica set initiated");
+          }
+        '
+
+  redis:
+    image: redis:7-alpine
+    container_name: leader-redis
+    command: ['redis-server', '--appendonly', 'yes']
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # §28 — object storage for receipts, expense photos, HLS output and library
+  # page images. MinIO on the same server initially; S3-compatible later.
+  minio:
+    image: minio/minio:latest
+    container_name: leader-minio
+    command: ['server', '/data', '--console-address', ':9001']
+    environment:
+      MINIO_ROOT_USER: leader
+      MINIO_ROOT_PASSWORD: leader-dev-secret
+    ports:
+      - '9000:9000'
+      - '9001:9001'
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: ['CMD', 'mc', 'ready', 'local']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  mongo-data:
+  redis-data:
+  minio-data:

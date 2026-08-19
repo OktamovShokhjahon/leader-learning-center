@@ -1,0 +1,363 @@
+{
+  "meta": {
+    "defaultTitle": "Leader Learning Centre — language and mathematics school in Urgench",
+    "defaultDescription": "Since 2018 in Urgench: English, IELTS, Russian and Turkish, and mathematics. Small groups, a personal cabinet, and full transparency for parents."
+  },
+  "nav": {
+    "courses": "Courses",
+    "teachers": "Teachers",
+    "results": "Results",
+    "branches": "Branches",
+    "about": "About",
+    "news": "News",
+    "contact": "Contact",
+    "gallery": "Gallery",
+    "faq": "FAQ",
+    "offer": "Public offer",
+    "privacy": "Privacy policy",
+    "login": "Personal cabinet",
+    "apply": "Apply",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
+    "changeLanguage": "Change language",
+    "skipToContent": "Skip to content"
+  },
+  "common": {
+    "learnMore": "Learn more",
+    "apply": "Apply",
+    "trialLesson": "Free trial lesson",
+    "allCourses": "All courses",
+    "allTeachers": "All teachers",
+    "allNews": "All news",
+    "perMonth": "per month",
+    "months": "months",
+    "lessonsPerWeek": "{count} lessons a week",
+    "groupSize": "up to {count} per group",
+    "level": "Level",
+    "age": "Age",
+    "duration": "Duration",
+    "price": "Price",
+    "phone": "Phone",
+    "address": "Address",
+    "workingHours": "Opening hours",
+    "soon": "Soon",
+    "comingSoon": "Information in preparation",
+    "contentPending": "Content for this section is awaited from the learning centre."
+  },
+  "home": {
+    "hero": {
+      "eyebrow": "Since 2018 — Urgench, Khorezm",
+      "title": "English, IELTS and mathematics — in Urgench",
+      "subtitle": "We prepare the young people of Khorezm for international exams. Small groups, qualified teachers, and a personal cabinet that keeps parents fully informed.",
+      "ctaPrimary": "Apply now",
+      "ctaSecondary": "Free trial lesson",
+      "callUs": "Call us"
+    },
+    "trust": {
+      "title": "Official partnerships"
+    },
+    "numbers": {
+      "title": "In numbers",
+      "years": "years of experience",
+      "graduates": "graduates",
+      "band": "average IELTS band",
+      "branches": "branches"
+    },
+    "courses": {
+      "eyebrow": "Courses",
+      "title": "What would you like to learn?",
+      "subtitle": "Every course starts with a placement test and is checked by a control test each month."
+    },
+    "why": {
+      "eyebrow": "Why Leader",
+      "title": "Six reasons to choose us",
+      "items": {
+        "teachers": {
+          "title": "Qualified teachers",
+          "body": "Certified teachers who know the exam format from the inside."
+        },
+        "groups": {
+          "title": "Small groups",
+          "body": "8–14 students per group, so there is time for everyone in the lesson."
+        },
+        "cabinet": {
+          "title": "Personal cabinet",
+          "body": "Attendance, results, library and payments — all in one place."
+        },
+        "parents": {
+          "title": "Transparency for parents",
+          "body": "If your child misses a lesson you are notified. The attendance calendar is always open."
+        },
+        "mock": {
+          "title": "Exam-format mock tests",
+          "body": "Mock tests under real exam conditions — the result is never a surprise."
+        },
+        "certificate": {
+          "title": "Certificate",
+          "body": "On completing the course you receive a certificate with a QR code for verification."
+        }
+      }
+    },
+    "results": {
+      "eyebrow": "Results",
+      "title": "What our students achieved",
+      "subtitle": "Every band score is one student's work.",
+      "empty": "The results wall will be filled once the learning centre supplies the data.",
+      "filterAll": "All"
+    },
+    "teachers": {
+      "eyebrow": "Team",
+      "title": "Our teachers",
+      "experience": "{years} years of experience"
+    },
+    "how": {
+      "eyebrow": "How it starts",
+      "title": "Four steps",
+      "steps": {
+        "apply": {
+          "title": "Leave an application",
+          "body": "Fill in the short form on this site — we get in touch within 24 hours."
+        },
+        "trial": {
+          "title": "Free trial lesson",
+          "body": "Sit in on a real group lesson. No commitment of any kind."
+        },
+        "test": {
+          "title": "Level test",
+          "body": "We establish your level and place you in the right group."
+        },
+        "start": {
+          "title": "Start studying",
+          "body": "Your personal cabinet opens, with the timetable and materials inside."
+        }
+      }
+    },
+    "cabinet": {
+      "eyebrow": "Personal cabinet",
+      "title": "The whole course in your pocket",
+      "subtitle": "A separate cabinet for every student and parent: attendance, results, library and payment history.",
+      "cta": "Personal cabinet",
+      "features": {
+        "attendance": "Attendance calendar",
+        "library": "Library, audio and video",
+        "ranking": "Ranking and control-test results",
+        "payments": "Payments and outstanding debt"
+      }
+    },
+    "testimonials": {
+      "eyebrow": "Reviews",
+      "title": "What students say",
+      "empty": "Reviews will be added once the learning centre supplies them."
+    },
+    "branches": {
+      "eyebrow": "Branches",
+      "title": "Where to find us",
+      "viewOnMap": "View on map",
+      "coursesHere": "Courses at this branch"
+    },
+    "news": {
+      "eyebrow": "News",
+      "title": "Life at the centre",
+      "empty": "News will be published shortly."
+    },
+    "faq": {
+      "eyebrow": "FAQ",
+      "title": "Frequently asked questions"
+    },
+    "form": {
+      "eyebrow": "Application",
+      "title": "Book a free trial lesson",
+      "subtitle": "Leave your name and phone number — we will take care of the rest.",
+      "name": "Full name",
+      "namePlaceholder": "First and last name",
+      "phone": "Phone number",
+      "course": "Which course interests you?",
+      "coursePlaceholder": "Choose a course",
+      "submit": "Send application",
+      "submitting": "Sending...",
+      "success": "Your application has been received. We will contact you shortly.",
+      "error": "The application could not be sent. Please try again.",
+      "consent": "I consent to the processing of my personal data",
+      "consentLink": "Privacy policy",
+      "fullFormLink": "Fill in the full form"
+    }
+  },
+  "faqItems": {
+    "q1": {
+      "q": "When do lessons start?",
+      "a": "New groups open every month. Leave an application and a manager will tell you the nearest group and its exact start date."
+    },
+    "q2": {
+      "q": "Is the trial lesson really free?",
+      "a": "Yes. The trial lesson is completely free and carries no obligation. You decide afterwards."
+    },
+    "q3": {
+      "q": "How can I pay?",
+      "a": "Cash, card, bank transfer, and also Payme, Click and Uzum — you can pay directly from the personal cabinet."
+    },
+    "q4": {
+      "q": "How do I follow my child's attendance?",
+      "a": "A separate cabinet opens for the parent with the attendance calendar, control-test results and payment history. If your child misses a lesson you receive a notification."
+    },
+    "q5": {
+      "q": "How many students are in a group?",
+      "a": "Between 8 and 14 depending on the course. The speaking club is capped at 8."
+    },
+    "q6": {
+      "q": "What happens if I miss a lesson?",
+      "a": "The absence is recorded in the system and visible in the cabinet. Excused absences are marked separately, and a catch-up session can be arranged with the teacher."
+    }
+  },
+  "footer": {
+    "tagline": "Language and mathematics learning centre in Urgench. Since 2018.",
+    "learn": "Study",
+    "centre": "Centre",
+    "legal": "Legal",
+    "social": "Social media",
+    "rights": "All rights reserved.",
+    "language": "Language"
+  },
+  "notFound": {
+    "title": "Page not found",
+    "body": "The page you are looking for does not exist or has been moved.",
+    "home": "Back to home"
+  },
+  "pages": {
+    "courses": {
+      "title": "Courses",
+      "subtitle": "Every course starts with a placement test, is checked by a monthly control test, and ends with a certificate.",
+      "metaDescription": "Leader Learning Centre courses: English, IELTS, Kids, speaking club, Russian and Turkish, mathematics, national certificate, summer school and online courses."
+    },
+    "courseDetail": {
+      "programme": "About the programme",
+      "whatYouGet": "What you get",
+      "details": "Course details",
+      "applyTitle": "Want to join this course?",
+      "applyBody": "Leave an application and a manager will tell you about the nearest group.",
+      "otherCourses": "Other courses"
+    },
+    "teachers": {
+      "title": "Teachers",
+      "subtitle": "Certified teachers, each in their own field.",
+      "metaDescription": "The teachers of Leader Learning Centre: experience, certificates and subjects."
+    },
+    "results": {
+      "title": "Results",
+      "subtitle": "Exam results and stories from our students.",
+      "metaDescription": "IELTS and CEFR results of Leader Learning Centre students, and their stories."
+    },
+    "branches": {
+      "title": "Branches",
+      "subtitle": "Find us in Urgench.",
+      "metaDescription": "Leader Learning Centre branches: addresses, phone numbers and opening hours."
+    },
+    "about": {
+      "title": "About us",
+      "subtitle": "Sharing knowledge in Khorezm since 2018.",
+      "metaDescription": "About Leader Learning Centre, operating in Urgench since 2018: history, mission and partnerships.",
+      "historyTitle": "Our history",
+      "historyBody": "Leader Learning Centre began in 2018 in a single room in Urgench. Today it is several branches, dozens of groups and new graduates every month — but the founding principle has not changed: give every student time.",
+      "missionTitle": "Our mission",
+      "missionBody": "To give the young people of Khorezm language and mathematics education of an international standard without leaving home. The process must be fully transparent to student and parent alike.",
+      "valuesTitle": "Our values",
+      "values": {
+        "transparency": {
+          "title": "Transparency",
+          "body": "Attendance, results and payments — all open and verifiable."
+        },
+        "quality": {
+          "title": "Quality",
+          "body": "Small groups and regular control tests. A result is never an accident."
+        },
+        "care": {
+          "title": "Care",
+          "body": "Every student is known by name and every parent is kept informed."
+        }
+      }
+    },
+    "news": {
+      "title": "News",
+      "subtitle": "Life at the centre, events and announcements.",
+      "metaDescription": "News, events and announcements from Leader Learning Centre."
+    },
+    "gallery": {
+      "title": "Gallery",
+      "subtitle": "Lessons, events and graduations.",
+      "metaDescription": "Photo and video gallery of Leader Learning Centre.",
+      "empty": "Photos and videos will be published once supplied by the learning centre."
+    },
+    "contact": {
+      "title": "Contact",
+      "subtitle": "Have a question? Write to us or call.",
+      "metaDescription": "Contact Leader Learning Centre: phone, address and enquiry form.",
+      "formTitle": "Send a message",
+      "message": "Your message",
+      "messagePlaceholder": "Write your question...",
+      "send": "Send"
+    },
+    "register": {
+      "title": "Apply",
+      "subtitle": "Three steps — a couple of minutes.",
+      "metaDescription": "Apply online for Leader Learning Centre courses and book a free trial lesson.",
+      "step": "Step {current} of {total}",
+      "steps": {
+        "who": "Who are you?",
+        "what": "What will you study?",
+        "confirm": "Confirm"
+      },
+      "fields": {
+        "age": "Age",
+        "schoolClass": "School class",
+        "branch": "Branch",
+        "branchPlaceholder": "Choose a branch",
+        "preferredDays": "Preferred days",
+        "preferredTime": "Preferred time",
+        "source": "How did you hear about us?",
+        "comment": "Comment",
+        "commentPlaceholder": "Anything else (optional)"
+      },
+      "days": {
+        "har_kun": "Every day",
+        "toq": "Odd days",
+        "juft": "Even days"
+      },
+      "times": {
+        "morning": "Morning",
+        "afternoon": "Afternoon",
+        "evening": "Evening"
+      },
+      "sources": {
+        "instagram": "Instagram",
+        "friend": "A friend",
+        "passing_by": "Passing by",
+        "telegram": "Telegram",
+        "other": "Other"
+      },
+      "next": "Next",
+      "back": "Back",
+      "submit": "Send application",
+      "successTitle": "Application received",
+      "successBody": "Our manager will contact you within 24 hours."
+    },
+    "faq": {
+      "title": "FAQ",
+      "subtitle": "Answers to the questions we are asked most.",
+      "metaDescription": "Frequently asked questions about Leader Learning Centre, answered."
+    },
+    "login": {
+      "title": "Personal cabinet",
+      "subtitle": "Sign in with your phone number and password.",
+      "metaDescription": "Sign in to the Leader Learning Centre personal cabinet.",
+      "phone": "Phone number",
+      "password": "Password",
+      "submit": "Sign in",
+      "forgot": "Forgot your password?",
+      "pending": "The personal cabinet is still being built. For now, please contact the centre for access."
+    },
+    "legal": {
+      "offerTitle": "Public offer",
+      "privacyTitle": "Privacy policy",
+      "pending": "The text of this document is being prepared by the centre’s lawyer and will be published before online payment goes live."
+    }
+  }
+}

@@ -1,0 +1,236 @@
+@import 'tailwindcss';
+
+/*
+ * TZ §25 — "Khorezm light". Khiva majolica tilework: deep navy and turquoise
+ * glaze over warm clay, with the tile grid used as the layout's structural
+ * device. Navy and aqua are sampled from the client's own logo so the site
+ * matches the mark they already use.
+ */
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  /* ---- Brand ---------------------------------------------------------- */
+  --color-navy-50: #ecf3f9;
+  --color-navy-100: #d3e4f0;
+  --color-navy-200: #a6c8e1;
+  --color-navy-300: #74a7ce;
+  --color-navy-400: #4483b2;
+  --color-navy-500: #226694;
+  --color-navy-600: #144e7a; /* logo navy — primary text-on-light, gradient anchor */
+  --color-navy-700: #103e61;
+  --color-navy-800: #0c2f49;
+  --color-navy-900: #082033;
+  --color-navy-950: #05141f;
+
+  --color-glaze-50: #e8f6f9;
+  --color-glaze-100: #c9ebf1;
+  --color-glaze-200: #94d6e3;
+  --color-glaze-300: #5cbed2;
+  --color-glaze-400: #2ba3bc;
+  --color-glaze-500: #1295ab;
+  --color-glaze-600: #0e8ca0; /* turquoise glaze — surfaces and gradients */
+  --color-glaze-700: #0b6f7f;
+  --color-glaze-800: #08525e;
+  --color-glaze-900: #06373f;
+
+  --color-aqua-50: #eaf7fc;
+  --color-aqua-100: #cdedf8;
+  --color-aqua-200: #9bdbf1;
+  --color-aqua-300: #63c6e8;
+  --color-aqua-400: #3ab7e1;
+  --color-aqua-500: #22acdc; /* logo cyan — gradient terminus, highlights */
+  --color-aqua-600: #1a8cb4;
+  --color-aqua-700: #146d8c;
+
+  --color-clay-50: #fbf1ec;
+  --color-clay-100: #f4ddd1;
+  --color-clay-200: #e7baa3;
+  --color-clay-300: #d8946f;
+  --color-clay-400: #cc7a50;
+  --color-clay-500: #c2643c; /* warm accent, CTAs on dark */
+  --color-clay-600: #a2502f;
+  --color-clay-700: #7e3e25;
+
+  --color-ink: #0b1b2b;
+  --color-ink-soft: #33475c;
+  --color-ink-muted: #64798e;
+  --color-sand: #f5f1e8;
+  --color-sand-dark: #ebe4d5;
+  --color-paper: #ffffff;
+
+  /* ---- Semantic (TZ §25.2) -------------------------------------------- */
+  --color-success: #16a34a;
+  --color-warning: #f59e0b;
+  --color-danger: #dc2626;
+  --color-info: #0ea5e9;
+
+  /* ---- Typography ------------------------------------------------------ */
+  --font-display: var(--font-unbounded), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-onest), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, monospace;
+
+  /* Type scale, TZ §25.2 */
+  --text-2xs: 0.75rem;
+  --text-xs: 0.875rem;
+  --text-sm: 1rem;
+  --text-base: 1.125rem;
+  --text-lg: 1.375rem;
+  --text-xl: 1.75rem;
+  --text-2xl: 2.25rem;
+  --text-3xl: 3rem;
+  --text-4xl: 4rem;
+
+  /* ---- Shape (TZ §25.2) ------------------------------------------------ */
+  --radius-card: 16px;
+  --radius-input: 12px;
+  --radius-pill: 999px;
+
+  /* Two shadow levels only */
+  --shadow-raise: 0 1px 2px rgb(11 27 43 / 0.06), 0 2px 8px rgb(11 27 43 / 0.06);
+  --shadow-float: 0 4px 12px rgb(11 27 43 / 0.08), 0 16px 40px rgb(11 27 43 / 0.12);
+
+  /* ---- Motion (TZ §25.5) ----------------------------------------------- */
+  --ease-enter: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-exit: cubic-bezier(0.4, 0, 1, 1);
+
+  --container-site: 1280px;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-border-subtle: var(--border-subtle);
+}
+
+:root {
+  --background: var(--color-sand);
+  --foreground: var(--color-ink);
+  --surface: var(--color-paper);
+  --border-subtle: rgb(11 27 43 / 0.1);
+}
+
+.dark {
+  --background: var(--color-navy-950);
+  --foreground: #e8eef4;
+  --surface: var(--color-navy-900);
+  --border-subtle: rgb(232 238 244 / 0.12);
+}
+
+@layer base {
+  * {
+    border-color: var(--border-subtle);
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+    font-size: var(--text-sm);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+  }
+
+  /* Money columns and ids must align — TZ §25.2 */
+  .tabular,
+  td.money,
+  .font-mono {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* TZ §25.6 — visible keyboard focus everywhere, no exceptions */
+  :focus-visible {
+    outline: 2px solid var(--color-glaze-600);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  ::selection {
+    background-color: var(--color-aqua-200);
+    color: var(--color-navy-900);
+  }
+}
+
+@layer components {
+  /* The signature gradient — hero shader, primary buttons, branch accent bars */
+  .gradient-glaze {
+    background-image: linear-gradient(
+      135deg,
+      var(--color-navy-600) 0%,
+      var(--color-glaze-600) 55%,
+      var(--color-aqua-500) 100%
+    );
+  }
+
+  .gradient-glaze-text {
+    background-image: linear-gradient(
+      135deg,
+      var(--color-navy-600) 0%,
+      var(--color-glaze-600) 55%,
+      var(--color-aqua-500) 100%
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  /*
+   * The structural device of §25.3: the majolica tile grid. Used as a faint
+   * mask over the hero shader and as a section texture — never as decoration
+   * that competes with content.
+   */
+  .tile-grid {
+    background-image:
+      linear-gradient(to right, currentColor 1px, transparent 1px),
+      linear-gradient(to bottom, currentColor 1px, transparent 1px);
+    background-size: 64px 64px;
+  }
+
+  .container-site {
+    width: 100%;
+    max-width: var(--container-site);
+    margin-inline: auto;
+    padding-inline: 1.25rem;
+  }
+
+  @media (min-width: 768px) {
+    .container-site {
+      padding-inline: 2rem;
+    }
+  }
+}
+
+/* TZ §24.3 / §25.6 — reduced motion is honoured everywhere: shaders freeze to a
+   static gradient, transitions collapse to opacity. */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
