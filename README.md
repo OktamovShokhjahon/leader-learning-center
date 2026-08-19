@@ -78,7 +78,8 @@ npm run typecheck && npm run test && npm run build
 
 ## Status
 
-**Phase 0 (setup) and Phase 6 (public site) are in place.**
+**Phase 0 (setup), Phase 6 (public site) and the authentication half of Phase 1
+are in place.**
 
 Done:
 - Monorepo, shared package, design tokens and UI kit
@@ -87,9 +88,25 @@ Done:
 - The "living glaze" WebGL hero (§25.4) with its static / reduced-motion fallbacks
 - Registration: short inline form and the three-step flow (§7.1), validated by the
   shared zod schema on both sides
-- API skeleton: env validation, error envelope, rate limiting, the
-  `AsyncLocalStorage` branch-scope plugin (§5.1), `leads` and `branches` models,
-  public lead and contact endpoints
+- **Authentication (§8)** — argon2id passwords with a shared common-password
+  blocklist, 15-minute access tokens plus 30-day refresh cookies rotated on every
+  use with reuse detection, the "Faol qurilmalar" session list with remote
+  termination, progressive lockout on phone + IP, TOTP 2FA (mandatory for
+  SuperAdmin, with a bootstrap path for the first account), and an audit entry
+  with IP and user-agent on every auth event
+- **Branches (§5)** — CRUD, archive-not-delete, and the SuperAdmin branch
+  switcher whose selection lives on the session document, not in a cookie
+- **Staff (§4.2)** — user CRUD, role assignment, password reset and
+  deactivation, with the "who may create whom" matrix enforced in the service
+- `GET /leads` and the funnel counts (§7.2, §23), which double as the end-to-end
+  proof that the §5.1 branch-scope plugin filters a controller that never
+  mentions `branchId`
+
+Not yet done in Phase 1:
+- Students, courses, groups, rooms, lessons and the schedule grid (§9)
+- The CRM and boss panels in `apps/web` — the API surface above has no UI yet;
+  `/kirish` is still a placeholder
+- SMS OTP login for students and parents (§8) — needs the Eskiz.uz account (§31 Q5)
 
 Not yet done on the public site, and why:
 - **SMS OTP and Cloudflare Turnstile** on the registration form (§7.1) — need the
@@ -104,5 +121,25 @@ Not yet done on the public site, and why:
 - **Analytics** (Yandex.Metrica, GA4, Meta Pixel) — need account IDs.
 - **Lighthouse CI budget** (§30.13) — to be wired in the Phase 8 performance pass.
 
-`/kirish` is a placeholder: real authentication is Phase 1 (§8).
+## First sign-in
+
+There is no public staff registration (§8), so the first SuperAdmin is seeded
+from the environment. Set both variables in `apps/api/.env`:
+
+```bash
+SEED_SUPERADMIN_PHONE=+998901234567
+SEED_SUPERADMIN_PASSWORD=<a long password you have not used elsewhere>
+```
+
+Restart the API. Because §8 makes 2FA mandatory for SuperAdmin, that account
+cannot sign in until it has enrolled one:
+
+1. `POST /api/v1/auth/2fa/bootstrap` with the phone and password — returns a
+   secret and an `otpauth://` URI to scan.
+2. `POST /api/v1/auth/2fa/bootstrap/verify` with the phone, password and the
+   6-digit code.
+3. `POST /api/v1/auth/login` now works with `totpCode`.
+
+Then change the password and remove `SEED_SUPERADMIN_*` from the environment.
+
 # leader-learning-center

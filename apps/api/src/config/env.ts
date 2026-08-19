@@ -1,4 +1,5 @@
 import 'dotenv/config'
+import { randomBytes } from 'node:crypto'
 import { z } from 'zod'
 
 /**
@@ -26,6 +27,27 @@ const envSchema = z.object({
 
   /** Comma-separated list of origins allowed to call the API. */
   CORS_ORIGINS: z.string().default('http://localhost:3000'),
+
+  // ── §8 authentication ──────────────────────────────────────────────────────
+  /** Signs the 15-minute access token. */
+  JWT_SECRET: z.string().min(32, 'JWT_SECRET must be at least 32 characters').optional(),
+  ACCESS_TOKEN_TTL: z.string().default('15m'),
+  /** §8 — refresh cookie lives 30 days and is rotated on every use. */
+  REFRESH_TOKEN_TTL_DAYS: z.coerce.number().int().positive().default(30),
+  /** Set in production so the refresh cookie is shared across api. and www. */
+  COOKIE_DOMAIN: z.string().optional(),
+  /**
+   * AES-256-GCM key (64 hex chars) for the fields §8 requires to be encrypted at
+   * rest: TOTP secrets and, later, `students.passportSeries`.
+   */
+  ENCRYPTION_KEY: z
+    .string()
+    .regex(/^[a-f\d]{64}$/i, 'ENCRYPTION_KEY must be 64 hex characters (32 bytes)')
+    .optional(),
+
+  /** Bootstrap SuperAdmin, seeded once on an empty database. */
+  SEED_SUPERADMIN_PHONE: z.string().optional(),
+  SEED_SUPERADMIN_PASSWORD: z.string().optional(),
 })
 
 const parsed = envSchema.safeParse(process.env)
@@ -37,11 +59,33 @@ if (!parsed.success) {
   throw new Error(`Invalid environment configuration:\n${issues}`)
 }
 
+const isProduction = parsed.data.NODE_ENV === 'production'
+
+/**
+ * Outside production a missing secret is generated per boot rather than
+ * hard-failing, so `npm run dev:api` and the test suite work from a bare
+ * checkout. The cost is that every restart invalidates existing tokens, which is
+ * the correct trade-off for a dev machine and unacceptable in production —
+ * hence the hard check below.
+ */
+function requiredSecret(name: string, value: string | undefined, bytes: number): string {
+  if (value) return value
+  if (isProduction) {
+    throw new Error(
+      `${name} is required in production. Generate one with:\n` +
+        `  node -e "console.log(require('crypto').randomBytes(${bytes}).toString('hex'))"`,
+    )
+  }
+  return randomBytes(bytes).toString('hex')
+}
+
 export const env = {
   ...parsed.data,
   corsOrigins: parsed.data.CORS_ORIGINS.split(',').map((origin) => origin.trim()),
-  isProduction: parsed.data.NODE_ENV === 'production',
+  isProduction,
   isTest: parsed.data.NODE_ENV === 'test',
+  jwtSecret: requiredSecret('JWT_SECRET', parsed.data.JWT_SECRET, 32),
+  encryptionKey: requiredSecret('ENCRYPTION_KEY', parsed.data.ENCRYPTION_KEY, 32),
 }
 
 if (env.isProduction && env.USE_MEMORY_DB) {

@@ -32,7 +32,9 @@ export async function connectDatabase(): Promise<string> {
     // Dev/test only — an in-memory single-node replica set so transactions work
     // without Docker on a developer machine. Guarded against production in env.ts.
     const { MongoMemoryReplSet } = await import('mongodb-memory-server')
-    const replSet = await MongoMemoryReplSet.create({ replSet: { count: 1, storageEngine: 'wiredTiger' } })
+    const replSet = await MongoMemoryReplSet.create({
+      replSet: { count: 1, storageEngine: 'wiredTiger' },
+    })
     memoryServer = replSet
     uri = replSet.getUri()
     logger.warn('Using in-memory MongoDB replica set — data is discarded on shutdown')
