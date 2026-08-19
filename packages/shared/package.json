@@ -22,6 +22,10 @@
       "types": "./dist/locales.d.ts",
       "default": "./dist/locales.js"
     },
+    "./common-passwords": {
+      "types": "./dist/common-passwords.d.ts",
+      "default": "./dist/common-passwords.js"
+    },
     "./errors": {
       "types": "./dist/errors.d.ts",
       "default": "./dist/errors.js"

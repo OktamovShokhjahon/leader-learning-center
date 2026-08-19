@@ -3,6 +3,7 @@ import { env } from './config/env.js'
 import { logger } from './config/logger.js'
 import { connectDatabase, disconnectDatabase } from './config/db.js'
 import { seedBranches } from './seed/seed-branches.js'
+import { seedSuperadmin } from './seed/seed-superadmin.js'
 
 async function main() {
   let dbReady = false
@@ -12,6 +13,9 @@ async function main() {
     dbReady = true
     // A lead cannot exist without a branch (§5.1), so make sure one exists.
     if (!env.isProduction) await seedBranches()
+    // Runs in production too: it is the only way the first account can exist,
+    // and it is a no-op unless SEED_SUPERADMIN_* are explicitly configured (§8).
+    await seedSuperadmin()
   } catch (error) {
     // In production a database is not optional — fail loudly and stay down.
     if (env.isProduction) throw error

@@ -2,6 +2,7 @@ import express from 'express'
 import helmet from 'helmet'
 import cors from 'cors'
 import rateLimit from 'express-rate-limit'
+import cookieParser from 'cookie-parser'
 import { pinoHttp } from 'pino-http'
 import { ERROR_CODES } from '@leader/shared/errors'
 import { env } from './config/env.js'
@@ -10,6 +11,10 @@ import { connectionState } from './config/db.js'
 import { branchScopeMiddleware } from './middleware/branch-scope.js'
 import { errorHandler, notFoundHandler } from './middleware/error-handler.js'
 import { publicRouter } from './modules/public/public.routes.js'
+import { authRouter } from './modules/auth/auth.routes.js'
+import { branchRouter } from './modules/branches/branch.routes.js'
+import { userRouter } from './modules/users/user.routes.js'
+import { leadRouter } from './modules/leads/lead.routes.js'
 
 export function createApp() {
   const app = express()
@@ -28,6 +33,9 @@ export function createApp() {
   )
   app.use(express.json({ limit: '1mb' }))
   app.use(express.urlencoded({ extended: true, limit: '1mb' }))
+  // The refresh token is an httpOnly cookie (§8); nothing else in the API reads
+  // cookies, and no session state is kept in one.
+  app.use(cookieParser())
   app.use(
     pinoHttp({
       logger,
@@ -62,8 +70,12 @@ export function createApp() {
   })
 
   app.use('/api/v1/public', publicRouter)
+  app.use('/api/v1/auth', authRouter)
+  app.use('/api/v1/branches', branchRouter)
+  app.use('/api/v1/users', userRouter)
+  app.use('/api/v1/leads', leadRouter)
 
-  // TODO Phase 1+: /auth, /branches, /students, /groups, /attendance, /payments,
+  // TODO Phase 1+: /students, /groups, /attendance, /payments,
   // /fines, /expenses, /payroll, /finance (§23). Finance and payroll routers get
   // a hard requireRole('superadmin') at mount time (§4.3, §15).
 

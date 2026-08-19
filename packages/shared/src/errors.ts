@@ -15,6 +15,25 @@ export const ERROR_CODES = {
   DUPLICATE_PHONE: 'DUPLICATE_PHONE',
   OTP_INVALID: 'OTP_INVALID',
   OTP_THROTTLED: 'OTP_THROTTLED',
+
+  // §8 — authentication. `INVALID_CREDENTIALS` is intentionally the single
+  // answer for "no such phone" and "wrong password" alike, so the endpoint
+  // cannot be used to enumerate who has an account.
+  INVALID_CREDENTIALS: 'INVALID_CREDENTIALS',
+  ACCOUNT_LOCKED: 'ACCOUNT_LOCKED',
+  ACCOUNT_DISABLED: 'ACCOUNT_DISABLED',
+  TOKEN_EXPIRED: 'TOKEN_EXPIRED',
+  TOKEN_INVALID: 'TOKEN_INVALID',
+  /** A refresh token was replayed — the whole family is revoked (§8). */
+  TOKEN_REUSED: 'TOKEN_REUSED',
+  SESSION_REVOKED: 'SESSION_REVOKED',
+  TOTP_REQUIRED: 'TOTP_REQUIRED',
+  TOTP_INVALID: 'TOTP_INVALID',
+  TOTP_SETUP_REQUIRED: 'TOTP_SETUP_REQUIRED',
+  PASSWORD_CHANGE_REQUIRED: 'PASSWORD_CHANGE_REQUIRED',
+  PASSWORD_TOO_COMMON: 'PASSWORD_TOO_COMMON',
+  PIN_INVALID: 'PIN_INVALID',
+  CONFLICT: 'CONFLICT',
   INVOICE_ALREADY_PAID: 'INVOICE_ALREADY_PAID',
   BRANCH_SCOPE_REQUIRED: 'BRANCH_SCOPE_REQUIRED',
   INTERNAL: 'INTERNAL',
@@ -59,5 +78,8 @@ export class ApiError extends Error {
   }
   static rateLimited(message = 'Too many requests') {
     return new ApiError(429, ERROR_CODES.RATE_LIMITED, message)
+  }
+  static conflict(message: string, details?: Record<string, unknown>) {
+    return new ApiError(409, ERROR_CODES.CONFLICT, message, details)
   }
 }

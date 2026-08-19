@@ -1,6 +1,7 @@
 import { AsyncLocalStorage } from 'node:async_hooks'
 import type { RequestHandler } from 'express'
-import type { Schema, Types } from 'mongoose'
+import { Types } from 'mongoose'
+import type { Schema } from 'mongoose'
 import type { Role } from '@leader/shared/permissions'
 import { logger } from '../config/logger.js'
 
@@ -39,7 +40,10 @@ export function runWithScope<T>(scope: RequestScope, callback: () => T): T {
  */
 export function withAllBranches<T>(reason: string, callback: () => T): T {
   const current = storage.getStore() ?? {}
-  logger.info({ scope: 'ALL', reason, userId: current.userId, role: current.role }, 'cross-branch scope used')
+  logger.info(
+    { scope: 'ALL', reason, userId: current.userId, role: current.role },
+    'cross-branch scope used',
+  )
   return storage.run({ ...current, branchId: 'ALL' }, callback)
 }
 
@@ -49,6 +53,15 @@ export const branchScopeMiddleware: RequestHandler = (req, _res, next) => {
     requestId: req.headers['x-request-id']?.toString(),
   }
   runWithScope(scope, () => next())
+}
+
+/**
+ * The scope holds the branch id as a string, because it comes from a session
+ * document and is compared as one. Mongo stores it as an ObjectId, so anything
+ * building a raw query fragment has to convert.
+ */
+function toObjectId(id: string): Types.ObjectId | string {
+  return Types.ObjectId.isValid(id) ? new Types.ObjectId(id) : id
 }
 
 /**
@@ -71,28 +84,41 @@ export function branchScopePlugin(schema: Schema) {
   ] as const
 
   for (const hook of READ_HOOKS) {
-    schema.pre(hook, function applyBranchFilter(this: { getFilter?: () => Record<string, unknown>; where: (obj: object) => unknown }) {
-      const scope = getScope()
-      if (!scope?.branchId || scope.branchId === 'ALL') return
+    schema.pre(
+      hook,
+      function applyBranchFilter(this: {
+        getFilter?: () => Record<string, unknown>
+        where: (obj: object) => unknown
+      }) {
+        const scope = getScope()
+        if (!scope?.branchId || scope.branchId === 'ALL') return
 
-      const filter = this.getFilter?.() ?? {}
-      // An explicit branchId in the query wins, so admin tooling can still be precise.
-      if (filter.branchId === undefined) {
-        this.where({ branchId: scope.branchId })
-      }
-    })
+        const filter = this.getFilter?.() ?? {}
+        // An explicit branchId in the query wins, so admin tooling can still be precise.
+        if (filter.branchId === undefined) {
+          this.where({ branchId: scope.branchId })
+        }
+      },
+    )
   }
 
   schema.pre('aggregate', function applyBranchStage(this: { pipeline: () => unknown[] }) {
     const scope = getScope()
     if (!scope?.branchId || scope.branchId === 'ALL') return
-    this.pipeline().unshift({ $match: { branchId: scope.branchId } })
+
+    // `find` casts a string id to an ObjectId from the schema; an aggregation
+    // pipeline gets no casting at all, so a raw string `$match` silently matches
+    // nothing and every report comes back empty rather than failing loudly.
+    this.pipeline().unshift({ $match: { branchId: toObjectId(scope.branchId) } })
   })
 
-  schema.pre('save', function setBranchOnCreate(this: { branchId?: Types.ObjectId | string; isNew: boolean }) {
-    const scope = getScope()
-    if (this.isNew && !this.branchId && scope?.branchId && scope.branchId !== 'ALL') {
-      this.branchId = scope.branchId
-    }
-  })
+  schema.pre(
+    'save',
+    function setBranchOnCreate(this: { branchId?: Types.ObjectId | string; isNew: boolean }) {
+      const scope = getScope()
+      if (this.isNew && !this.branchId && scope?.branchId && scope.branchId !== 'ALL') {
+        this.branchId = scope.branchId
+      }
+    },
+  )
 }

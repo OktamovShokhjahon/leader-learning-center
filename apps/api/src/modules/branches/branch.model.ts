@@ -7,19 +7,27 @@ import { LOCALES } from '@leader/shared/locales'
  * Branches are deliberately NOT branch-scoped: they are the scope. Full CRUD,
  * the branch switcher and per-branch settings land in Phase 1.
  */
-const localizedString = {
-  uz: { type: String, required: true },
+/**
+ * §21.2 — uz is the required language, ru/en fall back to it.
+ *
+ * A *factory*, not a shared object: Mongoose treats a nested path as always
+ * present, so marking `uz` required inside a reusable literal would make every
+ * field that uses it mandatory — including `address` and `workingHours`, which
+ * the TZ leaves optional. `required` is therefore passed in per field.
+ */
+const localized = ({ required = false } = {}) => ({
+  uz: { type: String, required },
   ru: String,
   en: String,
-}
+})
 
 const branchSchema = new Schema(
   {
-    name: { type: localizedString, required: true },
+    name: { type: localized({ required: true }), required: true },
     slug: { type: String, required: true, unique: true, index: true },
-    city: localizedString,
-    address: localizedString,
-    workingHours: localizedString,
+    city: localized(),
+    address: localized(),
+    workingHours: localized(),
     phones: { type: [String], default: [] },
     email: String,
     /** §5.2 — hue offset from the signature gradient, so the boss recognises the branch. */

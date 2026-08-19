@@ -41,7 +41,12 @@ export function formatPhone(phone: string): string {
   // More digits than an Uzbek number can hold — leave it alone.
   if (national.length > 9) return phone
 
-  const parts = [national.slice(0, 2), national.slice(2, 5), national.slice(5, 7), national.slice(7, 9)]
+  const parts = [
+    national.slice(0, 2),
+    national.slice(2, 5),
+    national.slice(5, 7),
+    national.slice(7, 9),
+  ]
   return `+998 ${parts.filter(Boolean).join(' ')}`.trimEnd()
 }
 
@@ -104,7 +109,10 @@ export const leadSchema = leadStep1Schema
     /** Cloudflare Turnstile token, verified server-side. */
     turnstileToken: z.string().optional(),
     /** OTP proving the phone belongs to the applicant. */
-    otpCode: z.string().regex(/^\d{6}$/, 'invalidOtp').optional(),
+    otpCode: z
+      .string()
+      .regex(/^\d{6}$/, 'invalidOtp')
+      .optional(),
     utm: utmSchema,
     locale: z.enum(['uz', 'ru', 'en']).default('uz'),
   })

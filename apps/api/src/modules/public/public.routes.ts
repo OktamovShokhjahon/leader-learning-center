@@ -36,8 +36,7 @@ const submitLimiter = rateLimit({
  * offending field. Choosing the schema up front keeps per-field errors intact.
  */
 const pickLeadSchema: RequestHandler = (req, _res, next) => {
-  const isFullForm =
-    typeof req.body === 'object' && req.body !== null && 'branchSlug' in req.body
+  const isFullForm = typeof req.body === 'object' && req.body !== null && 'branchSlug' in req.body
   return validateBody(isFullForm ? leadSchema : quickLeadSchema)(req, _res, next)
 }
 
