@@ -423,7 +423,8 @@
       "account": "My account",
       "approvals": "Approvals",
       "modules": "Modules",
-      "tests": "Tests"
+      "tests": "Tests",
+      "staff": "Accounts"
     },
     "errors": {
       "FORBIDDEN": "This section is not open to your role.",
@@ -434,7 +435,8 @@
       "SCHEDULE_CONFLICT": "That slot is already taken.",
       "GROUP_FULL": "That group is full.",
       "UPSTREAM_UNAVAILABLE": "Could not reach the server.",
-      "UNKNOWN": "Something went wrong. Please try again."
+      "UNKNOWN": "Something went wrong. Please try again.",
+      "DUPLICATE_PHONE": "An account with this phone already exists."
     },
     "pages": {
       "dashboard": {
@@ -505,6 +507,11 @@
         "eyebrow": "Online",
         "title": "Tests",
         "subtitle": "Import from a file and publish it as a module."
+      },
+      "staff": {
+        "eyebrow": "Access",
+        "title": "Accounts",
+        "subtitle": "Open an account, set its roles, reset a password."
       }
     },
     "dashboard": {
@@ -766,6 +773,58 @@
         "tooManyOptions": "too many options (at most 6)",
         "noPrompt": "no question text",
         "unclosedBlock": "brace never closed"
+      }
+    },
+    "staff": {
+      "searchPlaceholder": "Name, phone or email…",
+      "create": "New account",
+      "manage": "Manage",
+      "close": "Close",
+      "none": "No accounts found",
+      "count": "{n} accounts",
+      "person": "Person",
+      "phone": "Phone",
+      "rolesLabel": "Roles",
+      "statusLabel": "Status",
+      "actions": "",
+      "roleAll": "All roles",
+      "branchAll": "All branches",
+      "allBranches": "All branches",
+      "outranked": "Above your role",
+      "mustChangePassword": "Must change password at next login",
+      "twoFactorOn": "Two-factor authentication is on",
+      "prev": "Previous",
+      "next": "Next",
+      "fullName": "Full name",
+      "password": "Password",
+      "passwordHint": "At least 8 characters. Give it to the person — they change it at first login.",
+      "newPassword": "New password",
+      "email": "Email",
+      "locale": "Interface language",
+      "chooseBranch": "Choose a branch",
+      "addRole": "Add a role",
+      "removeRole": "Remove this role",
+      "saveProfile": "Save details",
+      "saveRoles": "Save roles",
+      "rolesSignOutWarning": "Changing roles signs this account out of every device.",
+      "cannotEditOwnRoles": "You cannot change your own roles.",
+      "resetPassword": "Set this password",
+      "resetHint": "Every device is signed out and the person must change it at next login.",
+      "deactivate": "Deactivate account",
+      "reactivate": "Reactivate account",
+      "deactivateHint": "The record is kept — lessons, payments and the audit trail point at it. Only access is withdrawn.",
+      "saved": "Saved",
+      "status": {
+        "active": "Active",
+        "inactive": "Deactivated"
+      },
+      "role": {
+        "superadmin": "SuperAdmin",
+        "admin": "Administrator",
+        "manager": "Manager",
+        "teacher": "Teacher",
+        "student": "Student",
+        "parent": "Parent"
       }
     }
   },

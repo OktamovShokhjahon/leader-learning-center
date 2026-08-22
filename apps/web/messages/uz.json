@@ -423,7 +423,8 @@
       "account": "Hisobim",
       "approvals": "Tasdiqlash",
       "modules": "Modullar",
-      "tests": "Testlar"
+      "tests": "Testlar",
+      "staff": "Hisoblar"
     },
     "errors": {
       "FORBIDDEN": "Bu bo‘lim sizning rolingiz uchun ochiq emas.",
@@ -434,7 +435,8 @@
       "SCHEDULE_CONFLICT": "Bu vaqt band.",
       "GROUP_FULL": "Guruh to‘lgan.",
       "UPSTREAM_UNAVAILABLE": "Server bilan bog‘lanib bo‘lmadi.",
-      "UNKNOWN": "Xatolik yuz berdi. Qaytadan urinib ko‘ring."
+      "UNKNOWN": "Xatolik yuz berdi. Qaytadan urinib ko‘ring.",
+      "DUPLICATE_PHONE": "Bu telefon raqamli hisob allaqachon mavjud."
     },
     "pages": {
       "dashboard": {
@@ -505,6 +507,11 @@
         "eyebrow": "Onlayn",
         "title": "Testlar",
         "subtitle": "Fayldan yuklang va modul sifatida chop eting."
+      },
+      "staff": {
+        "eyebrow": "Kirish huquqi",
+        "title": "Hisoblar",
+        "subtitle": "Hisob ochish, rollarni belgilash, parolni tiklash."
       }
     },
     "dashboard": {
@@ -766,6 +773,58 @@
         "tooManyOptions": "variantlar juda ko‘p (ko‘pi 6 ta)",
         "noPrompt": "savol matni yo‘q",
         "unclosedBlock": "qavs yopilmagan"
+      }
+    },
+    "staff": {
+      "searchPlaceholder": "Ism, telefon yoki email…",
+      "create": "Yangi hisob",
+      "manage": "Boshqarish",
+      "close": "Yopish",
+      "none": "Hisob topilmadi",
+      "count": "{n} ta hisob",
+      "person": "Shaxs",
+      "phone": "Telefon",
+      "rolesLabel": "Rollar",
+      "statusLabel": "Holat",
+      "actions": "",
+      "roleAll": "Barcha rollar",
+      "branchAll": "Barcha filiallar",
+      "allBranches": "Barcha filiallar",
+      "outranked": "Sizning rolingizdan yuqori",
+      "mustChangePassword": "Keyingi kirishda parolni almashtirishi shart",
+      "twoFactorOn": "Ikki bosqichli tasdiqlash yoqilgan",
+      "prev": "Oldingi",
+      "next": "Keyingi",
+      "fullName": "To‘liq ism",
+      "password": "Parol",
+      "passwordHint": "Kamida 8 ta belgi. Uni egasiga bering — birinchi kirishda o‘zi almashtiradi.",
+      "newPassword": "Yangi parol",
+      "email": "Email",
+      "locale": "Interfeys tili",
+      "chooseBranch": "Filialni tanlang",
+      "addRole": "Rol qo‘shish",
+      "removeRole": "Bu rolni olib tashlash",
+      "saveProfile": "Ma’lumotlarni saqlash",
+      "saveRoles": "Rollarni saqlash",
+      "rolesSignOutWarning": "Rol o‘zgarishi bilan hisob barcha qurilmalardan chiqariladi.",
+      "cannotEditOwnRoles": "O‘z rollaringizni o‘zgartira olmaysiz.",
+      "resetPassword": "Shu parolni o‘rnatish",
+      "resetHint": "Barcha qurilmalardagi seanslar tugatiladi, keyingi kirishda parolni almashtirish talab qilinadi.",
+      "deactivate": "Hisobni o‘chirish",
+      "reactivate": "Hisobni qayta yoqish",
+      "deactivateHint": "Yozuv saqlanadi — darslar, to‘lovlar va audit jurnali unga bog‘langan. Faqat kirish yopiladi.",
+      "saved": "Saqlandi",
+      "status": {
+        "active": "Faol",
+        "inactive": "O‘chirilgan"
+      },
+      "role": {
+        "superadmin": "SuperAdmin",
+        "admin": "Administrator",
+        "manager": "Menejer",
+        "teacher": "O‘qituvchi",
+        "student": "O‘quvchi",
+        "parent": "Ota-ona"
       }
     }
   },

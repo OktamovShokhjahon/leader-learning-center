@@ -86,7 +86,14 @@ export const PERMISSIONS: Record<Action, Record<Role, Grant>> = {
     student: N,
     parent: N,
   },
-  'staff.createTeacher': { superadmin: F, admin: F, manager: N, teacher: N, student: N, parent: N },
+  /**
+   * §4.2 gives this to SuperAdmin and Admin. The centre asked for a Manager to
+   * be able to open teacher and student accounts as well — they are the people
+   * who actually enrol a group — so a Manager holds it as `limited`: the door is
+   * open, and `ROLES_GRANTABLE_BY` in the user service decides what they may
+   * hand out through it (note 11).
+   */
+  'staff.createTeacher': { superadmin: F, admin: F, manager: L, teacher: N, student: N, parent: N },
 
   'student.manage': { superadmin: F, admin: F, manager: F, teacher: N, student: N, parent: N },
   'group.manage': { superadmin: F, admin: F, manager: L, teacher: N, student: N, parent: N },
@@ -159,7 +166,7 @@ export const PERMISSIONS: Record<Action, Record<Role, Grant>> = {
 }
 
 /**
- * Notes 1–9 of §4.2. A `limited` grant is not a free pass: these are the
+ * Notes 1–11 of §4.2. A `limited` grant is not a free pass: these are the
  * conditions the service layer must additionally enforce.
  */
 export const LIMITS: Partial<Record<Action, string>> = {
@@ -183,6 +190,8 @@ export const LIMITS: Partial<Record<Action, string>> = {
   'audit.view': 'Admin sees only actions performed inside their own branch (note 9).',
   'test.manage':
     'Teacher may author and publish test modules only for a course they teach (note 10).',
+  'staff.createTeacher':
+    'Manager may open teacher, student and parent accounts in their own branch, never an Admin or a Manager (note 11).',
 }
 
 /** Defaults for the configurable ceilings referenced above; branch settings override them. */
@@ -223,6 +232,71 @@ export const SUPERADMIN_ROUTE_EXCEPTIONS = ['/payroll/me'] as const
 export function isSuperadminOnlyPath(path: string): boolean {
   if (SUPERADMIN_ROUTE_EXCEPTIONS.some((exception) => path.startsWith(exception))) return false
   return SUPERADMIN_ONLY_ROUTE_PREFIXES.some((prefix) => path.startsWith(prefix))
+}
+
+/**
+ * §4.2 Staff, plus note 11 — which roles each role may hand out.
+ *
+ * `staff.createTeacher` only opens the door; *this* decides what may walk
+ * through it, and it lives here rather than in the API service so the "new
+ * account" form offers exactly the roles the API would accept. The API still
+ * checks it on every request — the form is a convenience, never the control.
+ */
+export const GRANTABLE_ROLES: Record<Role, readonly Role[]> = {
+  // The boss account: every role, a second SuperAdmin included, in any branch.
+  superadmin: ROLES,
+  // §4.2 grants an Admin `staff.createTeacher` and nothing above it. Students
+  // and parents are accounts too, and creating those is part of enrolment.
+  admin: ['teacher', 'student', 'parent'],
+  // Note 11 — a Manager enrols groups, so they open the teacher and student
+  // accounts that go with them. Never an Admin or another Manager: the people
+  // who could then administer *them* are the boss's call alone.
+  manager: ['teacher', 'student', 'parent'],
+  teacher: [],
+  student: [],
+  parent: [],
+}
+
+/**
+ * How far up the ladder a role sits.
+ *
+ * Granting a role and administering an *existing* account are two different
+ * questions, and `GRANTABLE_ROLES` only answers the first. Without a rank, a
+ * Manager who may now reach `PATCH /users/:id` could reset the password of the
+ * Admin sitting in the same branch — an escalation the grant check never sees,
+ * because no role is being handed out.
+ *
+ * Student and parent share a rank: neither administers anyone.
+ */
+export const ROLE_RANK: Record<Role, number> = {
+  superadmin: 5,
+  admin: 4,
+  manager: 3,
+  teacher: 2,
+  student: 1,
+  parent: 1,
+}
+
+/** The rank an account acts at — the highest of the roles it holds. */
+export function highestRank(roles: readonly Role[]): number {
+  return roles.reduce((highest, role) => Math.max(highest, ROLE_RANK[role] ?? 0), 0)
+}
+
+/**
+ * May an account holding `actorRoles` administer one holding `targetRoles`?
+ *
+ * Strictly below their own rank, and a SuperAdmin may act on anyone at all,
+ * another SuperAdmin included. Acting on one's *own* account is a separate
+ * question the caller answers — `updateRoles` and `deactivateUser` forbid it,
+ * a profile edit allows it.
+ */
+export function mayAdminister(
+  actorRoles: readonly Role[],
+  targetRoles: readonly Role[],
+): boolean {
+  if (actorRoles.includes('superadmin')) return true
+  if (targetRoles.includes('superadmin')) return false
+  return highestRank(targetRoles) < highestRank(actorRoles)
 }
 
 /** Which panel a role lands in after login (§24.1 route groups). */

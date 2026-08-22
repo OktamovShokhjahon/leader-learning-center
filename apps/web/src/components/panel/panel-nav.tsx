@@ -12,6 +12,7 @@ import {
   BadgeCheck,
   FileCheck2,
   UserRound,
+  UsersRound,
   type LucideIcon,
 } from 'lucide-react'
 import { can, type Role, type Action } from '@leader/shared/permissions'
@@ -46,6 +47,9 @@ const ITEMS: NavItem[] = [
   { href: '/crm/debtors', key: 'debtors', Icon: AlertTriangle, action: 'debtor.view' },
   { href: '/crm/approvals', key: 'approvals', Icon: BadgeCheck, action: 'payment.approve' },
   { href: '/crm/tests', key: 'tests', Icon: FileCheck2, action: 'test.manage' },
+  // §23 STAFF — the boss, an Admin and (note 11) a Manager all land on the same
+  // screen; the API decides which accounts each of them gets back.
+  { href: '/crm/staff', key: 'staff', Icon: UsersRound, action: 'staff.createTeacher' },
   { href: '/boss', key: 'finance', Icon: PieChart, roles: ['superadmin'] },
   { href: '/cabinet', key: 'cabinet', Icon: GraduationCap, roles: ['student', 'parent'] },
   { href: '/account', key: 'account', Icon: UserRound },

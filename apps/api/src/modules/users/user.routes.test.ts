@@ -141,20 +141,75 @@ describe('POST /users — who may create whom (§4.2 Staff)', () => {
       .expect(403)
   })
 
-  it('refuses a Manager creating staff at all', async () => {
+  it('lets a Manager create a Teacher and a Student in their own branch (note 11)', async () => {
     const branch = await makeBranch('urganch-markaz')
     const manager = await makeActor('manager', branch._id)
+
+    for (const role of ['teacher', 'student'] as const) {
+      await request(app)
+        .post('/api/v1/users')
+        .set(auth(manager.token))
+        .send({
+          fullName: `Yangi ${role}`,
+          phone: nextPhone(),
+          password: PASSWORD,
+          roles: [{ role, branchId: branch.id }],
+        })
+        .expect(201)
+    }
+  })
+
+  it('refuses a Manager creating an Admin or another Manager', async () => {
+    const branch = await makeBranch('urganch-markaz')
+    const manager = await makeActor('manager', branch._id)
+
+    for (const role of ['admin', 'manager', 'superadmin'] as const) {
+      await request(app)
+        .post('/api/v1/users')
+        .set(auth(manager.token))
+        .send({
+          fullName: 'Boshqaruvchi',
+          phone: nextPhone(),
+          password: PASSWORD,
+          roles: [role === 'superadmin' ? { role } : { role, branchId: branch.id }],
+        })
+        .expect(403)
+    }
+  })
+
+  it('refuses a Manager staffing someone else’s branch', async () => {
+    const own = await makeBranch('urganch-markaz')
+    const other = await makeBranch('urganch-2')
+    const manager = await makeActor('manager', own._id)
 
     await request(app)
       .post('/api/v1/users')
       .set(auth(manager.token))
       .send({
-        fullName: 'Ustoz',
+        fullName: 'Boshqa filial ustozi',
         phone: nextPhone(),
         password: PASSWORD,
-        roles: [{ role: 'teacher', branchId: branch.id }],
+        roles: [{ role: 'teacher', branchId: other.id }],
       })
       .expect(403)
+  })
+
+  it('lets a SuperAdmin create every role, including a second SuperAdmin', async () => {
+    const branch = await makeBranch('urganch-markaz')
+    const boss = await makeActor('superadmin')
+
+    for (const role of ['superadmin', 'admin', 'manager', 'teacher', 'student', 'parent'] as const) {
+      await request(app)
+        .post('/api/v1/users')
+        .set(auth(boss.token))
+        .send({
+          fullName: `Yangi ${role}`,
+          phone: nextPhone(),
+          password: PASSWORD,
+          roles: [role === 'superadmin' ? { role } : { role, branchId: branch.id }],
+        })
+        .expect(201)
+    }
   })
 
   it('refuses a Teacher outright', async () => {
@@ -274,6 +329,147 @@ describe('GET /users — visibility', () => {
 
     expect(response.body.data.items).toHaveLength(2)
     expect(response.body.data).toMatchObject({ page: 2, limit: 2, total: 6, pages: 3 })
+  })
+})
+
+/**
+ * Granting a role and administering an existing account are separate questions.
+ * Note 11 opened `POST /users` to a Manager, and the same route guard covers
+ * `PATCH`, `POST /:id/password` and `DELETE` — so without a rank check a Manager
+ * would inherit the ability to take over the Admin sitting in their own branch.
+ */
+describe('rank — who may administer whom', () => {
+  it('refuses a Manager touching the Admin of their own branch', async () => {
+    const branch = await makeBranch('urganch-markaz')
+    const manager = await makeActor('manager', branch._id)
+    const admin = await makeActor('admin', branch._id)
+    const adminDoc = await User.findOne({ phone: admin.phone })
+
+    await request(app)
+      .post(`/api/v1/users/${adminDoc!.id}/password`)
+      .set(auth(manager.token))
+      .send({ newPassword: 'Qorao-2026-strong' })
+      .expect(403)
+
+    await request(app)
+      .patch(`/api/v1/users/${adminDoc!.id}`)
+      .set(auth(manager.token))
+      .send({ isActive: false })
+      .expect(403)
+
+    await request(app)
+      .delete(`/api/v1/users/${adminDoc!.id}`)
+      .set(auth(manager.token))
+      .send({})
+      .expect(403)
+
+    // Untouched: the Admin can still sign in with the password they had.
+    expect((await User.findById(adminDoc!._id))!.isActive).toBe(true)
+  })
+
+  it('refuses a Manager promoting a Teacher into an Admin', async () => {
+    const branch = await makeBranch('urganch-markaz')
+    const manager = await makeActor('manager', branch._id)
+    const teacher = await makeActor('teacher', branch._id)
+    const teacherDoc = await User.findOne({ phone: teacher.phone })
+
+    await request(app)
+      .patch(`/api/v1/users/${teacherDoc!.id}/roles`)
+      .set(auth(manager.token))
+      .send({ roles: [{ role: 'admin', branchId: branch.id }] })
+      .expect(403)
+  })
+
+  it('lets a Manager reset a Teacher’s password', async () => {
+    const branch = await makeBranch('urganch-markaz')
+    const manager = await makeActor('manager', branch._id)
+    const teacher = await makeActor('teacher', branch._id)
+    const teacherDoc = await User.findOne({ phone: teacher.phone })
+
+    await request(app)
+      .post(`/api/v1/users/${teacherDoc!.id}/password`)
+      .set(auth(manager.token))
+      .send({ newPassword: 'Qorao-2026-strong' })
+      .expect(200)
+
+    await request(app)
+      .post('/api/v1/auth/login')
+      .send({ phone: teacher.phone, password: 'Qorao-2026-strong' })
+      .expect(200)
+  })
+
+  it('refuses an Admin resetting another Admin’s password', async () => {
+    const branch = await makeBranch('urganch-markaz')
+    const one = await makeActor('admin', branch._id)
+    const two = await makeActor('admin', branch._id)
+    const twoDoc = await User.findOne({ phone: two.phone })
+
+    await request(app)
+      .post(`/api/v1/users/${twoDoc!.id}/password`)
+      .set(auth(one.token))
+      .send({ newPassword: 'Qorao-2026-strong' })
+      .expect(403)
+  })
+})
+
+describe('GET /users — filters', () => {
+  it('narrows by role and by status', async () => {
+    const branch = await makeBranch('urganch-markaz')
+    const boss = await makeActor('superadmin')
+    const teacher = await makeActor('teacher', branch._id)
+    await makeActor('manager', branch._id)
+    const teacherDoc = await User.findOne({ phone: teacher.phone })
+
+    const byRole = await request(app)
+      .get('/api/v1/users?role=teacher')
+      .set(auth(boss.token))
+      .expect(200)
+    expect(byRole.body.data.total).toBe(1)
+
+    await request(app)
+      .delete(`/api/v1/users/${teacherDoc!.id}`)
+      .set(auth(boss.token))
+      .send({})
+      .expect(200)
+
+    const inactive = await request(app)
+      .get('/api/v1/users?status=inactive')
+      .set(auth(boss.token))
+      .expect(200)
+    expect(inactive.body.data.total).toBe(1)
+    expect(inactive.body.data.items[0].phone).toBe(teacher.phone)
+  })
+
+  it('lets the boss narrow to one branch, and reactivate an account', async () => {
+    const own = await makeBranch('urganch-markaz')
+    const other = await makeBranch('urganch-2')
+    const boss = await makeActor('superadmin')
+    const teacher = await makeActor('teacher', own._id)
+    await makeActor('teacher', other._id)
+    const teacherDoc = await User.findOne({ phone: teacher.phone })
+
+    const scoped = await request(app)
+      .get(`/api/v1/users?branchId=${own.id}`)
+      .set(auth(boss.token))
+      .expect(200)
+    expect(scoped.body.data.total).toBe(1)
+
+    await request(app)
+      .delete(`/api/v1/users/${teacherDoc!.id}`)
+      .set(auth(boss.token))
+      .send({})
+      .expect(200)
+
+    await request(app)
+      .patch(`/api/v1/users/${teacherDoc!.id}`)
+      .set(auth(boss.token))
+      .send({ isActive: true })
+      .expect(200)
+
+    await request(app)
+      .post('/api/v1/auth/login')
+      .send({ phone: teacher.phone, password: PASSWORD })
+      .expect(200)
   })
 })
 
