@@ -152,4 +152,12 @@ export type SessionUser = {
   twoFactorEnabled: boolean
   mustChangePassword: boolean
   hasPin: boolean
+  /**
+   * The student record this login belongs to, when there is one (§10.2).
+   *
+   * Carried on the session so the cabinet can load itself without listing
+   * students: a student holds no `student.manage` grant, so that list would 403
+   * for exactly the person the cabinet exists for.
+   */
+  studentId?: string
 }

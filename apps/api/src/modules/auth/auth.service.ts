@@ -5,6 +5,7 @@ import { encryptField, decryptField } from '../../config/crypto.js'
 import { logger } from '../../config/logger.js'
 import { User, type UserDocument, isSuperadmin, roleInBranch } from '../users/user.model.js'
 import { Branch } from '../branches/branch.model.js'
+import { Student } from '../students/student.model.js'
 import { recordAudit, type RequestMeta } from '../audit/audit.service.js'
 import { Session, type SessionDocument } from './session.model.js'
 import { verifyPassword, hashPassword, burnPasswordTime } from './password.service.js'
@@ -92,17 +93,11 @@ export async function login(
     throw new ApiError(403, ERROR_CODES.ACCOUNT_DISABLED, 'This account has been deactivated')
   }
 
-  // §8 — 2FA is mandatory for SuperAdmin. An account that has not finished
-  // enrolling gets a distinct code so the client can send it to the setup flow
-  // rather than showing "wrong code" for a code it never had.
-  if (isSuperadmin(user) && !user.twoFactor?.enabled) {
-    throw new ApiError(
-      403,
-      ERROR_CODES.TOTP_SETUP_REQUIRED,
-      'Two-factor authentication must be set up before a SuperAdmin can sign in',
-    )
-  }
-
+  // Sign-in is phone + password. TZ §8 makes TOTP *mandatory* for SuperAdmin,
+  // and that requirement was deliberately lifted at the client's request to keep
+  // the login simple — see docs/adr/0002-optional-two-factor.md. 2FA still works
+  // for any account that opts in via /auth/2fa/enable; it is simply no longer
+  // forced on the boss account. Re-enabling it is a one-line change here.
   if (user.twoFactor?.enabled) {
     if (!input.totpCode) {
       throw new ApiError(
@@ -314,6 +309,11 @@ export async function describeUser(
     twoFactorEnabled: Boolean(user.twoFactor?.enabled),
     mustChangePassword: Boolean(user.mustChangePassword),
     hasPin: Boolean(user.pinCodeHash),
+    // §10.2 — only looked up for a learner, so a staff sign-in pays nothing.
+    studentId: user.roles.some((assignment) => assignment.role === 'student')
+      ? ((await Student.findOne({ userId: user._id }).select('_id').lean())?._id.toString() ??
+        undefined)
+      : undefined,
   }
 }
 

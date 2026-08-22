@@ -24,16 +24,16 @@ export async function CabinetSection() {
 
   return (
     <Section className="relative overflow-hidden bg-navy-900">
-      <div aria-hidden className="tile-grid pointer-events-none absolute inset-0 text-white/[0.04]" />
+      <div aria-hidden className="tile-star pointer-events-none absolute inset-0 text-white/[0.04]" />
       <div
         aria-hidden
-        className="absolute -right-40 -top-40 size-[32rem] rounded-full bg-glaze-600/25 blur-3xl"
+        className="absolute -right-40 -top-40 size-[32rem] rounded-full bg-glaze-600/20 blur-3xl"
       />
 
       <div className="container-site relative grid items-center gap-12 lg:grid-cols-2">
         <div className="flex flex-col gap-6">
           <Eyebrow tone="dark">{t('eyebrow')}</Eyebrow>
-          <h2 className="max-w-lg text-xl text-white md:text-2xl">{t('title')}</h2>
+          <h2 className="display-section max-w-lg text-white">{t('title')}</h2>
           <p className="max-w-md text-sm leading-relaxed text-white/70">{t('subtitle')}</p>
 
           <ul className="flex flex-col gap-3">
@@ -78,7 +78,7 @@ function CabinetMock() {
   const late = new Set([23])
 
   return (
-    <div className="rounded-card border border-white/12 bg-navy-800/70 p-5 shadow-float backdrop-blur-sm">
+    <div className="panel-frame rounded-card bg-navy-800/70 p-5 backdrop-blur-sm">
       <div className="mb-4 flex items-center justify-between">
         <span className="font-display text-sm text-white">Sentabr 2026</span>
         <span className="rounded-pill bg-success/15 px-3 py-1 font-mono text-2xs text-success">

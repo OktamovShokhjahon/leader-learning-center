@@ -7,6 +7,7 @@ import { pick } from '@leader/shared/locales'
 import { SITE } from '@/content/site'
 import { getBranches, type Branch } from '@/content/branches'
 import type { Course } from '@/content/courses'
+import type { Post } from '@/content/posts'
 
 export function organizationJsonLd(locale: Locale) {
   return {
@@ -33,9 +34,9 @@ export function branchJsonLd(branch: Branch, locale: Locale) {
   return {
     '@context': 'https://schema.org',
     '@type': 'LocalBusiness',
-    '@id': `${SITE.url}/${locale}/filiallar/${branch.slug}#business`,
+    '@id': `${SITE.url}/${locale}/branches/${branch.slug}#business`,
     name: `${SITE.name} — ${pick(branch.name, locale)}`,
-    url: `${SITE.url}/${locale}/filiallar/${branch.slug}`,
+    url: `${SITE.url}/${locale}/branches/${branch.slug}`,
     telephone: branch.phones[0],
     image: `${SITE.url}/brand/logo.png`,
     address: {
@@ -55,7 +56,7 @@ export function courseJsonLd(course: Course, locale: Locale) {
     '@type': 'Course',
     name: pick(course.name, locale),
     description: pick(course.description, locale),
-    url: `${SITE.url}/${locale}/kurslar/${course.slug}`,
+    url: `${SITE.url}/${locale}/courses/${course.slug}`,
     provider: { '@type': 'EducationalOrganization', name: SITE.name, url: SITE.url },
     inLanguage: locale,
     offers: {
@@ -109,4 +110,24 @@ export function JsonLd({ data }: { data: object }) {
       dangerouslySetInnerHTML={{ __html: JSON.stringify(data).replace(/</g, '\\u003c') }}
     />
   )
+}
+
+/** §6.3 — Article markup for each blog post, so news posts can win rich results. */
+export function articleJsonLd(post: Post, locale: Locale) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: pick(post.title, locale),
+    description: pick(post.excerpt, locale),
+    url: `${SITE.url}/${locale}/news/${post.slug}`,
+    datePublished: post.publishedAt,
+    inLanguage: locale,
+    image: post.cover ? `${SITE.url}${post.cover}` : `${SITE.url}/brand/logo.png`,
+    author: { '@type': 'Organization', name: SITE.name, url: SITE.url },
+    publisher: { '@id': `${SITE.url}/#organization` },
+    mainEntityOfPage: {
+      '@type': 'WebPage',
+      '@id': `${SITE.url}/${locale}/news/${post.slug}`,
+    },
+  }
 }

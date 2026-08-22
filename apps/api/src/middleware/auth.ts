@@ -5,6 +5,7 @@ import { User, type UserDocument, isSuperadmin, roleInBranch } from '../modules/
 import { Session, isSessionUsable, type SessionDocument } from '../modules/auth/session.model.js'
 import { verifyAccessToken } from '../modules/auth/token.service.js'
 import { getScope, runWithScope } from './branch-scope.js'
+import { recordAudit } from '../modules/audit/audit.service.js'
 
 /**
  * TZ §4.3 / §8 — authentication and authorisation middleware.
@@ -92,9 +93,32 @@ export const requireAuth: RequestHandler = (req, _res, next) => {
 export function requireRole(...roles: Role[]): RequestHandler {
   return (req, _res, next) => {
     if (!req.user || !req.role) return next(ApiError.unauthenticated())
+
     if (!roles.includes(req.role)) {
+      /**
+       * §21.3 makes "any `403` on a finance endpoint" a mandatory audit entry,
+       * and §30.2 accepts the build only when a denied Admin *appears in the
+       * log*. A refused attempt to read the money is exactly the event worth
+       * keeping: it is the signal that someone went looking.
+       *
+       * Deliberately not awaited — the denial must not wait on a write, and a
+       * failed audit insert must not turn a clean 403 into a 500. `recordAudit`
+       * swallows its own errors.
+       */
+      void recordAudit({
+        action: 'access.denied',
+        entity: 'route',
+        path: req.originalUrl,
+        actorId: req.user.id,
+        actorName: req.user.fullName,
+        outcome: 'failure',
+        reason: `requires ${roles.join(', ')}, holds ${req.role}`,
+        req,
+      })
+
       return next(ApiError.forbidden(`This area requires: ${roles.join(', ')}`))
     }
+
     next()
   }
 }

@@ -45,6 +45,15 @@ const envSchema = z.object({
     .regex(/^[a-f\d]{64}$/i, 'ENCRYPTION_KEY must be 64 hex characters (32 bytes)')
     .optional(),
 
+  /**
+   * Dev-only escape hatch: accept payments on a standalone mongod, without the
+   * transaction TZ §26.4 requires. Refused in production.
+   */
+  ALLOW_NON_TRANSACTIONAL_PAYMENTS: z
+    .enum(['true', 'false'])
+    .default('false')
+    .transform((value) => value === 'true'),
+
   /** Bootstrap SuperAdmin, seeded once on an empty database. */
   SEED_SUPERADMIN_PHONE: z.string().optional(),
   SEED_SUPERADMIN_PASSWORD: z.string().optional(),

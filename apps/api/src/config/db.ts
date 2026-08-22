@@ -52,6 +52,40 @@ export async function connectDatabase(): Promise<string> {
   return uri
 }
 
+/**
+ * TZ §26.4 — payment and invoice writes run inside a transaction, which needs a
+ * replica set (even a single-node one). A standalone mongod accepts every other
+ * write and then fails only at the first payment, with a driver error nobody
+ * can act on. This resolves it once, at boot, so the problem is visible before
+ * a cashier hits it.
+ */
+let transactional: boolean | null = null
+
+export async function supportsTransactions(): Promise<boolean> {
+  if (transactional !== null) return transactional
+  try {
+    const info = await mongoose.connection.db?.admin().command({ hello: 1 })
+    // A replica set member reports a set name; mongos reports it is a router.
+    transactional = Boolean(info?.setName || info?.msg === 'isdbgrid')
+  } catch {
+    transactional = false
+  }
+  return transactional
+}
+
+export async function assertTransactionSupport(): Promise<void> {
+  if (await supportsTransactions()) return
+  logger.error(
+    [
+      'MongoDB is running STANDALONE, so payments are disabled: money writes need a',
+      'transaction (TZ §26.4) and a transaction needs a replica set.',
+      '  Fix with Docker:  docker compose -f infra/docker-compose.yml up -d',
+      '  Or convert this server:  mongod --replSet rs0   then in mongosh: rs.initiate()',
+      '  To click through the CRM locally only: ALLOW_NON_TRANSACTIONAL_PAYMENTS=true',
+    ].join('\n'),
+  )
+}
+
 export async function disconnectDatabase() {
   await mongoose.disconnect()
   if (memoryServer) {

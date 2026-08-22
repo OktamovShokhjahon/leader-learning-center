@@ -15,7 +15,7 @@ export async function BranchesSection({ heading = true }: { heading?: boolean } 
   const branches = getBranches()
 
   return (
-    <Section id="filiallar">
+    <Section id="branches">
       <div className="container-site">
         {heading ? <SectionHeading eyebrow={t('eyebrow')} title={t('title')} /> : null}
 
@@ -76,7 +76,7 @@ export async function BranchesSection({ heading = true }: { heading?: boolean } 
                 </div>
 
                 <Link
-                  href={`/filiallar/${branch.slug}`}
+                  href={`/branches/${branch.slug}`}
                   className="mt-auto inline-flex items-center gap-1.5 pt-2 text-xs font-medium text-glaze-700 hover:gap-2.5 dark:text-glaze-300"
                 >
                   {t('coursesHere')}

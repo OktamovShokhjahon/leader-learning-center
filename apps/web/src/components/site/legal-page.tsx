@@ -1,16 +1,18 @@
-import { getTranslations } from 'next-intl/server'
-import { FileText, Mail, Phone } from 'lucide-react'
+import { getTranslations, getLocale } from 'next-intl/server'
+import { FileText } from 'lucide-react'
+import { pick, type Locale } from '@leader/shared/locales'
 import { PageHeader } from '@/components/site/page-header'
 import { Section } from '@/components/ui/section'
-import { SITE } from '@/content/site'
+import { OFFER, PRIVACY, type LegalSection } from '@/content/legal'
 
 /**
- * TZ §6.1 — the public offer and privacy policy are *legally required before
- * online payment goes live* (§11.4). Their text must be written by the centre's
- * lawyer; publishing invented legal terms would be worse than publishing none.
+ * TZ §6.1 — the public offer and privacy policy, both legally required before
+ * online payment goes live (§11.4).
  *
- * So these pages ship as real, indexed routes carrying an honest notice and the
- * contact details, and the lawyer's text drops straight in.
+ * The text is a working draft written from what the system actually does, so
+ * the centre's lawyer reviews something accurate rather than a blank page. The
+ * notice at the top says exactly that, because a visitor should not mistake a
+ * draft for a signed document.
  */
 export async function LegalPage({
   titleKey,
@@ -21,37 +23,44 @@ export async function LegalPage({
 }) {
   const t = await getTranslations('pages.legal')
   const tn = await getTranslations('nav')
+  const locale = (await getLocale()) as Locale
+
+  const sections: LegalSection[] = navKey === 'offer' ? OFFER : PRIVACY
+  const updated = new Date().toLocaleDateString(
+    locale === 'uz' ? 'uz-UZ' : locale === 'ru' ? 'ru-RU' : 'en-GB',
+    { day: '2-digit', month: '2-digit', year: 'numeric' },
+  )
 
   return (
     <>
       <PageHeader title={t(titleKey)} breadcrumb={[{ label: tn(navKey) }]} />
       <Section>
-        <div className="container-site max-w-3xl">
-          <div className="flex flex-col items-start gap-5 rounded-card border border-warning/30 bg-warning/5 p-6 md:p-8">
-            <span className="inline-flex size-12 items-center justify-center rounded-input bg-warning/15 text-warning">
-              <FileText className="size-5.5" aria-hidden />
-            </span>
-            <p className="text-sm leading-relaxed text-ink-soft dark:text-navy-200">
-              {t('pending')}
-            </p>
-            <div className="flex flex-col gap-2 text-xs">
-              <a
-                href={`tel:${SITE.phones[0]?.replace(/\s/g, '')}`}
-                className="inline-flex items-center gap-2 font-mono text-navy-700 hover:underline dark:text-aqua-300"
-              >
-                <Phone className="size-4" aria-hidden />
-                {SITE.phones[0]}
-              </a>
-              <a
-                href={`mailto:${SITE.email}`}
-                className="inline-flex items-center gap-2 text-navy-700 hover:underline dark:text-aqua-300"
-              >
-                <Mail className="size-4" aria-hidden />
-                {SITE.email}
-              </a>
-            </div>
-          </div>
-        </div>
+        <article className="container-site flex max-w-3xl flex-col gap-10">
+          <p className="flex items-start gap-3 rounded-card border border-warning/30 bg-warning/5 p-5 text-xs leading-relaxed text-ink-soft dark:text-navy-200">
+            <FileText className="mt-0.5 size-4.5 shrink-0 text-warning" aria-hidden />
+            {t('draftNotice')}
+          </p>
+
+          {sections.map((section, index) => (
+            <section key={index} className="flex flex-col gap-4">
+              <h2 className="font-display text-lg leading-tight tracking-[-0.02em] text-ink dark:text-white">
+                {pick(section.heading, locale)}
+              </h2>
+              {section.body.map((paragraph, paragraphIndex) => (
+                <p
+                  key={paragraphIndex}
+                  className="text-sm leading-relaxed text-ink-soft dark:text-navy-200"
+                >
+                  {pick(paragraph, locale)}
+                </p>
+              ))}
+            </section>
+          ))}
+
+          <p className="border-t border-border-subtle pt-6 font-mono text-2xs text-ink-muted">
+            {t('lastUpdated', { date: updated })}
+          </p>
+        </article>
       </Section>
     </>
   )

@@ -9,7 +9,7 @@ export default function robots(): MetadataRoute.Robots {
         userAgent: '*',
         allow: '/',
         // The panels and the BFF are private surfaces, not public pages.
-        disallow: ['/api/', '/uz/kirish', '/ru/kirish', '/en/kirish'],
+        disallow: ['/api/', '/uz/login', '/ru/login', '/en/login'],
       },
     ],
     sitemap: `${SITE.url}/sitemap.xml`,

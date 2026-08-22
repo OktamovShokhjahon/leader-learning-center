@@ -9,8 +9,8 @@ import {
   ResultsSection,
   TeachersSection,
   TestimonialsSection,
-  NewsSection,
 } from '@/components/site/sections/people'
+import { NewsSection } from '@/components/site/sections/news'
 import { CabinetSection } from '@/components/site/sections/cabinet'
 import { BranchesSection, FaqSection, FAQ_KEYS } from '@/components/site/sections/branches-faq'
 import { LeadFormSection } from '@/components/site/sections/lead-form-section'
@@ -41,13 +41,13 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
       <Numbers />
       <CoursesSection limit={6} />
       <WhySection />
-      <ResultsSection />
-      <TeachersSection limit={4} />
+      <ResultsSection limit={8} />
+      <TeachersSection limit={3} />
       <HowSection />
       <CabinetSection />
       <TestimonialsSection />
       <BranchesSection />
-      <NewsSection />
+      <NewsSection limit={3} />
       <FaqSection />
       <LeadFormSection />
     </>

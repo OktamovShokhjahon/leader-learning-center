@@ -24,6 +24,14 @@ const auditLogSchema = new Schema(
     entity: String,
     entityId: { type: Schema.Types.ObjectId },
 
+    /**
+     * The request path, for events that are about a *route* rather than a
+     * document — §21.3's "any 403 on a finance endpoint" being the reason this
+     * exists. Those have no entity id to record, and forcing a URL into
+     * `entityId` silently fails its ObjectId cast.
+     */
+    path: String,
+
     /** Only the changed fields, never a whole document — see `diff()`. */
     before: Schema.Types.Mixed,
     after: Schema.Types.Mixed,
