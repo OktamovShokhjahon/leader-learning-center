@@ -41,6 +41,8 @@ type AuditInput = {
   action: string
   entity?: string
   entityId?: unknown
+  /** Request path, for route-level events such as a refused finance read. */
+  path?: string
   before?: Record<string, unknown>
   after?: Record<string, unknown>
   branchId?: unknown
@@ -73,6 +75,7 @@ export async function recordAudit(input: AuditInput): Promise<void> {
       action: input.action,
       entity: input.entity,
       entityId: input.entityId,
+      path: input.path,
       before: sanitize(input.before),
       after: sanitize(input.after),
       ip: input.req?.ip,

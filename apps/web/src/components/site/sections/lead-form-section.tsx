@@ -7,7 +7,7 @@ export async function LeadFormSection() {
   const t = await getTranslations('home.form')
 
   return (
-    <Section id="ariza" className="relative overflow-hidden">
+    <Section id="apply" className="relative overflow-hidden">
       <div className="container-site">
         <div className="grid items-center gap-10 rounded-card border border-border-subtle bg-surface p-6 shadow-raise md:p-10 lg:grid-cols-2 lg:gap-16">
           <div className="flex flex-col gap-5">

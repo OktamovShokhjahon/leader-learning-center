@@ -21,47 +21,47 @@ export const SITE = {
   facebook: 'https://facebook.com/leaderlc',
   youtube: 'https://youtube.com/@leaderlc',
   /** The existing personal-cabinet entry point preserved from the current site. */
-  cabinetPath: '/kirish',
+  cabinetPath: '/login',
 } as const
 
 export type NavItem = { href: string; key: string }
 
 /** TZ §6.1 — routes are Uzbek across all three locales. */
 export const MAIN_NAV: NavItem[] = [
-  { href: '/kurslar', key: 'courses' },
-  { href: '/oqituvchilar', key: 'teachers' },
-  { href: '/natijalar', key: 'results' },
-  { href: '/filiallar', key: 'branches' },
-  { href: '/biz-haqimizda', key: 'about' },
-  { href: '/yangiliklar', key: 'news' },
-  { href: '/aloqa', key: 'contact' },
+  { href: '/courses', key: 'courses' },
+  { href: '/teachers', key: 'teachers' },
+  { href: '/results', key: 'results' },
+  { href: '/branches', key: 'branches' },
+  { href: '/about', key: 'about' },
+  { href: '/news', key: 'news' },
+  { href: '/contact', key: 'contact' },
 ]
 
 export const FOOTER_NAV: { key: string; items: NavItem[] }[] = [
   {
     key: 'learn',
     items: [
-      { href: '/kurslar', key: 'courses' },
-      { href: '/oqituvchilar', key: 'teachers' },
-      { href: '/natijalar', key: 'results' },
-      { href: '/galereya', key: 'gallery' },
+      { href: '/courses', key: 'courses' },
+      { href: '/teachers', key: 'teachers' },
+      { href: '/results', key: 'results' },
+      { href: '/gallery', key: 'gallery' },
     ],
   },
   {
     key: 'centre',
     items: [
-      { href: '/biz-haqimizda', key: 'about' },
-      { href: '/filiallar', key: 'branches' },
-      { href: '/yangiliklar', key: 'news' },
+      { href: '/about', key: 'about' },
+      { href: '/branches', key: 'branches' },
+      { href: '/news', key: 'news' },
       { href: '/faq', key: 'faq' },
     ],
   },
   {
     key: 'legal',
     items: [
-      { href: '/oferta', key: 'offer' },
-      { href: '/maxfiylik', key: 'privacy' },
-      { href: '/aloqa', key: 'contact' },
+      { href: '/offer', key: 'offer' },
+      { href: '/privacy', key: 'privacy' },
+      { href: '/contact', key: 'contact' },
     ],
   },
 ]

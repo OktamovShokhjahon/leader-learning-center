@@ -14,7 +14,7 @@ export async function pageMetadata({
   description,
 }: {
   locale: Locale
-  /** Route path without the locale prefix, e.g. `/kurslar`. */
+  /** Route path without the locale prefix, e.g. `/courses`. */
   path: string
   /** Namespace under `pages.*` holding `title` and `metaDescription`. */
   namespace?: string

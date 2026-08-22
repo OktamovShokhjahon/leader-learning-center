@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useTranslations, useLocale } from 'next-intl'
@@ -10,12 +10,14 @@ import { pick, type Locale } from '@leader/shared/locales'
 import { Link } from '@/i18n/navigation'
 import { getCourses } from '@/content/courses'
 import { cn } from '@/lib/utils'
+import { Field, inputClass, useValidationMessage } from '../form-field'
+import { track } from '@/lib/analytics'
 
 type Status = 'idle' | 'submitting' | 'success' | 'error'
 
 /**
  * TZ §6.2 §14 — the short inline registration form. The full three-step flow
- * with SMS OTP lives at /royxatdan-otish (§7.1).
+ * with SMS OTP lives at /apply (§7.1).
  *
  * Validation uses the *same* zod schema the API validates with
  * (`@leader/shared/schemas`), so the two can never disagree.
@@ -26,7 +28,16 @@ export function LeadForm() {
   const locale = useLocale() as Locale
   const courses = getCourses()
   const [status, setStatus] = useState<Status>('idle')
+  const startedRef = useRef(false)
+
+  /** §6.3 — fires once, on first interaction. */
+  const markStarted = () => {
+    if (startedRef.current) return
+    startedRef.current = true
+    track('form_start', { form: 'home_inline', locale })
+  }
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const resolveError = useValidationMessage()
 
   const {
     register,
@@ -53,10 +64,12 @@ export function LeadForm() {
         throw new Error(body?.error?.code ?? 'REQUEST_FAILED')
       }
       setStatus('success')
+      track('lead_submitted', { form: 'home_inline', course: values.courseSlug, locale })
       reset()
     } catch (error) {
       setStatus('error')
       setErrorMessage(error instanceof Error ? error.message : null)
+      track('lead_failed', { form: 'home_inline', locale })
     }
   })
 
@@ -79,7 +92,12 @@ export function LeadForm() {
   }
 
   return (
-    <form onSubmit={onSubmit} noValidate className="flex flex-col gap-4">
+    <form
+      onSubmit={onSubmit}
+      onFocusCapture={markStarted}
+      noValidate
+      className="flex flex-col gap-4"
+    >
       {/* Honeypot — TZ §7.1. Hidden from humans and from assistive tech. */}
       <div aria-hidden className="absolute left-[-9999px] size-0 overflow-hidden">
         <label htmlFor="website">Website</label>
@@ -138,7 +156,7 @@ export function LeadForm() {
         <span>
           {t('consent')}{' '}
           <Link
-            href="/maxfiylik"
+            href="/privacy"
             className="text-glaze-700 underline underline-offset-2 dark:text-glaze-300"
           >
             {tn('privacy')}
@@ -148,7 +166,7 @@ export function LeadForm() {
       {errors.consent ? (
         <p className="-mt-2 flex items-center gap-1.5 text-2xs text-danger">
           <AlertCircle className="size-3.5" aria-hidden />
-          {errors.consent.message}
+          {resolveError(errors.consent.message)}
         </p>
       ) : null}
 
@@ -183,41 +201,5 @@ export function LeadForm() {
         )}
       </button>
     </form>
-  )
-}
-
-function inputClass(hasError: boolean) {
-  return cn(
-    'h-13 w-full rounded-input border bg-background px-4 text-sm text-ink outline-none transition-colors placeholder:text-ink-muted dark:text-white',
-    hasError
-      ? 'border-danger focus:border-danger'
-      : 'border-border-subtle focus:border-glaze-500',
-  )
-}
-
-function Field({
-  label,
-  htmlFor,
-  error,
-  children,
-}: {
-  label: string
-  htmlFor: string
-  error?: string
-  children: React.ReactNode
-}) {
-  return (
-    <div className="flex flex-col gap-1.5">
-      <label htmlFor={htmlFor} className="text-xs font-medium text-ink-soft dark:text-navy-200">
-        {label}
-      </label>
-      {children}
-      {error ? (
-        <p className="flex items-center gap-1.5 text-2xs text-danger">
-          <AlertCircle className="size-3.5" aria-hidden />
-          {error}
-        </p>
-      ) : null}
-    </div>
   )
 }

@@ -409,7 +409,7 @@ describe('two-factor authentication (§8)', () => {
       .expect(200)
   })
 
-  it('blocks a SuperAdmin who has not enrolled, and points them at the bootstrap route', async () => {
+  it('lets a SuperAdmin sign in with password alone — 2FA is opt-in, not mandatory', async () => {
     await User.create({
       fullName: 'Boss',
       phone: '+998900000002',
@@ -417,53 +417,15 @@ describe('two-factor authentication (§8)', () => {
       roles: [{ role: 'superadmin' }],
     })
 
-    const blocked = await request(app)
+    const signedIn = await request(app)
       .post('/api/v1/auth/login')
       .send({ phone: '+998900000002', password: PASSWORD })
-      .expect(403)
-    expect(blocked.body.error.code).toBe('TOTP_SETUP_REQUIRED')
-
-    const bootstrap = await request(app)
-      .post('/api/v1/auth/2fa/bootstrap')
-      .send({ phone: '+998900000002', password: PASSWORD })
       .expect(200)
 
-    // The bootstrap route hands out a secret but never a token.
-    expect(bootstrap.body.data.secret).toMatch(/^[A-Z2-7]{32}$/)
-    expect(bootstrap.body.data).not.toHaveProperty('accessToken')
-
-    await request(app)
-      .post('/api/v1/auth/2fa/bootstrap/verify')
-      .send({
-        phone: '+998900000002',
-        password: PASSWORD,
-        totpCode: generateTotp(bootstrap.body.data.secret),
-      })
-      .expect(200)
-
-    await request(app)
-      .post('/api/v1/auth/login')
-      .send({
-        phone: '+998900000002',
-        password: PASSWORD,
-        totpCode: generateTotp(bootstrap.body.data.secret),
-      })
-      .expect(200)
+    expect(signedIn.body.data.accessToken).toBeTruthy()
+    expect(signedIn.body.data.user.twoFactorEnabled).toBe(false)
   })
 
-  it('refuses to bootstrap with a wrong password', async () => {
-    await User.create({
-      fullName: 'Boss',
-      phone: '+998900000003',
-      passwordHash: await hashPassword(PASSWORD),
-      roles: [{ role: 'superadmin' }],
-    })
-
-    await request(app)
-      .post('/api/v1/auth/2fa/bootstrap')
-      .send({ phone: '+998900000003', password: 'guess' })
-      .expect(401)
-  })
 })
 
 describe('POST /auth/branch — the switcher (§5.2)', () => {

@@ -15,9 +15,11 @@ import { logger } from '../config/logger.js'
  * boss account with access to every branch's finance would be the single worst
  * bug this project could ship.
  *
- * The account is created with `mustChangePassword` set, and — because §8 makes
- * 2FA mandatory for SuperAdmin — cannot sign in at all until it has enrolled a
- * second factor through `POST /auth/2fa/bootstrap`.
+ * The account is created with `mustChangePassword` set. Sign-in is phone +
+ * password: TZ §8 made 2FA mandatory for SuperAdmin, and that requirement was
+ * lifted at the client's request — see docs/adr/0002-optional-two-factor.md.
+ * Enrolling a second factor from the panel via `POST /auth/2fa/enable` is
+ * strongly recommended for an account that can read every branch's finance.
  */
 export async function seedSuperadmin(): Promise<boolean> {
   const phone = env.SEED_SUPERADMIN_PHONE
@@ -50,8 +52,9 @@ export async function seedSuperadmin(): Promise<boolean> {
 
   logger.warn(
     { phone: normalizedPhone },
-    'Created the bootstrap SuperAdmin. Enrol 2FA via POST /auth/2fa/bootstrap, ' +
-      'change the password, then remove SEED_SUPERADMIN_* from the environment.',
+    'Created the bootstrap SuperAdmin. Sign in with the phone and password, change ' +
+      'the password, then remove SEED_SUPERADMIN_* from the environment. Enabling 2FA ' +
+      'on this account is strongly recommended: it can read every branch finance page.',
   )
   return true
 }

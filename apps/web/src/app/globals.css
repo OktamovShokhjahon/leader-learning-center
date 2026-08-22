@@ -109,6 +109,13 @@
   --foreground: var(--color-ink);
   --surface: var(--color-paper);
   --border-subtle: rgb(11 27 43 / 0.1);
+
+  /*
+   * The girih lattice, as an inline SVG mask. A 96px cell holding one whole
+   * eight-point star at the centre and a quarter star at each corner, each star
+   * being two 36px squares sharing a centre with one turned 45°.
+   */
+  --girih: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96' viewBox='0 0 96 96'%3E%3Cg fill='none' stroke='%23000' stroke-width='1.25'%3E%3Crect x='30' y='30' width='36' height='36'/%3E%3Crect x='30' y='30' width='36' height='36' transform='rotate(45 48 48)'/%3E%3Crect x='-18' y='-18' width='36' height='36'/%3E%3Crect x='-18' y='-18' width='36' height='36' transform='rotate(45 0 0)'/%3E%3Crect x='78' y='-18' width='36' height='36'/%3E%3Crect x='78' y='-18' width='36' height='36' transform='rotate(45 96 0)'/%3E%3Crect x='-18' y='78' width='36' height='36'/%3E%3Crect x='-18' y='78' width='36' height='36' transform='rotate(45 0 96)'/%3E%3Crect x='78' y='78' width='36' height='36'/%3E%3Crect x='78' y='78' width='36' height='36' transform='rotate(45 96 96)'/%3E%3C/g%3E%3C/svg%3E");
 }
 
 .dark {
@@ -193,15 +200,85 @@
   }
 
   /*
-   * The structural device of §25.3: the majolica tile grid. Used as a faint
-   * mask over the hero shader and as a section texture — never as decoration
-   * that competes with content.
+   * §25.3 — the structural device: Khiva majolica girih.
+   *
+   * The motif is the real thing, not a stand-in grid: an eight-point star built
+   * the way the tilemakers build it, from two squares sharing a centre with one
+   * rotated 45°. Stars sit at the cell centre and at all four corners so the
+   * lattice interlaces seamlessly across tiles, exactly as a tiled panel does.
+   *
+   * Drawn through `mask-image` rather than `background-image` so the motif
+   * inherits `color` from the element — one lattice, tinted per surface.
    */
-  .tile-grid {
-    background-image:
-      linear-gradient(to right, currentColor 1px, transparent 1px),
-      linear-gradient(to bottom, currentColor 1px, transparent 1px);
-    background-size: 64px 64px;
+  .tile-star {
+    -webkit-mask-image: var(--girih);
+    mask-image: var(--girih);
+    -webkit-mask-size: 96px 96px;
+    mask-size: 96px 96px;
+    -webkit-mask-repeat: repeat;
+    mask-repeat: repeat;
+    background-color: currentColor;
+  }
+
+  /* Half-scale lattice, for small surfaces like a card cover. */
+  .tile-star-sm {
+    -webkit-mask-size: 56px 56px;
+    mask-size: 56px 56px;
+  }
+
+  /*
+   * A tiled panel is bounded by a border band, never by a soft shadow. This is
+   * what separates a ceramic panel from a generic elevated card, and it is why
+   * the hero and the stat band do not use `--shadow-float`.
+   */
+  .panel-frame {
+    border: 1.5px solid rgb(255 255 255 / 0.28);
+    box-shadow:
+      inset 0 0 0 1px rgb(255 255 255 / 0.1),
+      inset 0 0 0 9px rgb(255 255 255 / 0.04);
+  }
+
+  .panel-frame-ink {
+    border: 1.5px solid rgb(11 27 43 / 0.14);
+    box-shadow:
+      inset 0 0 0 1px rgb(11 27 43 / 0.05),
+      inset 0 0 0 9px rgb(11 27 43 / 0.02);
+  }
+
+  /*
+   * The pishtaq — the tall rectangular portal that fronts every Khiva madrasa.
+   * The hero is framed by one: a doubled rule inset from the viewport edge,
+   * with the content recessed inside it. This is the page's architecture, and
+   * the reason the hero does not read as a gradient with words on it.
+   */
+  .portal {
+    border: 1px solid rgb(255 255 255 / 0.34);
+    box-shadow:
+      inset 0 0 0 1px rgb(255 255 255 / 0.1),
+      inset 0 0 0 7px transparent,
+      inset 0 0 0 8px rgb(255 255 255 / 0.16);
+  }
+
+  /*
+   * The display face is wide and geometric — it earns its keep at size or not
+   * at all. Tracking tightens as it scales so the counters stay closed.
+   */
+  .display-hero {
+    font-family: var(--font-display);
+    font-size: clamp(2.6rem, 6.4vw, 5.25rem);
+    font-weight: 600;
+    line-height: 0.98;
+    letter-spacing: -0.035em;
+    text-wrap: balance;
+  }
+
+  .display-section {
+    font-family: var(--font-display);
+    font-size: clamp(1.75rem, 3.4vw, 2.75rem);
+    font-weight: 600;
+    line-height: 1.05;
+    letter-spacing: -0.028em;
+    text-wrap: balance;
   }
 
   .container-site {

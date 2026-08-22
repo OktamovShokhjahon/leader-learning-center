@@ -17,7 +17,7 @@ export function PageHeader({
   return (
     <div className="relative overflow-hidden pt-18">
       <div aria-hidden className="gradient-glaze absolute inset-0" />
-      <div aria-hidden className="tile-grid absolute inset-0 text-white/[0.07]" />
+      <div aria-hidden className="tile-star absolute inset-0 text-white/[0.09]" />
 
       <div className="container-site relative py-14 md:py-20">
         {breadcrumb && breadcrumb.length > 0 ? (
@@ -39,7 +39,7 @@ export function PageHeader({
           </nav>
         ) : null}
 
-        <h1 className="max-w-3xl text-2xl text-white md:text-3xl">{title}</h1>
+        <h1 className="display-section max-w-3xl text-white">{title}</h1>
         {subtitle ? (
           <p className="mt-4 max-w-xl text-sm leading-relaxed text-white/75">{subtitle}</p>
         ) : null}

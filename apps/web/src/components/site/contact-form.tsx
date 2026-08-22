@@ -8,6 +8,7 @@ import { Send, Check, AlertCircle, Loader2 } from 'lucide-react'
 import { contactSchema, formatPhone, type ContactInput } from '@leader/shared/schemas'
 import { Field, inputClass } from './form-field'
 import { cn } from '@/lib/utils'
+import { track } from '@/lib/analytics'
 
 type Status = 'idle' | 'submitting' | 'success' | 'error'
 
@@ -35,6 +36,7 @@ export function ContactForm() {
       })
       if (!response.ok) throw new Error('REQUEST_FAILED')
       setStatus('success')
+      track('contact_submitted')
       reset()
     } catch {
       setStatus('error')

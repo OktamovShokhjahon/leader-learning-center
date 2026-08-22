@@ -1,7 +1,7 @@
 import { createApp } from './app.js'
 import { env } from './config/env.js'
 import { logger } from './config/logger.js'
-import { connectDatabase, disconnectDatabase } from './config/db.js'
+import { connectDatabase, disconnectDatabase, assertTransactionSupport } from './config/db.js'
 import { seedBranches } from './seed/seed-branches.js'
 import { seedSuperadmin } from './seed/seed-superadmin.js'
 
@@ -11,6 +11,8 @@ async function main() {
   try {
     await connectDatabase()
     dbReady = true
+    // §26.4 — surface a standalone mongod at boot, not at the first payment.
+    await assertTransactionSupport()
     // A lead cannot exist without a branch (§5.1), so make sure one exists.
     if (!env.isProduction) await seedBranches()
     // Runs in production too: it is the only way the first account can exist,

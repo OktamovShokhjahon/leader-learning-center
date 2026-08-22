@@ -31,6 +31,7 @@ export const ACTIONS = [
   'attendance.viewOwn',
   // Payments
   'payment.accept',
+  'payment.approve',
   'debtor.view',
   'payment.refund',
   'student.setFee',
@@ -51,6 +52,7 @@ export const ACTIONS = [
   'finance.compareBranches',
   // Content
   'content.manage',
+  'test.manage',
   'content.consume',
   // Site
   'site.edit',
@@ -103,6 +105,13 @@ export const PERMISSIONS: Record<Action, Record<Role, Grant>> = {
 
   'payment.accept': { superadmin: F, admin: F, manager: F, teacher: N, student: N, parent: N },
   'debtor.view': { superadmin: F, admin: F, manager: F, teacher: L, student: N, parent: N },
+  /**
+   * The client's rule: an Admin approves payments but never sees the centre's
+   * finances. Approving is an operational act on one payment; §15 revenue,
+   * profit and payroll stay SuperAdmin-only, and the router guard enforces that
+   * separately from this map.
+   */
+  'payment.approve': { superadmin: F, admin: F, manager: N, teacher: N, student: N, parent: N },
   'payment.refund': { superadmin: F, admin: L, manager: N, teacher: N, student: N, parent: N },
   'student.setFee': { superadmin: F, admin: F, manager: N, teacher: N, student: N, parent: N },
   'discount.give': { superadmin: F, admin: L, manager: N, teacher: N, student: N, parent: N },
@@ -136,6 +145,12 @@ export const PERMISSIONS: Record<Action, Record<Role, Grant>> = {
   },
 
   'content.manage': { superadmin: F, admin: F, manager: N, teacher: L, student: N, parent: N },
+  /**
+   * Online test modules are uploaded by the people who teach them and by the
+   * boss — the client was explicit that an Admin does not author tests.
+   * A teacher is `limited`: only for a course they actually teach (note 10).
+   */
+  'test.manage': { superadmin: F, admin: N, manager: N, teacher: L, student: N, parent: N },
   'content.consume': { superadmin: F, admin: F, manager: F, teacher: F, student: F, parent: N },
 
   'site.edit': { superadmin: F, admin: L, manager: N, teacher: N, student: N, parent: N },
@@ -166,6 +181,8 @@ export const LIMITS: Partial<Record<Action, string>> = {
   'site.edit':
     'Admin edits only their own branch page fragment: address, phone, photos, staff (note 8).',
   'audit.view': 'Admin sees only actions performed inside their own branch (note 9).',
+  'test.manage':
+    'Teacher may author and publish test modules only for a course they teach (note 10).',
 }
 
 /** Defaults for the configurable ceilings referenced above; branch settings override them. */

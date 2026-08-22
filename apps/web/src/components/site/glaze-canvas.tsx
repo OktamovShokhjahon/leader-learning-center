@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 
 /**
  * TZ §25.4 — the signature element: a WebGL mesh gradient whose flow follows the
- * pointer slowly, with a faint tile-grid mask over it so the colour appears to
+ * pointer slowly, with a faint tile-star mask over it so the colour appears to
  * move *behind* ceramic.
  *
  * It degrades to the static CSS gradient (rendered underneath, always) when:

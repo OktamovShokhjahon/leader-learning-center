@@ -5,6 +5,7 @@ import { getMessages, setRequestLocale, getTranslations } from 'next-intl/server
 import { isLocale, LOCALES, type Locale } from '@leader/shared/locales'
 import { fontVariables } from '@/lib/fonts'
 import { SITE } from '@/content/site'
+import { Analytics } from '@/components/site/analytics'
 import '../globals.css'
 
 export function generateStaticParams() {
@@ -53,7 +54,14 @@ export async function generateMetadata({
       title: t('defaultTitle'),
       description: t('defaultDescription'),
     },
-    icons: { icon: '/favicon.ico', apple: '/brand/logo.png' },
+    // Declared explicitly rather than left to the `app/icon.svg` file
+    // convention: the root layout sits under the dynamic `[locale]` segment, so
+    // the convention does not emit a link and the browser falls back to
+    // requesting `/favicon.ico`, which does not exist.
+    icons: {
+      icon: [{ url: '/icon.svg', type: 'image/svg+xml' }],
+      apple: '/brand/logo.png',
+    },
   }
 }
 
@@ -69,6 +77,7 @@ export default async function LocaleLayout({ children, params }: LayoutProps) {
     <html lang={locale} className={fontVariables} suppressHydrationWarning>
       <body className="min-h-dvh bg-background text-foreground antialiased">
         <NextIntlClientProvider messages={messages}>{children}</NextIntlClientProvider>
+        <Analytics />
       </body>
     </html>
   )

@@ -15,21 +15,29 @@ export async function CourseCard({ course, index = 0 }: { course: Course; index?
   return (
     <Reveal as="li" delay={Math.min(index, 5) * 0.06} className="h-full">
       <Link
-        href={`/kurslar/${course.slug}`}
-        className="group flex h-full flex-col overflow-hidden rounded-card border border-border-subtle bg-surface shadow-raise transition-all duration-200 hover:-translate-y-1 hover:shadow-float"
+        href={`/courses/${course.slug}`}
+        className="group flex h-full flex-col overflow-hidden rounded-card border border-border-subtle bg-surface transition-all duration-200 hover:-translate-y-1 hover:border-glaze-300 hover:shadow-float"
       >
-        {/* Gradient cover — the course accent, derived from the signature gradient */}
+        {/*
+         * The cover is a glazed tile: the course accent seen through the girih
+         * lattice, with the star scaled down so a 96px cell does not swamp a
+         * card-width band. The lattice brightens on hover — the only motion the
+         * card has, standing in for a photograph the client has not supplied.
+         */}
         <div
-          className={`relative h-28 bg-gradient-to-br ${courseGradient(course.accent)} overflow-hidden`}
+          className={`relative h-28 overflow-hidden bg-gradient-to-br ${courseGradient(course.accent)}`}
         >
-          <div aria-hidden className="tile-grid absolute inset-0 text-white/10" />
-          <span className="absolute bottom-3 left-5 rounded-pill bg-white/20 px-3 py-1 text-2xs font-medium text-white backdrop-blur-sm">
+          <div
+            aria-hidden
+            className="tile-star tile-star-sm absolute inset-0 text-white/14 transition-colors duration-300 group-hover:text-white/24"
+          />
+          <span className="absolute bottom-3 left-5 rounded-pill border border-white/30 bg-navy-950/25 px-3 py-1 text-2xs font-medium text-white backdrop-blur-sm">
             {pick(course.level, locale)}
           </span>
         </div>
 
         <div className="flex flex-1 flex-col gap-3 p-5">
-          <h3 className="font-display text-lg text-ink dark:text-white">
+          <h3 className="font-display text-lg leading-tight tracking-[-0.02em] text-ink dark:text-white">
             {pick(course.name, locale)}
           </h3>
           <p className="flex-1 text-xs leading-relaxed text-ink-soft dark:text-navy-200">
@@ -83,7 +91,7 @@ export async function CoursesSection({
   const courses = limit ? getCourses().slice(0, limit) : getCourses()
 
   return (
-    <Section id="kurslar">
+    <Section id="courses">
       <div className="container-site">
         {heading ? (
         <SectionHeading
@@ -93,7 +101,7 @@ export async function CoursesSection({
           action={
             limit ? (
               <Link
-                href="/kurslar"
+                href="/courses"
                 className="inline-flex h-12 items-center gap-2 rounded-pill border border-navy-600/25 px-5 text-xs font-medium text-navy-700 transition-colors hover:bg-navy-50 dark:text-navy-100 dark:hover:bg-navy-800"
               >
                 {tc('allCourses')}

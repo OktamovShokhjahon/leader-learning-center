@@ -1,6 +1,6 @@
 /**
  * Branches — TZ §5. Multi-branch is core, not an add-on: every branch has its
- * own public page (`/uz/filiallar/urganch`), its own accent colour and its own
+ * own public page (`/uz/branches/urganch`), its own accent colour and its own
  * course/price set.
  *
  * ⚠️ PLACEHOLDER DATA. The client has not yet confirmed branch count, addresses

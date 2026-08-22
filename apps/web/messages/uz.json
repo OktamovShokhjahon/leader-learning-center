@@ -350,14 +350,454 @@
       "metaDescription": "Leader Learning Centre shaxsiy kabinetiga kirish.",
       "phone": "Telefon raqam",
       "password": "Parol",
+      "totp": "Tasdiqlash kodi",
+      "totpHint": "Autentifikatsiya ilovasidagi 6 xonali kod",
+      "totpPrompt": "Hisobingiz ikki bosqichli himoya bilan qo‘riqlanadi. Ilovadagi kodni kiriting.",
       "submit": "Kirish",
-      "forgot": "Parolni unutdingizmi?",
-      "pending": "Shaxsiy kabinet ishga tushirilmoqda. Hozircha kirish uchun o‘quv markazi bilan bog‘laning."
+      "submitting": "Kirilmoqda...",
+      "forgotHint": "Parolni unutdingizmi yoki hisobingiz yo‘qmi? O‘quv markazi administratoriga murojaat qiling.",
+      "errors": {
+        "INVALID_CREDENTIALS": "Telefon raqam yoki parol noto‘g‘ri.",
+        "ACCOUNT_LOCKED": "Hisob vaqtincha bloklandi. Bir necha daqiqadan so‘ng qaytadan urinib ko‘ring.",
+        "RATE_LIMITED": "Juda ko‘p urinish bo‘ldi. Biroz kutib, qaytadan urinib ko‘ring.",
+        "INVALID_TOTP": "Tasdiqlash kodi noto‘g‘ri.",
+        "VALIDATION_FAILED": "Kiritilgan ma’lumotlar noto‘g‘ri.",
+        "API_NOT_CONFIGURED": "Server sozlanmagan. Administratorga murojaat qiling.",
+        "UPSTREAM_UNAVAILABLE": "Server bilan bog‘lanib bo‘lmadi. Keyinroq urinib ko‘ring.",
+        "UNKNOWN": "Kirishda xatolik yuz berdi. Qaytadan urinib ko‘ring."
+      }
     },
     "legal": {
       "offerTitle": "Ommaviy oferta",
       "privacyTitle": "Maxfiylik siyosati",
-      "pending": "Ushbu hujjat matni o‘quv markazining yuristi tomonidan tayyorlanmoqda va onlayn to‘lovlar ishga tushirilishidan oldin joylashtiriladi."
+      "pending": "Ushbu hujjat matni o‘quv markazining yuristi tomonidan tayyorlanmoqda va onlayn to‘lovlar ishga tushirilishidan oldin joylashtiriladi.",
+      "draftNotice": "Ushbu matn loyiha holatida: u tizim qanday ishlashiga qarab yozilgan va o‘quv markazi yuristi tomonidan ko‘rib chiqilishi hamda tasdiqlanishi kerak. Onlayn to‘lov ishga tushirilishidan oldin yakuniy tahrir joylashtiriladi.",
+      "lastUpdated": "Oxirgi yangilanish: {date}"
     }
+  },
+  "panel": {
+    "eyebrow": "Shaxsiy kabinet",
+    "loading": "Yuklanmoqda...",
+    "signOut": "Chiqish",
+    "access": "Ruxsatlar",
+    "allBranches": "Barcha filiallar",
+    "devices": "Faol qurilmalar",
+    "noDevices": "Faol seanslar yo‘q.",
+    "unknownDevice": "Noma’lum qurilma",
+    "thisDevice": "Shu qurilma",
+    "endSession": "Tugatish",
+    "twoFactorOn": "Ikki bosqichli himoya yoqilgan.",
+    "twoFactorOff": "Ikki bosqichli himoya o‘chirilgan. Uni yoqish tavsiya etiladi.",
+    "roleMismatch": "Bu bo‘lim sizning rolingiz uchun emas. O‘zingizga tegishli bo‘limga o‘ting.",
+    "mustChangePassword": "Parolingizni o‘zgartirishingiz kerak.",
+    "underConstruction": "O‘quvchilar, guruhlar, davomat, to‘lovlar, jarimalar va moliya bo‘limlari keyingi bosqichlarda ishga tushiriladi.",
+    "roles": {
+      "superadmin": "SuperAdmin",
+      "admin": "Administrator",
+      "manager": "Menejer",
+      "teacher": "O‘qituvchi",
+      "student": "O‘quvchi",
+      "parent": "Ota-ona"
+    },
+    "password": {
+      "title": "Parolni o‘zgartirish",
+      "current": "Joriy parol",
+      "next": "Yangi parol",
+      "confirm": "Yangi parolni takrorlang",
+      "hint": "Kamida 8 belgi. Ommabop parollar qabul qilinmaydi.",
+      "submit": "Parolni o‘zgartirish",
+      "wrongCurrent": "Joriy parol noto‘g‘ri.",
+      "failed": "Parolni o‘zgartirib bo‘lmadi. Qaytadan urinib ko‘ring.",
+      "doneTitle": "Parol o‘zgartirildi",
+      "doneBody": "Boshqa barcha qurilmalardagi seanslar tugatildi."
+    },
+    "nav": {
+      "label": "Panel navigatsiyasi",
+      "dashboard": "Boshqaruv",
+      "groups": "Guruhlar",
+      "students": "O‘quvchilar",
+      "payments": "To‘lov qabul qilish",
+      "debtors": "Qarzdorlar",
+      "finance": "Moliya",
+      "cabinet": "Kabinet",
+      "account": "Hisobim",
+      "approvals": "Tasdiqlash",
+      "modules": "Modullar",
+      "tests": "Testlar"
+    },
+    "errors": {
+      "FORBIDDEN": "Bu bo‘lim sizning rolingiz uchun ochiq emas.",
+      "UNAUTHENTICATED": "Seans tugadi. Qaytadan kiring.",
+      "NOT_FOUND": "Ma’lumot topilmadi.",
+      "TRANSACTIONS_UNAVAILABLE": "To‘lovlar hozircha ishlamaydi: MongoDB replica set sifatida ishga tushirilishi kerak.",
+      "INVOICE_ALREADY_PAID": "Bu hisob allaqachon to‘langan.",
+      "SCHEDULE_CONFLICT": "Bu vaqt band.",
+      "GROUP_FULL": "Guruh to‘lgan.",
+      "UPSTREAM_UNAVAILABLE": "Server bilan bog‘lanib bo‘lmadi.",
+      "UNKNOWN": "Xatolik yuz berdi. Qaytadan urinib ko‘ring."
+    },
+    "pages": {
+      "dashboard": {
+        "eyebrow": "Bugun",
+        "title": "Boshqaruv paneli",
+        "subtitle": "Kunlik ishlaringiz — bir bosishda."
+      },
+      "students": {
+        "eyebrow": "Baza",
+        "title": "O‘quvchilar",
+        "subtitle": "Qidiring, holat bo‘yicha filtrlang, kartani oching."
+      },
+      "groups": {
+        "eyebrow": "Ta’lim",
+        "title": "Guruhlar",
+        "subtitle": "Guruhni tanlang va davomatni belgilang."
+      },
+      "attendance": {
+        "eyebrow": "Davomat",
+        "title": "Davomatni belgilash",
+        "subtitle": "Har bir o‘quvchiga bir marta bosing. Standart holat — keldi."
+      },
+      "payments": {
+        "eyebrow": "Kassa",
+        "title": "To‘lov qabul qilish",
+        "subtitle": "Ism yoki telefon raqamining oxirgi raqamlari bo‘yicha qidiring."
+      },
+      "debtors": {
+        "eyebrow": "Nazorat",
+        "title": "Qarzdorlar",
+        "subtitle": "Muddati o‘tgan to‘lovlar va aloqa."
+      },
+      "finance": {
+        "eyebrow": "Moliya",
+        "title": "Moliyaviy ko‘rsatkichlar",
+        "subtitle": "Faqat SuperAdmin uchun."
+      },
+      "account": {
+        "eyebrow": "Hisob",
+        "title": "Mening hisobim",
+        "subtitle": "Ruxsatlar, qurilmalar va parol."
+      },
+      "student": {
+        "eyebrow": "O‘quvchi",
+        "title": "O‘quvchi kartasi"
+      },
+      "cabinet": {
+        "eyebrow": "Kabinet",
+        "title": "Shaxsiy kabinet",
+        "subtitle": "Davomat, natijalar va to‘lovlar."
+      },
+      "test": {
+        "eyebrow": "Onlayn modul",
+        "title": "Test",
+        "subtitle": "Har bir savolga bitta javob tanlang."
+      },
+      "attempt": {
+        "eyebrow": "Natija",
+        "title": "Test natijasi",
+        "subtitle": "To‘g‘ri javoblar yashil, xatolar qizil."
+      },
+      "approvals": {
+        "eyebrow": "Kassa",
+        "title": "To‘lovlarni tasdiqlash",
+        "subtitle": "Kutayotgan to‘lovlarni ko‘rib chiqing."
+      },
+      "tests": {
+        "eyebrow": "Onlayn",
+        "title": "Testlar",
+        "subtitle": "Fayldan yuklang va modul sifatida chop eting."
+      }
+    },
+    "dashboard": {
+      "takePayment": "To‘lov qabul qilish",
+      "takePaymentHint": "15 soniyada",
+      "markAttendance": "Davomat",
+      "markAttendanceHint": "Bugungi darslar",
+      "chaseDebtors": "Qarzdorlar",
+      "chaseDebtorsHint": "{n} ta qarzdor",
+      "chaseDebtorsHintPlain": "Ro‘yxatni ochish",
+      "myGroups": "Guruhlarim",
+      "seeAll": "Barchasi",
+      "noGroups": "Guruh yo‘q",
+      "topDebtors": "Eng katta qarzdorlar",
+      "noDebtors": "Qarzdor yo‘q",
+      "daysLate": "{n} kun",
+      "hasDebt": "Qarzdor"
+    },
+    "attendance": {
+      "date": "Sana",
+      "allPresent": "Hammasi keldi",
+      "save": "Saqlash",
+      "saved": "Saqlandi",
+      "noLesson": "Bu kunda dars yo‘q.",
+      "noStudents": "Guruhda o‘quvchi yo‘q.",
+      "summary": "{total} o‘quvchi · {absent} kelmadi",
+      "lessonCancelled": "Dars bekor qilingan",
+      "status": {
+        "present": "Keldi",
+        "absent": "Kelmadi",
+        "late": "Kechikdi",
+        "excused": "Sababli"
+      }
+    },
+    "payments": {
+      "searchPlaceholder": "Ism yoki telefon oxirgi raqamlari…",
+      "noResults": "Topilmadi",
+      "owes": "qarz",
+      "settled": "qarz yo‘q",
+      "accept": "To‘lov qabul qilish",
+      "outstanding": "Qarzi:",
+      "amount": "Summa (so‘m)",
+      "method": "To‘lov usuli",
+      "confirm": "Tasdiqlash",
+      "close": "Yopish",
+      "accepted": "To‘lov qabul qilindi",
+      "alreadyTaken": "Bu to‘lov allaqachon qabul qilingan",
+      "receiptNo": "Kvitansiya № {no}",
+      "done": "Yopish",
+      "method_naqd": "Naqd",
+      "method_plastik": "Plastik",
+      "method_bank": "Bank",
+      "method_payme": "Payme",
+      "method_click": "Click",
+      "method_uzum": "Uzum"
+    },
+    "debtors": {
+      "tabAll": "Barcha qarzdorlar",
+      "tabUnpaid": "Kurs puli to‘lamaganlar",
+      "bandAll": "Barchasi",
+      "band1": "1–3 kun",
+      "band4": "4–10 kun",
+      "band10": "10+ kun",
+      "totalDebt": "Umumiy qarz",
+      "count": "{n} ta yozuv",
+      "none": "Qarzdor yo‘q — hammasi to‘langan.",
+      "student": "O‘quvchi",
+      "group": "Guruh",
+      "period": "Davr",
+      "due": "Qarz",
+      "daysOverdue": "Kechikish",
+      "contact": "Aloqa",
+      "call": "Qo‘ng‘iroq",
+      "telegram": "Telegram",
+      "hasDebt": "Qarzi bor"
+    },
+    "students": {
+      "searchPlaceholder": "Ism yoki telefon…",
+      "all": "Barchasi",
+      "none": "O‘quvchi topilmadi",
+      "count": "{n} ta",
+      "student": "O‘quvchi",
+      "phone": "Telefon",
+      "statusLabel": "Holat",
+      "fee": "Oylik",
+      "balance": "Balans",
+      "prev": "Oldingi",
+      "next": "Keyingi",
+      "status": {
+        "active": "Faol",
+        "pending": "Kutilmoqda",
+        "overdue": "Qarzdor",
+        "paid": "To‘langan",
+        "completed": "Tugatgan",
+        "frozen": "Muzlatilgan",
+        "dropped": "Tark etgan"
+      }
+    },
+    "groups": {
+      "none": "Guruh yo‘q",
+      "group": "Guruh",
+      "markAttendance": "Davomat",
+      "weekday": {
+        "mon": "Du",
+        "tue": "Se",
+        "wed": "Ch",
+        "thu": "Pa",
+        "fri": "Ju",
+        "sat": "Sh",
+        "sun": "Ya"
+      }
+    },
+    "finance": {
+      "show": "Summalarni ko‘rsatish",
+      "hide": "Summalarni yashirish",
+      "collected": "Yig‘ilgan",
+      "collectionRate": "Yig‘ish darajasi",
+      "ofInvoiced": "hisoblangandan",
+      "receivables": "Debitorlik",
+      "averageCheque": "O‘rtacha chek",
+      "activeStudents": "{n} faol o‘quvchi",
+      "vsLastMonth": "o‘tgan oyga nisbatan",
+      "trend": "Oylik dinamika",
+      "ageing": "Qarz muddati",
+      "noDebt": "Qarz yo‘q",
+      "invoices": "{n} ta hisob",
+      "byCourse": "Kurslar bo‘yicha",
+      "noData": "Ma’lumot yo‘q",
+      "course": "Kurs",
+      "students": "O‘quvchi",
+      "invoiced": "Hisoblangan",
+      "branches": "Filiallar taqqoslash",
+      "branch": "Filial",
+      "groups": "Guruh",
+      "debt": "Qarz",
+      "rate": "Yig‘ish",
+      "bucket_notYetDue": "Muddati kelmagan",
+      "bucket_1": "1–7 kun",
+      "bucket_8": "8–30 kun",
+      "bucket_30+": "30+ kun"
+    },
+    "cabinet": {
+      "status": "Holat",
+      "attendanceRate": "Davomat",
+      "absences": "Qoldirilgan",
+      "outstanding": "Qarz",
+      "calendar": "Davomat kalendari",
+      "prevMonth": "Oldingi oy",
+      "nextMonth": "Keyingi oy",
+      "invoices": "Hisoblar",
+      "payments": "To‘lovlar",
+      "noInvoices": "Hisob yo‘q",
+      "noPayments": "To‘lov yo‘q",
+      "paidSoFar": "to‘langan:",
+      "unlinked": "Hisobingizga o‘quvchi kartasi biriktirilmagan. O‘quv markazi administratoriga murojaat qiling.",
+      "weekday": {
+        "mon": "Du",
+        "tue": "Se",
+        "wed": "Ch",
+        "thu": "Pa",
+        "fri": "Ju",
+        "sat": "Sh",
+        "sun": "Ya"
+      },
+      "attendance": {
+        "present": "Keldi",
+        "absent": "Kelmadi",
+        "late": "Kechikdi",
+        "excused": "Sababli"
+      },
+      "studentStatus": {
+        "active": "Faol",
+        "pending": "Kutilmoqda",
+        "overdue": "Qarzdor",
+        "paid": "To‘langan",
+        "completed": "Tugatgan",
+        "frozen": "Muzlatilgan",
+        "dropped": "Tark etgan"
+      },
+      "invoiceStatus": {
+        "pending": "Kutilmoqda",
+        "partial": "Qisman",
+        "paid": "To‘langan",
+        "overdue": "Muddati o‘tgan",
+        "cancelled": "Bekor qilingan"
+      },
+      "method": {
+        "naqd": "Naqd",
+        "plastik": "Plastik",
+        "bank": "Bank",
+        "payme": "Payme",
+        "click": "Click",
+        "uzum": "Uzum"
+      }
+    },
+    "tests": {
+      "noModules": "Bu kurs uchun onlayn modullar hali qo‘shilmagan.",
+      "progress": "{done} / {total} modul",
+      "questions": "{n} ta savol",
+      "pass": "o‘tish: {n}%",
+      "best": "eng yaxshi: {n}%",
+      "start": "Boshlash",
+      "retry": "Qayta topshirish",
+      "review": "Natijani ko‘rish",
+      "back": "Orqaga",
+      "next": "Keyingi",
+      "submit": "Yakunlash",
+      "answered": "{done} / {total} javob berildi",
+      "passedTitle": "Modul muvaffaqiyatli topshirildi",
+      "failedTitle": "Modul topshirilmadi",
+      "scoreDetail": "{total} tadan {correct} tasi to‘g‘ri. O‘tish uchun {pass}% kerak.",
+      "nextUnlocked": "Keyingi modul ochildi.",
+      "answers": "Javoblar",
+      "tapToReview": "Savolni ko‘rish uchun raqamni bosing",
+      "yourAnswer": "sizning javobingiz",
+      "notAnswered": "Bu savolga javob berilmagan."
+    },
+    "approvals": {
+      "scopeNote": "Siz to‘lovlarni tasdiqlaysiz. Markazning umumiy moliyaviy ko‘rsatkichlari — daromad, foyda va ish haqi — faqat SuperAdmin uchun ochiq.",
+      "none": "Tasdiqlashni kutayotgan to‘lov yo‘q.",
+      "count": "{n} ta kutilmoqda",
+      "approve": "Tasdiqlash",
+      "reject": "Rad etish",
+      "unknownStudent": "Noma’lum o‘quvchi",
+      "method": {
+        "naqd": "Naqd",
+        "plastik": "Plastik",
+        "bank": "Bank",
+        "payme": "Payme",
+        "click": "Click",
+        "uzum": "Uzum"
+      }
+    },
+    "import": {
+      "dropTitle": "Test faylini yuklang",
+      "dropHint": "Moodle formatidagi .txt fayl (= to‘g‘ri javob, ~ noto‘g‘ri) yoki Excel jadval. Faylni shu yerga tashlang.",
+      "choose": "Fayl tanlash",
+      "unreadable": "Faylni o‘qib bo‘lmadi. Formatni tekshiring.",
+      "issuesTitle": "{n} ta savolda muammo bor",
+      "line": "{n}-qator",
+      "issuesNote": "Bu savollar yuklanmaydi. Faylni tuzatib, qaytadan yuklang.",
+      "preview": "{n} ta savol tayyor",
+      "clear": "Tozalash",
+      "details": "Modul ma’lumotlari",
+      "course": "Kurs",
+      "choosePlaceholder": "Kursni tanlang",
+      "title": "Modul nomi",
+      "order": "Tartib raqami",
+      "orderHint": "Kursdagi nechanchi modul",
+      "passMark": "O‘tish bali (%)",
+      "passHint": "Keyingi modul shu balldan ochiladi",
+      "from": "Manba: {name}",
+      "publish": "Yuklash va chop etish",
+      "issue": {
+        "noOptions": "variantlar topilmadi",
+        "noCorrect": "to‘g‘ri javob belgilanmagan",
+        "manyCorrect": "bir nechta to‘g‘ri javob belgilangan",
+        "tooFewOptions": "variantlar juda kam (kamida 2 ta)",
+        "tooManyOptions": "variantlar juda ko‘p (ko‘pi 6 ta)",
+        "noPrompt": "savol matni yo‘q",
+        "unclosedBlock": "qavs yopilmagan"
+      }
+    }
+  },
+  "validation": {
+    "required": "Bu maydonni to‘ldiring.",
+    "nameTooShort": "Ism kamida 3 ta belgidan iborat bo‘lsin.",
+    "nameTooLong": "Ism juda uzun.",
+    "invalidPhone": "Telefon raqamni +998 formatida kiriting.",
+    "ageTooLow": "Yosh juda kichik.",
+    "ageTooHigh": "Yosh juda katta.",
+    "courseRequired": "Kursni tanlang.",
+    "branchRequired": "Filialni tanlang.",
+    "consentRequired": "Davom etish uchun rozilik bering.",
+    "messageTooShort": "Xabar kamida 10 ta belgidan iborat bo‘lsin.",
+    "passwordRequired": "Parolni kiriting.",
+    "passwordTooShort": "Parol kamida 8 ta belgidan iborat bo‘lsin.",
+    "passwordTooLong": "Parol juda uzun.",
+    "passwordTooCommon": "Bu parol juda ommabop. Boshqasini tanlang.",
+    "passwordsDoNotMatch": "Parollar mos kelmadi.",
+    "passwordUnchanged": "Yangi parol eskisidan farq qilsin.",
+    "invalidOtp": "Kod 6 ta raqamdan iborat bo‘lsin.",
+    "invalidTotp": "Kod 6 ta raqamdan iborat bo‘lsin.",
+    "invalidPin": "PIN kod noto‘g‘ri.",
+    "invalidEmail": "Email manzil noto‘g‘ri.",
+    "invalidId": "Noto‘g‘ri identifikator.",
+    "invalidBranchId": "Noto‘g‘ri filial.",
+    "invalidSlug": "Noto‘g‘ri manzil.",
+    "slugTooShort": "Manzil juda qisqa.",
+    "slugTooLong": "Manzil juda uzun.",
+    "invalidSort": "Noto‘g‘ri saralash.",
+    "roleRequired": "Rolni tanlang.",
+    "branchRequiredForRole": "Bu rol uchun filial tanlanishi kerak.",
+    "superadminIsGlobal": "SuperAdmin barcha filiallarga tegishli, alohida filial tanlanmaydi."
   }
 }

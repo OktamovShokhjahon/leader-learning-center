@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useTranslations, useLocale } from 'next-intl'
@@ -20,8 +20,9 @@ import { pick, type Locale } from '@leader/shared/locales'
 import { Link } from '@/i18n/navigation'
 import { getCourses } from '@/content/courses'
 import { getBranches } from '@/content/branches'
-import { Field, inputClass } from './form-field'
+import { Field, inputClass, useValidationMessage } from './form-field'
 import { cn } from '@/lib/utils'
+import { track } from '@/lib/analytics'
 
 type Status = 'idle' | 'submitting' | 'success' | 'error'
 
@@ -49,7 +50,16 @@ export function RegisterForm() {
   const branches = getBranches()
 
   const [step, setStep] = useState(0)
+  const startedRef = useRef(false)
+
+  /** §6.3 — 'form_start' fires once, on the first real interaction, not on render. */
+  const markStarted = () => {
+    if (startedRef.current) return
+    startedRef.current = true
+    track('form_start', { form: 'register', locale })
+  }
   const [status, setStatus] = useState<Status>('idle')
+  const resolveError = useValidationMessage()
 
   const {
     register,
@@ -74,7 +84,12 @@ export function RegisterForm() {
         ? (Object.keys(leadStep1Schema.shape) as (keyof LeadInput)[])
         : (Object.keys(leadStep2Schema.shape) as (keyof LeadInput)[])
     const valid = await trigger(fields)
-    if (valid) setStep((current) => Math.min(current + 1, TOTAL - 1))
+    if (!valid) return
+    const target = Math.min(step + 1, TOTAL - 1)
+    setStep(target)
+    // §6.3 — the TZ names 'form_step_2'; step 3 is tracked the same way so the
+    // funnel has a value between step 2 and submission.
+    track(target === 1 ? 'form_step_2' : 'form_step_3', { form: 'register', locale })
   }
 
   const onSubmit = handleSubmit(async (values) => {
@@ -87,9 +102,11 @@ export function RegisterForm() {
       })
       if (!response.ok) throw new Error('REQUEST_FAILED')
       setStatus('success')
+      track('lead_submitted', { form: 'register', course: values.courseSlug, locale })
       reset()
     } catch {
       setStatus('error')
+      track('lead_failed', { form: 'register', locale })
     }
   })
 
@@ -112,7 +129,12 @@ export function RegisterForm() {
   }
 
   return (
-    <form onSubmit={onSubmit} noValidate className="flex flex-col gap-6">
+    <form
+      onSubmit={onSubmit}
+      onFocusCapture={markStarted}
+      noValidate
+      className="flex flex-col gap-6"
+    >
       {/* Step indicator */}
       <div className="flex flex-col gap-3">
         <div className="flex items-center justify-between">
@@ -271,7 +293,7 @@ export function RegisterForm() {
           <span>
             {tf('consent')}{' '}
             <Link
-              href="/maxfiylik"
+              href="/privacy"
               className="text-glaze-700 underline underline-offset-2 dark:text-glaze-300"
             >
               {tn('privacy')}
@@ -281,7 +303,7 @@ export function RegisterForm() {
         {errors.consent ? (
           <p className="-mt-2 flex items-center gap-1.5 text-2xs text-danger">
             <AlertCircle className="size-3.5" aria-hidden />
-            {errors.consent.message}
+            {resolveError(errors.consent.message)}
           </p>
         ) : null}
       </div>

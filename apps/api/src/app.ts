@@ -15,6 +15,11 @@ import { authRouter } from './modules/auth/auth.routes.js'
 import { branchRouter } from './modules/branches/branch.routes.js'
 import { userRouter } from './modules/users/user.routes.js'
 import { leadRouter } from './modules/leads/lead.routes.js'
+import { testRouter } from './modules/tests/test.routes.js'
+import { studentRouter } from './modules/students/student.routes.js'
+import { groupRouter } from './modules/groups/group.routes.js'
+import { paymentRouter } from './modules/payments/payment.routes.js'
+import { financeRouter } from './modules/finance/finance.routes.js'
 
 export function createApp() {
   const app = express()
@@ -74,6 +79,12 @@ export function createApp() {
   app.use('/api/v1/branches', branchRouter)
   app.use('/api/v1/users', userRouter)
   app.use('/api/v1/leads', leadRouter)
+  app.use('/api/v1/tests', testRouter)
+  app.use('/api/v1/students', studentRouter)
+  app.use('/api/v1/groups', groupRouter)
+  app.use('/api/v1/payments', paymentRouter)
+  // §4.3 / §15 — the finance router carries its own hard superadmin guard.
+  app.use('/api/v1/finance', financeRouter)
 
   // TODO Phase 1+: /students, /groups, /attendance, /payments,
   // /fines, /expenses, /payroll, /finance (§23). Finance and payroll routers get

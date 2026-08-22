@@ -7,6 +7,7 @@ import { getStats } from '@/content/stats'
 import { Section } from '@/components/ui/section'
 import { CountUp } from '../count-up'
 import { Reveal } from '../reveal'
+import { cn } from '@/lib/utils'
 
 /**
  * TZ §6.2 §2 — trust bar.
@@ -54,10 +55,25 @@ export async function Numbers() {
   return (
     <Section className="py-14 md:py-20">
       <div className="container-site">
-        <ul className="grid grid-cols-2 gap-x-6 gap-y-10 md:grid-cols-4">
+        {/*
+         * A framed band, divided the way a tile panel is divided — by hairlines
+         * between fields, not by gaps between floating cards.
+         */}
+        <ul className="panel-frame-ink grid grid-cols-2 overflow-hidden rounded-card bg-surface md:grid-cols-4">
           {stats.map((stat, index) => (
-            <Reveal as="li" key={stat.key} delay={index * 0.08} className="flex flex-col gap-2">
-              <span className="font-display text-2xl font-semibold text-navy-600 md:text-3xl dark:text-aqua-300">
+            <Reveal
+              as="li"
+              key={stat.key}
+              delay={index * 0.08}
+              className={cn(
+                'flex flex-col gap-1.5 px-6 py-8 md:px-8 md:py-10',
+                // Hairlines between fields; none on the outer edges.
+                index % 2 === 0 ? 'border-r border-border-subtle' : '',
+                index < 2 ? 'border-b border-border-subtle md:border-b-0' : '',
+                'md:border-b-0 md:border-r md:last:border-r-0',
+              )}
+            >
+              <span className="display-section text-navy-600 dark:text-aqua-300">
                 <CountUp
                   to={stat.value as number}
                   decimals={stat.decimals ?? 0}

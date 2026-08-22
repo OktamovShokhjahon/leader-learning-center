@@ -3,6 +3,7 @@ import { LOCALES } from '@leader/shared/locales'
 import { SITE } from '@/content/site'
 import { getCourses } from '@/content/courses'
 import { getBranches } from '@/content/branches'
+import { getPosts } from '@/content/posts'
 
 /**
  * TZ §6.3 — sitemap generated dynamically, including all courses, branches and
@@ -11,30 +12,36 @@ import { getBranches } from '@/content/branches'
 export default function sitemap(): MetadataRoute.Sitemap {
   const staticPaths = [
     { path: '', priority: 1, changeFrequency: 'weekly' as const },
-    { path: '/kurslar', priority: 0.9, changeFrequency: 'weekly' as const },
-    { path: '/oqituvchilar', priority: 0.7, changeFrequency: 'monthly' as const },
-    { path: '/natijalar', priority: 0.8, changeFrequency: 'weekly' as const },
-    { path: '/filiallar', priority: 0.8, changeFrequency: 'monthly' as const },
-    { path: '/biz-haqimizda', priority: 0.6, changeFrequency: 'monthly' as const },
-    { path: '/yangiliklar', priority: 0.7, changeFrequency: 'weekly' as const },
-    { path: '/galereya', priority: 0.5, changeFrequency: 'monthly' as const },
-    { path: '/aloqa', priority: 0.7, changeFrequency: 'monthly' as const },
-    { path: '/royxatdan-otish', priority: 0.9, changeFrequency: 'monthly' as const },
+    { path: '/courses', priority: 0.9, changeFrequency: 'weekly' as const },
+    { path: '/teachers', priority: 0.7, changeFrequency: 'monthly' as const },
+    { path: '/results', priority: 0.8, changeFrequency: 'weekly' as const },
+    { path: '/branches', priority: 0.8, changeFrequency: 'monthly' as const },
+    { path: '/about', priority: 0.6, changeFrequency: 'monthly' as const },
+    { path: '/news', priority: 0.7, changeFrequency: 'weekly' as const },
+    { path: '/gallery', priority: 0.5, changeFrequency: 'monthly' as const },
+    { path: '/contact', priority: 0.7, changeFrequency: 'monthly' as const },
+    { path: '/apply', priority: 0.9, changeFrequency: 'monthly' as const },
     { path: '/faq', priority: 0.6, changeFrequency: 'monthly' as const },
-    { path: '/oferta', priority: 0.3, changeFrequency: 'yearly' as const },
-    { path: '/maxfiylik', priority: 0.3, changeFrequency: 'yearly' as const },
+    { path: '/offer', priority: 0.3, changeFrequency: 'yearly' as const },
+    { path: '/privacy', priority: 0.3, changeFrequency: 'yearly' as const },
   ]
 
   const dynamicPaths = [
     ...getCourses().map((course) => ({
-      path: `/kurslar/${course.slug}`,
+      path: `/courses/${course.slug}`,
       priority: 0.8,
       changeFrequency: 'monthly' as const,
     })),
     ...getBranches().map((branch) => ({
-      path: `/filiallar/${branch.slug}`,
+      path: `/branches/${branch.slug}`,
       priority: 0.7,
       changeFrequency: 'monthly' as const,
+    })),
+    // §6.3 — news posts are the only URLs that grow without a developer.
+    ...getPosts().map((post) => ({
+      path: `/news/${post.slug}`,
+      priority: 0.6,
+      changeFrequency: 'yearly' as const,
     })),
   ]
 

@@ -350,14 +350,454 @@
       "metaDescription": "Sign in to the Leader Learning Centre personal cabinet.",
       "phone": "Phone number",
       "password": "Password",
+      "totp": "Verification code",
+      "totpHint": "The 6-digit code from your authenticator app",
+      "totpPrompt": "Your account is protected by two-factor authentication. Enter the code from your app.",
       "submit": "Sign in",
-      "forgot": "Forgot your password?",
-      "pending": "The personal cabinet is still being built. For now, please contact the centre for access."
+      "submitting": "Signing in...",
+      "forgotHint": "Forgotten your password, or do not have an account yet? Contact the centre administrator.",
+      "errors": {
+        "INVALID_CREDENTIALS": "That phone number or password is not correct.",
+        "ACCOUNT_LOCKED": "This account is temporarily locked. Try again in a few minutes.",
+        "RATE_LIMITED": "Too many attempts. Wait a moment and try again.",
+        "INVALID_TOTP": "That verification code is not correct.",
+        "VALIDATION_FAILED": "The details you entered are not valid.",
+        "API_NOT_CONFIGURED": "The server is not configured. Please contact an administrator.",
+        "UPSTREAM_UNAVAILABLE": "Could not reach the server. Please try again later.",
+        "UNKNOWN": "Something went wrong signing in. Please try again."
+      }
     },
     "legal": {
       "offerTitle": "Public offer",
       "privacyTitle": "Privacy policy",
-      "pending": "The text of this document is being prepared by the centre’s lawyer and will be published before online payment goes live."
+      "pending": "The text of this document is being prepared by the centre’s lawyer and will be published before online payment goes live.",
+      "draftNotice": "This text is a draft: it is written from how the system actually works and must be reviewed and approved by the centre’s lawyer. The final version will be published before online payment goes live.",
+      "lastUpdated": "Last updated: {date}"
     }
+  },
+  "panel": {
+    "eyebrow": "Personal cabinet",
+    "loading": "Loading...",
+    "signOut": "Sign out",
+    "access": "Access",
+    "allBranches": "All branches",
+    "devices": "Active devices",
+    "noDevices": "No active sessions.",
+    "unknownDevice": "Unknown device",
+    "thisDevice": "This device",
+    "endSession": "End",
+    "twoFactorOn": "Two-factor authentication is on.",
+    "twoFactorOff": "Two-factor authentication is off. Turning it on is recommended.",
+    "roleMismatch": "This section is not for your role. Go to the one that is.",
+    "mustChangePassword": "You need to change your password.",
+    "underConstruction": "Students, groups, attendance, payments, fines and finance arrive in the coming phases.",
+    "roles": {
+      "superadmin": "SuperAdmin",
+      "admin": "Administrator",
+      "manager": "Manager",
+      "teacher": "Teacher",
+      "student": "Student",
+      "parent": "Parent"
+    },
+    "password": {
+      "title": "Change password",
+      "current": "Current password",
+      "next": "New password",
+      "confirm": "Repeat the new password",
+      "hint": "At least 8 characters. Common passwords are rejected.",
+      "submit": "Change password",
+      "wrongCurrent": "That current password is not correct.",
+      "failed": "The password could not be changed. Please try again.",
+      "doneTitle": "Password changed",
+      "doneBody": "Sessions on every other device have been ended."
+    },
+    "nav": {
+      "label": "Panel navigation",
+      "dashboard": "Overview",
+      "groups": "Groups",
+      "students": "Students",
+      "payments": "Take payment",
+      "debtors": "Debtors",
+      "finance": "Finance",
+      "cabinet": "Cabinet",
+      "account": "My account",
+      "approvals": "Approvals",
+      "modules": "Modules",
+      "tests": "Tests"
+    },
+    "errors": {
+      "FORBIDDEN": "This section is not open to your role.",
+      "UNAUTHENTICATED": "Your session expired. Please sign in again.",
+      "NOT_FOUND": "Not found.",
+      "TRANSACTIONS_UNAVAILABLE": "Payments are unavailable: MongoDB must run as a replica set.",
+      "INVOICE_ALREADY_PAID": "That invoice is already settled.",
+      "SCHEDULE_CONFLICT": "That slot is already taken.",
+      "GROUP_FULL": "That group is full.",
+      "UPSTREAM_UNAVAILABLE": "Could not reach the server.",
+      "UNKNOWN": "Something went wrong. Please try again."
+    },
+    "pages": {
+      "dashboard": {
+        "eyebrow": "Today",
+        "title": "Dashboard",
+        "subtitle": "Your daily work, one tap away."
+      },
+      "students": {
+        "eyebrow": "Records",
+        "title": "Students",
+        "subtitle": "Search, filter by status, open a card."
+      },
+      "groups": {
+        "eyebrow": "Teaching",
+        "title": "Groups",
+        "subtitle": "Pick a group and mark attendance."
+      },
+      "attendance": {
+        "eyebrow": "Attendance",
+        "title": "Mark attendance",
+        "subtitle": "One tap per student. Everyone starts present."
+      },
+      "payments": {
+        "eyebrow": "Front desk",
+        "title": "Take a payment",
+        "subtitle": "Search by name or the last digits of a phone."
+      },
+      "debtors": {
+        "eyebrow": "Control",
+        "title": "Debtors",
+        "subtitle": "Overdue payments and how to reach them."
+      },
+      "finance": {
+        "eyebrow": "Finance",
+        "title": "Financial overview",
+        "subtitle": "SuperAdmin only."
+      },
+      "account": {
+        "eyebrow": "Account",
+        "title": "My account",
+        "subtitle": "Access, devices and password."
+      },
+      "student": {
+        "eyebrow": "Student",
+        "title": "Student card"
+      },
+      "cabinet": {
+        "eyebrow": "Cabinet",
+        "title": "Personal cabinet",
+        "subtitle": "Attendance, results and payments."
+      },
+      "test": {
+        "eyebrow": "Online module",
+        "title": "Test",
+        "subtitle": "Choose one answer per question."
+      },
+      "attempt": {
+        "eyebrow": "Result",
+        "title": "Test result",
+        "subtitle": "Correct answers in green, mistakes in red."
+      },
+      "approvals": {
+        "eyebrow": "Front desk",
+        "title": "Approve payments",
+        "subtitle": "Review the payments waiting on you."
+      },
+      "tests": {
+        "eyebrow": "Online",
+        "title": "Tests",
+        "subtitle": "Import from a file and publish it as a module."
+      }
+    },
+    "dashboard": {
+      "takePayment": "Take a payment",
+      "takePaymentHint": "In 15 seconds",
+      "markAttendance": "Attendance",
+      "markAttendanceHint": "Today’s lessons",
+      "chaseDebtors": "Debtors",
+      "chaseDebtorsHint": "{n} debtors",
+      "chaseDebtorsHintPlain": "Open the list",
+      "myGroups": "My groups",
+      "seeAll": "See all",
+      "noGroups": "No groups",
+      "topDebtors": "Largest debts",
+      "noDebtors": "No debtors",
+      "daysLate": "{n} days",
+      "hasDebt": "Has debt"
+    },
+    "attendance": {
+      "date": "Date",
+      "allPresent": "All present",
+      "save": "Save",
+      "saved": "Saved",
+      "noLesson": "No lesson on this day.",
+      "noStudents": "No students in this group.",
+      "summary": "{total} students · {absent} away",
+      "lessonCancelled": "Lesson cancelled",
+      "status": {
+        "present": "Present",
+        "absent": "Absent",
+        "late": "Late",
+        "excused": "Excused"
+      }
+    },
+    "payments": {
+      "searchPlaceholder": "Name or last digits of a phone…",
+      "noResults": "Nothing found",
+      "owes": "owes",
+      "settled": "settled",
+      "accept": "Take a payment",
+      "outstanding": "Outstanding:",
+      "amount": "Amount (so‘m)",
+      "method": "Payment method",
+      "confirm": "Confirm",
+      "close": "Close",
+      "accepted": "Payment accepted",
+      "alreadyTaken": "That payment was already taken",
+      "receiptNo": "Receipt no. {no}",
+      "done": "Close",
+      "method_naqd": "Cash",
+      "method_plastik": "Card",
+      "method_bank": "Bank",
+      "method_payme": "Payme",
+      "method_click": "Click",
+      "method_uzum": "Uzum"
+    },
+    "debtors": {
+      "tabAll": "All debtors",
+      "tabUnpaid": "Nothing paid this period",
+      "bandAll": "All",
+      "band1": "1–3 days",
+      "band4": "4–10 days",
+      "band10": "10+ days",
+      "totalDebt": "Total debt",
+      "count": "{n} rows",
+      "none": "No debtors — everything is paid.",
+      "student": "Student",
+      "group": "Group",
+      "period": "Period",
+      "due": "Due",
+      "daysOverdue": "Days late",
+      "contact": "Contact",
+      "call": "Call",
+      "telegram": "Telegram",
+      "hasDebt": "Has debt"
+    },
+    "students": {
+      "searchPlaceholder": "Name or phone…",
+      "all": "All",
+      "none": "No students found",
+      "count": "{n}",
+      "student": "Student",
+      "phone": "Phone",
+      "statusLabel": "Status",
+      "fee": "Monthly fee",
+      "balance": "Balance",
+      "prev": "Previous",
+      "next": "Next",
+      "status": {
+        "active": "Active",
+        "pending": "Pending",
+        "overdue": "Overdue",
+        "paid": "Paid",
+        "completed": "Completed",
+        "frozen": "Frozen",
+        "dropped": "Dropped"
+      }
+    },
+    "groups": {
+      "none": "No groups",
+      "group": "Group",
+      "markAttendance": "Attendance",
+      "weekday": {
+        "mon": "Mon",
+        "tue": "Tue",
+        "wed": "Wed",
+        "thu": "Thu",
+        "fri": "Fri",
+        "sat": "Sat",
+        "sun": "Sun"
+      }
+    },
+    "finance": {
+      "show": "Show amounts",
+      "hide": "Hide amounts",
+      "collected": "Collected",
+      "collectionRate": "Collection rate",
+      "ofInvoiced": "of invoiced",
+      "receivables": "Receivables",
+      "averageCheque": "Average cheque",
+      "activeStudents": "{n} active students",
+      "vsLastMonth": "vs last month",
+      "trend": "Monthly trend",
+      "ageing": "Debt ageing",
+      "noDebt": "No debt",
+      "invoices": "{n} invoices",
+      "byCourse": "By course",
+      "noData": "No data",
+      "course": "Course",
+      "students": "Students",
+      "invoiced": "Invoiced",
+      "branches": "Branch comparison",
+      "branch": "Branch",
+      "groups": "Groups",
+      "debt": "Debt",
+      "rate": "Collection",
+      "bucket_notYetDue": "Not yet due",
+      "bucket_1": "1–7 days",
+      "bucket_8": "8–30 days",
+      "bucket_30+": "30+ days"
+    },
+    "cabinet": {
+      "status": "Status",
+      "attendanceRate": "Attendance",
+      "absences": "Absences",
+      "outstanding": "Outstanding",
+      "calendar": "Attendance calendar",
+      "prevMonth": "Previous month",
+      "nextMonth": "Next month",
+      "invoices": "Invoices",
+      "payments": "Payments",
+      "noInvoices": "No invoices",
+      "noPayments": "No payments",
+      "paidSoFar": "paid:",
+      "unlinked": "No student record is linked to your account yet. Please contact the centre administrator.",
+      "weekday": {
+        "mon": "Mon",
+        "tue": "Tue",
+        "wed": "Wed",
+        "thu": "Thu",
+        "fri": "Fri",
+        "sat": "Sat",
+        "sun": "Sun"
+      },
+      "attendance": {
+        "present": "Present",
+        "absent": "Absent",
+        "late": "Late",
+        "excused": "Excused"
+      },
+      "studentStatus": {
+        "active": "Active",
+        "pending": "Pending",
+        "overdue": "Overdue",
+        "paid": "Paid",
+        "completed": "Completed",
+        "frozen": "Frozen",
+        "dropped": "Dropped"
+      },
+      "invoiceStatus": {
+        "pending": "Pending",
+        "partial": "Partial",
+        "paid": "Paid",
+        "overdue": "Overdue",
+        "cancelled": "Cancelled"
+      },
+      "method": {
+        "naqd": "Cash",
+        "plastik": "Card",
+        "bank": "Bank",
+        "payme": "Payme",
+        "click": "Click",
+        "uzum": "Uzum"
+      }
+    },
+    "tests": {
+      "noModules": "No online modules have been added to this course yet.",
+      "progress": "{done} of {total} modules",
+      "questions": "{n} questions",
+      "pass": "pass: {n}%",
+      "best": "best: {n}%",
+      "start": "Start",
+      "retry": "Try again",
+      "review": "See result",
+      "back": "Back",
+      "next": "Next",
+      "submit": "Finish",
+      "answered": "{done} of {total} answered",
+      "passedTitle": "Module passed",
+      "failedTitle": "Module not passed",
+      "scoreDetail": "{correct} of {total} correct. You need {pass}% to pass.",
+      "nextUnlocked": "The next module is now open.",
+      "answers": "Answers",
+      "tapToReview": "Tap a number to see the question",
+      "yourAnswer": "your answer",
+      "notAnswered": "This question was left unanswered."
+    },
+    "approvals": {
+      "scopeNote": "You approve payments. The centre’s overall finances — revenue, profit and payroll — are open to the SuperAdmin only.",
+      "none": "No payments are waiting for approval.",
+      "count": "{n} waiting",
+      "approve": "Approve",
+      "reject": "Reject",
+      "unknownStudent": "Unknown student",
+      "method": {
+        "naqd": "Cash",
+        "plastik": "Card",
+        "bank": "Bank",
+        "payme": "Payme",
+        "click": "Click",
+        "uzum": "Uzum"
+      }
+    },
+    "import": {
+      "dropTitle": "Upload a test file",
+      "dropHint": "A Moodle-format .txt file (= correct answer, ~ wrong) or an Excel sheet. Drop the file here.",
+      "choose": "Choose a file",
+      "unreadable": "That file could not be read. Check the format.",
+      "issuesTitle": "{n} questions have problems",
+      "line": "line {n}",
+      "issuesNote": "These questions will not be imported. Fix the file and upload it again.",
+      "preview": "{n} questions ready",
+      "clear": "Clear",
+      "details": "Module details",
+      "course": "Course",
+      "choosePlaceholder": "Choose a course",
+      "title": "Module title",
+      "order": "Position",
+      "orderHint": "Which module this is in the course",
+      "passMark": "Pass mark (%)",
+      "passHint": "The next module opens at this score",
+      "from": "From: {name}",
+      "publish": "Upload and publish",
+      "issue": {
+        "noOptions": "no options found",
+        "noCorrect": "no correct answer marked",
+        "manyCorrect": "more than one correct answer marked",
+        "tooFewOptions": "too few options (at least 2)",
+        "tooManyOptions": "too many options (at most 6)",
+        "noPrompt": "no question text",
+        "unclosedBlock": "brace never closed"
+      }
+    }
+  },
+  "validation": {
+    "required": "Please fill in this field.",
+    "nameTooShort": "The name must be at least 3 characters.",
+    "nameTooLong": "That name is too long.",
+    "invalidPhone": "Enter the number in +998 format.",
+    "ageTooLow": "That age is too low.",
+    "ageTooHigh": "That age is too high.",
+    "courseRequired": "Choose a course.",
+    "branchRequired": "Choose a branch.",
+    "consentRequired": "Give your consent to continue.",
+    "messageTooShort": "The message must be at least 10 characters.",
+    "passwordRequired": "Enter your password.",
+    "passwordTooShort": "The password must be at least 8 characters.",
+    "passwordTooLong": "That password is too long.",
+    "passwordTooCommon": "That password is too common. Choose another one.",
+    "passwordsDoNotMatch": "The passwords do not match.",
+    "passwordUnchanged": "The new password must differ from the old one.",
+    "invalidOtp": "The code must be 6 digits.",
+    "invalidTotp": "The code must be 6 digits.",
+    "invalidPin": "That PIN is not valid.",
+    "invalidEmail": "That email address is not valid.",
+    "invalidId": "That identifier is not valid.",
+    "invalidBranchId": "That branch is not valid.",
+    "invalidSlug": "That address is not valid.",
+    "slugTooShort": "That address is too short.",
+    "slugTooLong": "That address is too long.",
+    "invalidSort": "That sort order is not valid.",
+    "roleRequired": "Choose a role.",
+    "branchRequiredForRole": "This role needs a branch.",
+    "superadminIsGlobal": "SuperAdmin applies to every branch, so no single branch is chosen."
   }
 }
