@@ -50,7 +50,7 @@ export function TestImport() {
   const [order, setOrder] = useState('1')
   const [passMark, setPassMark] = useState('70')
 
-  const courses = useQuery<{ items: Course[] } | Course[]>('/groups/courses')
+  const courses = useQuery<{ items: Course[] } | Course[]>('/groups/catalog/courses')
   const courseList = Array.isArray(courses.data) ? courses.data : (courses.data?.items ?? [])
 
   const create = useMutation<Record<string, unknown>, { _id: string }>('/tests/modules')

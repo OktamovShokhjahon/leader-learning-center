@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { useTranslations, useLocale } from 'next-intl'
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react'
 import { Check, X, Loader2, ShieldCheck, Inbox } from 'lucide-react'
@@ -47,12 +48,24 @@ export function PaymentApprovals() {
     (body) => `/payments/${body.paymentId}/reject`,
   )
 
+  /** The row currently being decided, so only its two buttons go dead. */
+  const [decidingId, setDecidingId] = useState<string | null>(null)
+
   const act = async (paymentId: string, action: 'approve' | 'reject') => {
-    const result =
-      action === 'approve'
-        ? await approve.mutate({ paymentId })
-        : await reject.mutate({ paymentId, reason: 'rejected_by_admin' })
-    if (result !== null) void refetch()
+    // Money moves here, so a second click on an in-flight row must not send a
+    // second request — the API answers the replay with 409 ALREADY_DECIDED, but
+    // the honest place to stop it is before it leaves.
+    if (decidingId) return
+    setDecidingId(paymentId)
+    try {
+      const result =
+        action === 'approve'
+          ? await approve.mutate({ paymentId })
+          : await reject.mutate({ paymentId, reason: 'rejected_by_admin' })
+      if (result !== null) void refetch()
+    } finally {
+      setDecidingId(null)
+    }
   }
 
   if (loading) return <Loading />
@@ -74,8 +87,11 @@ export function PaymentApprovals() {
           <ul>
             <AnimatePresence initial={false}>
               {pending.map((payment) => {
-                const busy =
-                  (approve.pending || reject.pending) && false /* per-row spinner below */
+                // Only the row being decided is disabled — a shared `pending`
+                // would freeze the whole queue on one click. `&& false` used to
+                // stand here, which disabled nothing and let a double-tap send
+                // two approvals for the same payment.
+                const busy = decidingId === payment._id
                 return (
                   <motion.li
                     key={payment._id}

@@ -30,7 +30,7 @@ leadRouter.get(
   '/',
   // §4.2 — leads are the front desk's job, so this rides on the same grant as
   // the student records they turn into.
-  requirePermission('student.manage'),
+  requirePermission('lead.manage'),
   validateQuery(leadQuerySchema),
   asyncRoute(async (req, res) => {
     const query = res.locals.query as z.infer<typeof leadQuerySchema>
@@ -68,7 +68,7 @@ leadRouter.get(
 /** §7.2 — the counts behind the kanban columns. */
 leadRouter.get(
   '/funnel',
-  requirePermission('student.manage'),
+  requirePermission('lead.manage'),
   asyncRoute(async (_req, res) => {
     const counts = await Lead.aggregate([
       { $match: { deletedAt: null } },

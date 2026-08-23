@@ -58,7 +58,6 @@ const DEMO = 'DemoParol2026!'
 }
 
 const boss = await login('+998123456789', 'a@a@parola@a@A1')
-const admin = await login('+998900000101', DEMO)
 const manager = await login('+998900000102', DEMO)
 const teacher = await login('+998900000103', DEMO)
 
@@ -66,30 +65,30 @@ const teacher = await login('+998900000103', DEMO)
 const bossFinance = await call('/finance/overview', { token: boss })
 check('boss reads finance overview', bossFinance.status === 200)
 
-for (const [role, token] of [['admin', admin], ['manager', manager], ['teacher', teacher]]) {
+for (const [role, token] of [['manager', manager], ['teacher', teacher]]) {
   const denied = await call('/finance/overview', { token })
   check(`${role} gets 403 on finance`, denied.status === 403, `got ${denied.status}`)
 }
 
 // ── Students ──────────────────────────────────────────────────────────────
-const students = await call('/students?limit=5', { token: admin })
-check('admin lists students', students.status === 200 && students.body.data.total >= 15,
+const students = await call('/students?limit=5', { token: manager })
+check('manager lists students', students.status === 200 && students.body.data.total >= 15,
   `total=${students.body.data?.total}`)
 
 const teacherStudents = await call('/students?limit=5', { token: teacher })
 check('teacher cannot list students', teacherStudents.status === 403, `got ${teacherStudents.status}`)
 
 // ── Groups: teacher sees only their own (§4.2) ────────────────────────────
-const adminGroups = await call('/groups', { token: admin })
+const managerGroups = await call('/groups', { token: manager })
 const teacherGroups = await call('/groups', { token: teacher })
-check('admin sees all 4 groups', adminGroups.body.data?.total === 4, `got ${adminGroups.body.data?.total}`)
+check('manager sees all 4 groups', managerGroups.body.data?.total === 4, `got ${managerGroups.body.data?.total}`)
 check('teacher sees only own groups', teacherGroups.body.data?.total === 2,
   `got ${teacherGroups.body.data?.total}`)
 
 // ── Schedule conflict detection (§9.3) ────────────────────────────────────
-const firstGroup = adminGroups.body.data.items[0]
+const firstGroup = managerGroups.body.data.items[0]
 const conflict = await call('/groups', {
-  token: admin,
+  token: manager,
   method: 'POST',
   body: {
     courseId: firstGroup.courseId._id ?? firstGroup.courseId,
@@ -110,7 +109,7 @@ check('conflict names the offending group',
   Boolean(conflict.body.error?.details?.conflicts?.[0]?.groupName),
   conflict.body.error?.details?.conflicts?.[0]?.groupName ?? 'none')
 
-// ── Manager cannot price a group (§4.2 note 1) ────────────────────────────
+// ── Manager prices a group (§4.2 note 1, lifted by ADR 0004) ──────────────
 const managerPriced = await call('/groups', {
   token: manager,
   method: 'POST',
@@ -122,21 +121,34 @@ const managerPriced = await call('/groups', {
     startDate: new Date().toISOString(), capacity: 10, price: 400000,
   },
 })
-check('manager cannot set a group price', managerPriced.status === 403, `got ${managerPriced.status}`)
+check('manager may now set a group price', managerPriced.status === 201,
+  `got ${managerPriced.status} ${managerPriced.body.error?.code ?? ''}`)
+check('the price the manager set is the price stored',
+  managerPriced.body.data?.price === 400000, `price=${managerPriced.body.data?.price}`)
+
+// ── Manager approves a payment, but still cannot refund one (ADR 0004) ────
+const managerRefund = await call('/payments/000000000000000000000000/refund', {
+  token: manager, method: 'POST', body: { reason: 'should never be allowed' },
+})
+check('manager cannot refund', managerRefund.status === 403, `got ${managerRefund.status}`)
+
+const managerApprovals = await call('/payments/pending-approval', { token: manager })
+check('manager may reach the approval queue', managerApprovals.status === 200,
+  `got ${managerApprovals.status}`)
 
 // ── Invoices (§11.1) ──────────────────────────────────────────────────────
 const period = new Date().toISOString().slice(0, 7)
 const dry = await call('/payments/invoices/generate', {
-  token: admin, method: 'POST', body: { period, dryRun: true },
+  token: boss, method: 'POST', body: { period, dryRun: true },
 })
 check('dry run writes nothing', dry.body.data?.created === 0 && dry.body.data?.wouldCreate > 0,
   `wouldCreate=${dry.body.data?.wouldCreate}`)
 
 const run1 = await call('/payments/invoices/generate', {
-  token: admin, method: 'POST', body: { period },
+  token: boss, method: 'POST', body: { period },
 })
 const run2 = await call('/payments/invoices/generate', {
-  token: admin, method: 'POST', body: { period },
+  token: boss, method: 'POST', body: { period },
 })
 check('invoice run creates invoices', run1.body.data?.created > 0, `created=${run1.body.data?.created}`)
 check('re-running creates none (idempotent)', run2.body.data?.created === 0,
@@ -169,14 +181,14 @@ check('debt fell by the amount paid',
   `${target.debt} → ${afterPay.body.data[0].debt}`)
 
 // partial payment leaves the invoice partial, not paid
-const invoices = await call(`/payments/invoices?studentId=${target._id}`, { token: admin })
+const invoices = await call(`/payments/invoices?studentId=${target._id}`, { token: manager })
 const invoice = invoices.body.data.items[0]
 check('partial payment marks invoice partial', invoice.status === 'partial' || invoice.status === 'overdue',
   `status=${invoice.status}, paid=${invoice.paidAmount}/${invoice.finalAmount}`)
 
 // ── Debtors (§11.3) ───────────────────────────────────────────────────────
-const debtors = await call('/payments/debtors', { token: admin })
-check('admin sees debtor amounts', debtors.status === 200 && typeof debtors.body.data.totalDebt === 'number',
+const debtors = await call('/payments/debtors', { token: manager })
+check('manager sees debtor amounts', debtors.status === 200 && typeof debtors.body.data.totalDebt === 'number',
   `count=${debtors.body.data?.total}, totalDebt=${debtors.body.data?.totalDebt}`)
 
 const teacherDebtors = await call('/payments/debtors', { token: teacher })
@@ -217,13 +229,13 @@ if (roster.body.data.lesson) {
 
 // ── Refund is a new document, original untouched (§11.2) ──────────────────
 const refund = await call(`/payments/${pay1.body.data.payment._id}/refund`, {
-  token: admin, method: 'POST', body: { reason: 'Smoke test reversal' },
+  token: boss, method: 'POST', body: { reason: 'Smoke test reversal' },
 })
 check('refund creates a negative counter-document',
   refund.status === 201 && refund.body.data?.amount === -300000,
   `amount=${refund.body.data?.amount}`)
 
-const original = await call(`/payments?studentId=${target._id}`, { token: admin })
+const original = await call(`/payments?studentId=${target._id}`, { token: manager })
 const originalRow = original.body.data.items.find((p) => p._id === pay1.body.data.payment._id)
 check('original payment is unchanged', originalRow?.amount === 300000, `amount=${originalRow?.amount}`)
 

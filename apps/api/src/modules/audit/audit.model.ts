@@ -1,5 +1,4 @@
 import { Schema, model, type InferSchemaType } from 'mongoose'
-import { ROLES } from '@leader/shared/permissions'
 
 /**
  * TZ §21.3 / §22 — `auditLogs`.
@@ -14,8 +13,13 @@ import { ROLES } from '@leader/shared/permissions'
 const auditLogSchema = new Schema(
   {
     actorId: { type: Schema.Types.ObjectId, ref: 'User', index: true },
-    /** Denormalised so the log still reads correctly after a role change. */
-    role: { type: String, enum: ROLES },
+    /**
+     * Denormalised so the log still reads correctly after a role change, and
+     * deliberately **not** pinned to the `ROLES` enum: §21.3 retains these rows
+     * for three years, so an entry written by a role that has since been
+     * retired — `admin`, say — must stay writable and readable.
+     */
+    role: { type: String },
     actorName: String,
     branchId: { type: Schema.Types.ObjectId, ref: 'Branch', index: true },
 

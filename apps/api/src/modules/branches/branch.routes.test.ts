@@ -93,9 +93,9 @@ describe('POST /branches (§4.2 — SuperAdmin only)', () => {
 
   it('refuses an Admin', async () => {
     const branch = await Branch.create({ slug: 'urganch', name: { uz: 'Urganch' } })
-    const admin = await makeActor('admin', branch._id)
+    const manager = await makeActor('manager', branch._id)
 
-    await request(app).post('/api/v1/branches').set(auth(admin.token)).send(validBranch).expect(403)
+    await request(app).post('/api/v1/branches').set(auth(manager.token)).send(validBranch).expect(403)
   })
 
   it('refuses an anonymous request', async () => {
@@ -140,9 +140,9 @@ describe('GET /branches — visibility', () => {
   it('shows an Admin only the branches they hold a role in', async () => {
     const own = await Branch.create({ slug: 'urganch', name: { uz: 'Urganch' } })
     await Branch.create({ slug: 'xiva', name: { uz: 'Xiva' } })
-    const admin = await makeActor('admin', own._id)
+    const manager = await makeActor('manager', own._id)
 
-    const response = await request(app).get('/api/v1/branches').set(auth(admin.token)).expect(200)
+    const response = await request(app).get('/api/v1/branches').set(auth(manager.token)).expect(200)
 
     expect(response.body.data.total).toBe(1)
     expect(response.body.data.items[0].slug).toBe('urganch')
@@ -151,10 +151,10 @@ describe('GET /branches — visibility', () => {
   it('answers 404, not 403, when an Admin asks for another branch by id', async () => {
     const own = await Branch.create({ slug: 'urganch', name: { uz: 'Urganch' } })
     const other = await Branch.create({ slug: 'xiva', name: { uz: 'Xiva' } })
-    const admin = await makeActor('admin', own._id)
+    const manager = await makeActor('manager', own._id)
 
     // A 403 would confirm the branch exists; that is not an Admin's business.
-    await request(app).get(`/api/v1/branches/${other.id}`).set(auth(admin.token)).expect(404)
+    await request(app).get(`/api/v1/branches/${other.id}`).set(auth(manager.token)).expect(404)
   })
 
   it('shows a SuperAdmin every branch', async () => {
@@ -226,7 +226,7 @@ describe('branch scoping (§5.1)', () => {
       })
     }
 
-    const admin = await makeActor('admin', own._id)
+    const manager = await makeActor('manager', own._id)
 
     // Read through the scope the API itself installs for this session. The query
     // is awaited *inside* the callback, exactly as a controller does downstream
@@ -234,13 +234,13 @@ describe('branch scoping (§5.1)', () => {
     // would run its hooks outside the AsyncLocalStorage context and see nothing.
     const { runWithScope, withAllBranches } = await import('../../middleware/branch-scope.js')
 
-    const visible = await runWithScope({ branchId: own.id, role: 'admin' }, async () =>
+    const visible = await runWithScope({ branchId: own.id, role: 'manager' }, async () =>
       Lead.find({}).lean(),
     )
 
     expect(visible).toHaveLength(1)
     expect(visible[0]!.branchSlug).toBe('urganch')
-    expect(admin.token).toBeTruthy()
+    expect(manager.token).toBeTruthy()
 
     // The consolidated SuperAdmin scope is the documented single exception.
     const consolidated = await runWithScope({ branchId: own.id, role: 'superadmin' }, async () =>

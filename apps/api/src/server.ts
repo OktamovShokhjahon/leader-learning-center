@@ -2,8 +2,7 @@ import { createApp } from './app.js'
 import { env } from './config/env.js'
 import { logger } from './config/logger.js'
 import { connectDatabase, disconnectDatabase, assertTransactionSupport } from './config/db.js'
-import { seedBranches } from './seed/seed-branches.js'
-import { seedSuperadmin } from './seed/seed-superadmin.js'
+import { seedBranches, seedSuperadmin } from './seed/index.js'
 
 async function main() {
   let dbReady = false

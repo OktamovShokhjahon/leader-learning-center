@@ -85,7 +85,7 @@ paymentRouter.get(
 /** §11.1 — the monthly run. Manual trigger mirrors the nightly job. */
 paymentRouter.post(
   '/invoices/generate',
-  requireRole('superadmin', 'admin'),
+  requireRole('superadmin'),
   validateBody(generateInvoicesSchema),
   asyncRoute(async (req, res) => {
     const result = await generateInvoices(req.body.period, {
@@ -98,7 +98,7 @@ paymentRouter.post(
 
 paymentRouter.post(
   '/invoices/recalculate',
-  requireRole('superadmin', 'admin'),
+  requireRole('superadmin'),
   asyncRoute(async (_req, res) => {
     res.json({ data: await recalculateOverdue() })
   }),

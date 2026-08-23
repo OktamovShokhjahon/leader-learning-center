@@ -46,7 +46,7 @@ async function makeUser(overrides: Record<string, unknown> = {}) {
     fullName: 'Umarbek Ulugbekovich',
     phone: '+998901112233',
     passwordHash: await hashPassword(PASSWORD),
-    roles: [{ role: 'admin', branchId: (await makeBranch())._id }],
+    roles: [{ role: 'manager', branchId: (await makeBranch())._id }],
     ...overrides,
   })
 }
@@ -77,7 +77,7 @@ describe('POST /auth/login', () => {
       .expect(200)
 
     expect(response.body.data.accessToken).toBeTypeOf('string')
-    expect(response.body.data.user.activeRole).toBe('admin')
+    expect(response.body.data.user.activeRole).toBe('manager')
 
     const cookies = response.headers['set-cookie'] as unknown as string[]
     const refresh = cookies.find((cookie) => cookie.startsWith(REFRESH_COOKIE))!
@@ -256,7 +256,7 @@ describe('GET /auth/me and the session list', () => {
       .expect(200)
 
     expect(response.body.data.phone).toBe('+998901112233')
-    expect(response.body.data.activeRole).toBe('admin')
+    expect(response.body.data.activeRole).toBe('manager')
     expect(response.body.data.roles[0].branchName).toBe('Urganch — Markaziy')
     // The response must never carry anything password- or secret-shaped.
     expect(JSON.stringify(response.body)).not.toMatch(/passwordHash|argon2|secret/i)

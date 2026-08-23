@@ -40,7 +40,7 @@ type NavItem = {
  * is a convenience, never the control (§4.3).
  */
 const ITEMS: NavItem[] = [
-  { href: '/crm', key: 'dashboard', Icon: LayoutDashboard, roles: ['admin', 'manager', 'teacher'] },
+  { href: '/crm', key: 'dashboard', Icon: LayoutDashboard, roles: ['manager', 'teacher'] },
   { href: '/crm/groups', key: 'groups', Icon: CalendarCheck, action: 'attendance.mark' },
   { href: '/crm/students', key: 'students', Icon: Users, action: 'student.manage' },
   { href: '/crm/payments', key: 'payments', Icon: Wallet, action: 'payment.accept' },

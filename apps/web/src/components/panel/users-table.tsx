@@ -326,8 +326,7 @@ export function UsersTable() {
 /** Rank read as colour: the higher the role, the warmer the pill. */
 const ROLE_TONE: Record<Role, string> = {
   superadmin: 'bg-clay-500/15 text-clay-600 dark:text-clay-300',
-  admin: 'bg-navy-600/12 text-navy-700 dark:text-navy-100',
-  manager: 'bg-glaze-50 text-glaze-800 dark:bg-navy-800 dark:text-glaze-200',
+  manager: 'bg-navy-600/12 text-navy-700 dark:text-navy-100',
   teacher: 'bg-info/12 text-info',
   student: 'bg-navy-50 text-ink-soft dark:bg-navy-800 dark:text-navy-200',
   parent: 'bg-navy-50 text-ink-soft dark:bg-navy-800 dark:text-navy-200',

@@ -76,7 +76,7 @@ export function LoginForm() {
       }
 
       const role: Role | undefined = body?.data?.user?.roles?.[0]?.role
-      router.replace(role ? HOME_PANEL[role] : '/')
+      router.replace((role && HOME_PANEL[role]) || '/')
     } catch {
       setErrorCode('UPSTREAM_UNAVAILABLE')
       setStatus('error')

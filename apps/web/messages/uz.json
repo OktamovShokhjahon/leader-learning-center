@@ -393,7 +393,6 @@
     "underConstruction": "O‘quvchilar, guruhlar, davomat, to‘lovlar, jarimalar va moliya bo‘limlari keyingi bosqichlarda ishga tushiriladi.",
     "roles": {
       "superadmin": "SuperAdmin",
-      "admin": "Administrator",
       "manager": "Menejer",
       "teacher": "O‘qituvchi",
       "student": "O‘quvchi",
@@ -820,7 +819,6 @@
       },
       "role": {
         "superadmin": "SuperAdmin",
-        "admin": "Administrator",
         "manager": "Menejer",
         "teacher": "O‘qituvchi",
         "student": "O‘quvchi",

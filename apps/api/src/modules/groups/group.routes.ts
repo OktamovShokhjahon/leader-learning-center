@@ -12,7 +12,7 @@ import {
   parseSort,
 } from '@leader/shared/schemas'
 import { ApiError } from '@leader/shared/errors'
-import { DEFAULT_LIMITS } from '@leader/shared/permissions'
+import { DEFAULT_LIMITS, can } from '@leader/shared/permissions'
 import { validateBody, validateQuery } from '../../middleware/validate.js'
 import { asyncRoute } from '../../middleware/error-handler.js'
 import {
@@ -20,7 +20,6 @@ import {
   requirePermission,
   requireFullGrant,
   currentUser,
-  isSuperadmin,
 } from '../../middleware/auth.js'
 import { allowSelfOr } from '../../middleware/self-access.js'
 import { recordAudit } from '../audit/audit.service.js'
@@ -125,11 +124,10 @@ groupRouter.post(
   asyncRoute(async (req, res) => {
     const actor = currentUser(req)
 
-    // §4.2 note 1 — "Manager may create a group but cannot set its price."
-    const canPrice = isSuperadmin(actor) || actor.roles.some((r) => r.role === 'admin')
-    if (req.body.price !== undefined && !canPrice) {
-      throw ApiError.forbidden('Only an Admin or SuperAdmin can set a group price')
-    }
+    // §4.2 note 1 ("Manager may create a group but cannot set its price") was
+    // lifted with the Admin role — a Manager assembles the group, so they price
+    // it too. `group.manage` is now a full grant for everyone who holds it, and
+    // the route guard above is the whole check (ADR 0004).
 
     // §9.3 — block the save and name the conflict.
     const conflicts = await findScheduleConflicts({
@@ -158,7 +156,7 @@ groupRouter.post(
       startDate: req.body.startDate,
       endDate: req.body.endDate,
       capacity: req.body.capacity,
-      price: canPrice ? (req.body.price ?? 0) : 0,
+      price: req.body.price ?? 0,
       teacherShare: req.body.teacherShare ?? DEFAULT_LIMITS.teacherShare,
       status: req.body.status,
       createdBy: actor._id,
@@ -188,10 +186,6 @@ groupRouter.patch(
     const group = await Group.findOne({ _id: req.params.id, deletedAt: null })
     if (!group) throw ApiError.notFound('Group not found')
 
-    const canPrice = isSuperadmin(actor) || actor.roles.some((r) => r.role === 'admin')
-    if (req.body.price !== undefined && !canPrice) {
-      throw ApiError.forbidden('Only an Admin or SuperAdmin can set a group price')
-    }
 
     // Re-check the slot whenever timing, teacher or room moves.
     const touchesSlot =
@@ -392,9 +386,7 @@ groupRouter.post(
     const ageHours = (Date.now() - lesson.date.getTime()) / (1000 * 60 * 60)
     const windowHours = DEFAULT_LIMITS.attendanceEditWindowHours
     if (ageHours > windowHours) {
-      const roles = actor.roles.map((assignment) => assignment.role)
-      const mayEditLate = roles.includes('admin') || roles.includes('superadmin')
-      if (!mayEditLate) {
+      if (!can(req.role!, 'attendance.editAfter48h')) {
         throw ApiError.forbidden(
           `Attendance closed ${windowHours} h after the lesson. Ask an administrator.`,
         )

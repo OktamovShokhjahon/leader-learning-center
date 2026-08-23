@@ -393,7 +393,6 @@
     "underConstruction": "Students, groups, attendance, payments, fines and finance arrive in the coming phases.",
     "roles": {
       "superadmin": "SuperAdmin",
-      "admin": "Administrator",
       "manager": "Manager",
       "teacher": "Teacher",
       "student": "Student",
@@ -820,7 +819,6 @@
       },
       "role": {
         "superadmin": "SuperAdmin",
-        "admin": "Administrator",
         "manager": "Manager",
         "teacher": "Teacher",
         "student": "Student",
