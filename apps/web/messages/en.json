@@ -389,27 +389,12 @@
     "twoFactorOn": "Two-factor authentication is on.",
     "twoFactorOff": "Two-factor authentication is off. Turning it on is recommended.",
     "roleMismatch": "This section is not for your role. Go to the one that is.",
-    "mustChangePassword": "You need to change your password.",
-    "underConstruction": "Students, groups, attendance, payments, fines and finance arrive in the coming phases.",
     "roles": {
       "superadmin": "SuperAdmin",
-      "admin": "Administrator",
       "manager": "Manager",
       "teacher": "Teacher",
       "student": "Student",
       "parent": "Parent"
-    },
-    "password": {
-      "title": "Change password",
-      "current": "Current password",
-      "next": "New password",
-      "confirm": "Repeat the new password",
-      "hint": "At least 8 characters. Common passwords are rejected.",
-      "submit": "Change password",
-      "wrongCurrent": "That current password is not correct.",
-      "failed": "The password could not be changed. Please try again.",
-      "doneTitle": "Password changed",
-      "doneBody": "Sessions on every other device have been ended."
     },
     "nav": {
       "label": "Panel navigation",
@@ -423,7 +408,16 @@
       "account": "My account",
       "approvals": "Approvals",
       "modules": "Modules",
-      "tests": "Tests"
+      "tests": "Tests",
+      "staff": "Accounts",
+      "leads": "Leads",
+      "expenses": "Expenses",
+      "fines": "Fines",
+      "courses": "Courses",
+      "payroll": "Payroll",
+      "branches": "Branches",
+      "settings": "Settings",
+      "audit": "Audit"
     },
     "errors": {
       "FORBIDDEN": "This section is not open to your role.",
@@ -434,7 +428,9 @@
       "SCHEDULE_CONFLICT": "That slot is already taken.",
       "GROUP_FULL": "That group is full.",
       "UPSTREAM_UNAVAILABLE": "Could not reach the server.",
-      "UNKNOWN": "Something went wrong. Please try again."
+      "UNKNOWN": "Something went wrong. Please try again.",
+      "DUPLICATE_PHONE": "An account with this phone already exists.",
+      "BRANCH_SCOPE_REQUIRED": "Pick a single branch first — this action writes into one."
     },
     "pages": {
       "dashboard": {
@@ -475,7 +471,7 @@
       "account": {
         "eyebrow": "Account",
         "title": "My account",
-        "subtitle": "Access, devices and password."
+        "subtitle": "Access and active devices."
       },
       "student": {
         "eyebrow": "Student",
@@ -505,6 +501,51 @@
         "eyebrow": "Online",
         "title": "Tests",
         "subtitle": "Import from a file and publish it as a module."
+      },
+      "staff": {
+        "eyebrow": "Access",
+        "title": "Accounts",
+        "subtitle": "Open an account, set its roles, reset a password."
+      },
+      "leads": {
+        "eyebrow": "Sales",
+        "title": "Leads",
+        "subtitle": "Who applied, and what happens next."
+      },
+      "expenses": {
+        "eyebrow": "Finance",
+        "title": "Expenses",
+        "subtitle": "Quick add, approval and summary."
+      },
+      "fines": {
+        "eyebrow": "Control",
+        "title": "Fines",
+        "subtitle": "Student and employee fines."
+      },
+      "courses": {
+        "eyebrow": "Catalogue",
+        "title": "Courses and rooms",
+        "subtitle": "Everything a group needs to exist."
+      },
+      "settings": {
+        "eyebrow": "System",
+        "title": "Settings",
+        "subtitle": "Ceilings, thresholds and integrations."
+      },
+      "audit": {
+        "eyebrow": "System",
+        "title": "Audit log",
+        "subtitle": "Who did what, and when."
+      },
+      "payroll": {
+        "eyebrow": "Finance",
+        "title": "Payroll",
+        "subtitle": "Salary schemes and the monthly run."
+      },
+      "branches": {
+        "eyebrow": "Organisation",
+        "title": "Branches",
+        "subtitle": "What the whole system is scoped by."
       }
     },
     "dashboard": {
@@ -601,7 +642,9 @@
         "completed": "Completed",
         "frozen": "Frozen",
         "dropped": "Dropped"
-      }
+      },
+      "create": "New student",
+      "edit": "Edit"
     },
     "groups": {
       "none": "No groups",
@@ -615,6 +658,18 @@
         "fri": "Fri",
         "sat": "Sat",
         "sun": "Sun"
+      },
+      "create": "New group",
+      "edit": "Edit",
+      "archive": "Archive",
+      "archiveTitle": "Archive group",
+      "archiveBody": "“{name}” will be archived. History is kept; future lessons are cancelled.",
+      "filter": {
+        "active": "Active",
+        "planned": "Planned",
+        "finished": "Finished",
+        "archived": "Archived",
+        "all": "All"
       }
     },
     "finance": {
@@ -698,7 +753,8 @@
         "payme": "Payme",
         "click": "Click",
         "uzum": "Uzum"
-      }
+      },
+      "modules": "Online modules"
     },
     "tests": {
       "noModules": "No online modules have been added to this course yet.",
@@ -767,7 +823,412 @@
         "noPrompt": "no question text",
         "unclosedBlock": "brace never closed"
       }
-    }
+    },
+    "staff": {
+      "searchPlaceholder": "Name, phone or email…",
+      "create": "New account",
+      "manage": "Manage",
+      "close": "Close",
+      "none": "No accounts found",
+      "count": "{n} accounts",
+      "person": "Person",
+      "phone": "Phone",
+      "rolesLabel": "Roles",
+      "statusLabel": "Status",
+      "actions": "",
+      "roleAll": "All roles",
+      "branchAll": "All branches",
+      "allBranches": "All branches",
+      "outranked": "Above your role",
+      "twoFactorOn": "Two-factor authentication is on",
+      "prev": "Previous",
+      "next": "Next",
+      "fullName": "Full name",
+      "password": "Password",
+      "passwordHint": "At least 8 characters. Give it to the person — they change it at first login.",
+      "newPassword": "New password",
+      "email": "Email",
+      "locale": "Interface language",
+      "chooseBranch": "Choose a branch",
+      "addRole": "Add a role",
+      "removeRole": "Remove this role",
+      "saveProfile": "Save details",
+      "saveRoles": "Save roles",
+      "rolesSignOutWarning": "Changing roles signs this account out of every device.",
+      "cannotEditOwnRoles": "You cannot change your own roles.",
+      "resetPassword": "Set this password",
+      "resetHint": "Every device is signed out and the person must change it at next login.",
+      "deactivate": "Deactivate account",
+      "reactivate": "Reactivate account",
+      "deactivateHint": "The record is kept — lessons, payments and the audit trail point at it. Only access is withdrawn.",
+      "saved": "Saved",
+      "status": {
+        "active": "Active",
+        "inactive": "Deactivated"
+      },
+      "role": {
+        "superadmin": "SuperAdmin",
+        "manager": "Manager",
+        "teacher": "Teacher",
+        "student": "Student",
+        "parent": "Parent"
+      }
+    },
+    "form": {
+      "close": "Close",
+      "cancel": "Cancel",
+      "prev": "Previous",
+      "next": "Next"
+    },
+    "courses": {
+      "searchPlaceholder": "Course name or address…",
+      "create": "New course",
+      "edit": "Edit",
+      "save": "Save",
+      "delete": "Delete",
+      "none": "No courses found",
+      "count": "{n} courses",
+      "name": "Name",
+      "slug": "Address (slug)",
+      "slugHint": "Appears in the site address: /courses/general-english",
+      "description": "Description",
+      "level": "Level",
+      "duration": "Duration",
+      "months": "{n} months",
+      "defaultPrice": "Default price",
+      "priceHint": "The real price lives on the group, per branch.",
+      "order": "Order",
+      "orderHint": "Where it sits in the list",
+      "visibility": "Visibility",
+      "public": "Public",
+      "hidden": "Hidden",
+      "publicHint": "Shows in the course list on the public site.",
+      "deleteTitle": "Delete course",
+      "deleteBody": "“{name}” will be deleted. Refused while active groups teach it."
+    },
+    "rooms": {
+      "title": "Rooms",
+      "create": "New room",
+      "edit": "Edit",
+      "save": "Save",
+      "delete": "Delete",
+      "none": "No rooms yet",
+      "name": "Name",
+      "capacity": "Capacity",
+      "equipment": "Equipment",
+      "equipmentHint": "Comma separated: projector, whiteboard",
+      "deleteTitle": "Delete room",
+      "deleteBody": "“{name}” will be deleted. Refused while it is timetabled."
+    },
+    "groupForm": {
+      "create": "New group",
+      "save": "Save",
+      "name": "Group name",
+      "course": "Course",
+      "teacher": "Teacher",
+      "room": "Room",
+      "noRoom": "No room",
+      "choose": "Choose",
+      "capacity": "Capacity",
+      "pattern": "Pattern",
+      "patternHint": "Picking a pattern fills in the weekdays.",
+      "patterns": {
+        "har_kun": "Every day",
+        "toq": "Odd days",
+        "juft": "Even days",
+        "custom": "Custom"
+      },
+      "days": "Lesson days",
+      "weekday": {
+        "1": "Mon",
+        "2": "Tue",
+        "3": "Wed",
+        "4": "Thu",
+        "5": "Fri",
+        "6": "Sat",
+        "7": "Sun"
+      },
+      "startTime": "Starts",
+      "endTime": "Ends",
+      "startDate": "Start date",
+      "endDate": "End date",
+      "endDateHint": "Left empty, it follows the course duration.",
+      "price": "Price",
+      "priceHint": "The monthly fee for this branch.",
+      "status": "Status",
+      "statuses": {
+        "planned": "Planned",
+        "active": "Active",
+        "finished": "Finished",
+        "archived": "Archived"
+      },
+      "conflict": "That slot is taken by “{group}”. Pick another time or room."
+    },
+    "studentForm": {
+      "create": "New student",
+      "save": "Save",
+      "saved": "Saved",
+      "choose": "Choose",
+      "fullName": "Full name",
+      "phone": "Phone",
+      "telegram": "Telegram",
+      "parentName": "Parent name",
+      "parentPhone": "Parent phone",
+      "birthDate": "Date of birth",
+      "gender": "Gender",
+      "genders": {
+        "male": "Boy",
+        "female": "Girl",
+        "other": "Other"
+      },
+      "age": "Age",
+      "schoolClass": "School class",
+      "joinedAt": "Joined",
+      "address": "Address",
+      "status": "Status",
+      "notes": "Notes",
+      "monthlyFee": "Monthly fee",
+      "feeHint": "Before any discount.",
+      "statuses": {
+        "active": "Active",
+        "pending": "Pending",
+        "overdue": "Overdue",
+        "paid": "Paid",
+        "completed": "Completed",
+        "frozen": "Frozen",
+        "dropped": "Dropped"
+      },
+      "dropReason": "Reason for leaving",
+      "reasonRequired": "A reason is required.",
+      "dropReasons": {
+        "price": "Price",
+        "moved": "Moved away",
+        "dissatisfied": "Dissatisfied",
+        "other": "Other"
+      },
+      "freeze": "Freeze",
+      "unfreeze": "Unfreeze",
+      "freezeHint": "A frozen student is not invoiced.",
+      "transfer": "Transfer",
+      "toBranch": "To branch",
+      "sameBranch": "Stays in this branch",
+      "toGroup": "To group",
+      "noGroup": "No group",
+      "confirmTransfer": "Confirm transfer",
+      "transferHint": "Unpaid invoices follow the student; settled ones stay with the branch that took the money."
+    },
+    "leads": {
+      "none": "No leads",
+      "returning": "Returning",
+      "phone": "Phone",
+      "source": "Source",
+      "age": "Age",
+      "course": "Course",
+      "call": "Call",
+      "telegram": "Telegram",
+      "statusLabel": "Status",
+      "save": "Save",
+      "rejectReason": "Reason for refusal",
+      "nextAction": "Next action date",
+      "nextActionHint": "Trial lesson or a follow-up call.",
+      "scheduleTrial": "Book a trial lesson",
+      "convert": "Convert to student",
+      "convertTitle": "Convert {name}",
+      "group": "Group",
+      "groupHint": "Enrol straight away (optional).",
+      "noGroup": "No group",
+      "monthlyFee": "Monthly fee",
+      "createLogin": "Open a cabinet login",
+      "createLoginHint": "The student can sign in to their cabinet.",
+      "password": "Password",
+      "passwordHint": "At least 8 characters. Changed at first login.",
+      "status": {
+        "yangi": "New",
+        "boglanildi": "Contacted",
+        "sinov_darsiga_yozildi": "Trial booked",
+        "sinov_darsida_qatnashdi": "Attended trial",
+        "oquvchi_boldi": "Became a student",
+        "rad_etdi": "Refused"
+      }
+    },
+    "expenses": {
+      "add": "+ Expense",
+      "save": "Save",
+      "all": "All",
+      "none": "No expenses",
+      "count": "{n} records",
+      "total": "Total:",
+      "date": "Date",
+      "category": "Category",
+      "comment": "Comment",
+      "amount": "Amount",
+      "statusLabel": "Status",
+      "approve": "Approve",
+      "reject": "Reject",
+      "status": {
+        "draft": "Draft",
+        "pending_approval": "Awaiting approval",
+        "approved": "Approved",
+        "rejected": "Rejected"
+      },
+      "ceilingHint": "Anything above the ceiling goes to the boss for approval."
+    },
+    "fines": {
+      "issue": "Issue a fine",
+      "none": "No fines",
+      "count": "{n} fines",
+      "total": "Total:",
+      "allTargets": "All",
+      "date": "Date",
+      "target": "Target",
+      "person": "Person",
+      "choose": "Choose",
+      "reason": "Reason",
+      "reasonHint": "At least 10 characters — so it still makes sense months later.",
+      "amount": "Amount",
+      "statusLabel": "Status",
+      "cancel": "Cancel",
+      "cancelTitle": "Cancel this fine",
+      "cancelBody": "The fine for {name} will be cancelled. The record is kept.",
+      "cancelReason": "Reason for cancelling",
+      "issueHint": "Issuing records the debt; a student fine lands on their next invoice, an employee fine on payroll.",
+      "targets": {
+        "student": "Student",
+        "employee": "Employee"
+      },
+      "statuses": {
+        "issued": "Issued",
+        "paid": "Paid",
+        "cancelled": "Cancelled",
+        "appealed": "Appealed",
+        "waived": "Waived"
+      }
+    },
+    "payroll": {
+      "runs": "Runs",
+      "schemes": "Schemes",
+      "calculate": "Calculate",
+      "newScheme": "New scheme",
+      "editScheme": "Edit scheme",
+      "none": "No payroll for this month",
+      "noSchemes": "No schemes set",
+      "person": "Employee",
+      "scheme": "Scheme",
+      "schemeHint": "How the salary is worked out.",
+      "gross": "Gross",
+      "deductions": "Deductions",
+      "net": "Net",
+      "statusLabel": "Status",
+      "approve": "Approve",
+      "markPaid": "Mark paid",
+      "edit": "Edit",
+      "save": "Save",
+      "choose": "Choose",
+      "base": "Base",
+      "share": "Share",
+      "shareHint": "0.6 means 60% of what was collected.",
+      "rate": "Rate",
+      "rateHint": "Per lesson, or per student.",
+      "unknown": "Unknown",
+      "collected": "Collected",
+      "lessons": "Lessons",
+      "students": "Students",
+      "payments": "Payments",
+      "schemeNames": {
+        "fixed": "Fixed",
+        "percentage": "Percentage",
+        "per_lesson": "Per lesson",
+        "per_student": "Per student",
+        "mixed": "Mixed"
+      },
+      "statuses": {
+        "draft": "Draft",
+        "approved": "Approved",
+        "paid": "Paid"
+      }
+    },
+    "branches": {
+      "create": "New branch",
+      "edit": "Edit",
+      "save": "Save",
+      "none": "No branches",
+      "count": "{n} branches",
+      "name": "Name",
+      "slug": "Address (slug)",
+      "slugHint": "Appears in the site address and never changes after.",
+      "city": "City",
+      "address": "Address",
+      "workingHours": "Working hours",
+      "phones": "Phones",
+      "phonesHint": "Comma separated.",
+      "email": "Email",
+      "statusLabel": "Status",
+      "active": "Active",
+      "archived": "Archived",
+      "archive": "Archive",
+      "archiveTitle": "Archive branch",
+      "archiveBody": "“{name}” will be archived. The data is kept."
+    },
+    "settings": {
+      "scope": "Scope:",
+      "centreWide": "Whole centre",
+      "save": "Save",
+      "saved": "Saved",
+      "reset": "Reset",
+      "default": "Default",
+      "overridden": "Overridden",
+      "secretPlaceholder": "Enter a new value",
+      "globalOnly": "This setting is centre-wide and cannot be overridden per branch.",
+      "groups": {
+        "money": "Money",
+        "academic": "Academic",
+        "notifications": "Notifications",
+        "integrations": "Integrations",
+        "content": "Content"
+      },
+      "keys": {
+        "money_discountCeilingPercent": "Discount ceiling",
+        "money_expenseApprovalCeiling": "Expense approval ceiling",
+        "money_pettyCashCeiling": "Manager petty-cash ceiling",
+        "money_overdueGraceDays": "Overdue grace days",
+        "money_defaultTeacherShare": "Default teacher share",
+        "money_invoiceDayOfMonth": "Invoice day of month",
+        "academic_attendanceEditWindowHours": "Attendance edit window (hours)",
+        "academic_lowAttendanceThresholdPercent": "Low attendance threshold",
+        "academic_absenceStreakAlert": "Consecutive absence alert",
+        "academic_holidays": "Public holidays",
+        "academic_anonymiseLeaderboard": "Hide names on the leaderboard",
+        "fines_autoIssueEnabled": "Issue fines automatically",
+        "notify_smsEnabled": "SMS enabled",
+        "notify_telegramEnabled": "Telegram enabled",
+        "notify_quietHours": "Quiet hours",
+        "notify_reminderOffsetDays": "Reminder days",
+        "integration_eskizToken": "Eskiz.uz token",
+        "integration_eskizSender": "Eskiz.uz sender name",
+        "integration_telegramBotToken": "Telegram bot token",
+        "content_showResultsWall": "Show the results wall",
+        "content_defaultLocale": "Default language"
+      }
+    },
+    "audit": {
+      "searchPlaceholder": "Name, action or path…",
+      "allActions": "All actions",
+      "denied": "Denied",
+      "none": "No entries",
+      "count": "{n} entries",
+      "when": "When",
+      "who": "Who",
+      "action": "Action",
+      "entity": "Entity",
+      "outcome": "Outcome",
+      "retentionNote": "Kept for 3 years, and not deletable by anyone — the boss included."
+    },
+    "branchSwitcher": {
+      "allBranches": "All branches",
+      "allBranchesHint": "For reports; nothing can be created in this mode",
+      "pickOne": "Pick a branch"
+    },
+    "passwordPolicy": "Your password is issued and rotated by the centre administration. You cannot change it yourself — if you have forgotten it, ask an administrator."
   },
   "validation": {
     "required": "Please fill in this field.",

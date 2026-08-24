@@ -17,6 +17,7 @@ import {
   requirePermission,
   requireFullGrant,
   requireRole,
+  writeGuards,
   currentUser,
 } from '../../middleware/auth.js'
 import { Invoice, Payment } from './invoice.model.js'
@@ -85,7 +86,7 @@ paymentRouter.get(
 /** §11.1 — the monthly run. Manual trigger mirrors the nightly job. */
 paymentRouter.post(
   '/invoices/generate',
-  requireRole('superadmin', 'admin'),
+  requireRole('superadmin'),
   validateBody(generateInvoicesSchema),
   asyncRoute(async (req, res) => {
     const result = await generateInvoices(req.body.period, {
@@ -98,7 +99,7 @@ paymentRouter.post(
 
 paymentRouter.post(
   '/invoices/recalculate',
-  requireRole('superadmin', 'admin'),
+  requireRole('superadmin'),
   asyncRoute(async (_req, res) => {
     res.json({ data: await recalculateOverdue() })
   }),
@@ -110,7 +111,8 @@ paymentRouter.post(
  */
 paymentRouter.post(
   '/',
-  requirePermission('payment.accept'),
+  // §5.1 — money must land in a named branch, never in the consolidated scope.
+  ...writeGuards('payment.accept'),
   validateBody(acceptPaymentSchema),
   asyncRoute(async (req, res) => {
     const { payment, replayed } = await acceptPayment(req.body, currentUser(req).id)

@@ -46,7 +46,7 @@ async function makeUser(overrides: Record<string, unknown> = {}) {
     fullName: 'Umarbek Ulugbekovich',
     phone: '+998901112233',
     passwordHash: await hashPassword(PASSWORD),
-    roles: [{ role: 'admin', branchId: (await makeBranch())._id }],
+    roles: [{ role: 'manager', branchId: (await makeBranch())._id }],
     ...overrides,
   })
 }
@@ -77,7 +77,7 @@ describe('POST /auth/login', () => {
       .expect(200)
 
     expect(response.body.data.accessToken).toBeTypeOf('string')
-    expect(response.body.data.user.activeRole).toBe('admin')
+    expect(response.body.data.user.activeRole).toBe('manager')
 
     const cookies = response.headers['set-cookie'] as unknown as string[]
     const refresh = cookies.find((cookie) => cookie.startsWith(REFRESH_COOKIE))!
@@ -256,7 +256,7 @@ describe('GET /auth/me and the session list', () => {
       .expect(200)
 
     expect(response.body.data.phone).toBe('+998901112233')
-    expect(response.body.data.activeRole).toBe('admin')
+    expect(response.body.data.activeRole).toBe('manager')
     expect(response.body.data.roles[0].branchName).toBe('Urganch — Markaziy')
     // The response must never carry anything password- or secret-shaped.
     expect(JSON.stringify(response.body)).not.toMatch(/passwordHash|argon2|secret/i)
@@ -307,64 +307,49 @@ describe('GET /auth/me and the session list', () => {
   })
 })
 
-describe('POST /auth/password', () => {
-  it('changes the password and signs every other device out', async () => {
-    await makeUser()
-    const laptop = await signIn('+998901112233', PASSWORD, { deviceName: 'Laptop' })
-    const phone = await signIn('+998901112233', PASSWORD, { deviceName: 'Phone' })
-
-    await request(app)
-      .post('/api/v1/auth/password')
-      .set('Authorization', `Bearer ${laptop.accessToken}`)
-      .send({
-        currentPassword: PASSWORD,
-        newPassword: 'Yangi-Parol-2026!',
-        confirmPassword: 'Yangi-Parol-2026!',
-      })
-      .expect(200)
-
-    // The device that made the change stays signed in; the other does not.
-    await request(app)
-      .get('/api/v1/auth/me')
-      .set('Authorization', `Bearer ${laptop.accessToken}`)
-      .expect(200)
-    await request(app)
-      .get('/api/v1/auth/me')
-      .set('Authorization', `Bearer ${phone.accessToken}`)
-      .expect(401)
-
-    await request(app)
-      .post('/api/v1/auth/login')
-      .send({ phone: '+998901112233', password: 'Yangi-Parol-2026!' })
-      .expect(200)
-  })
-
-  it('rejects a common password (§8)', async () => {
+/**
+ * Self-service password change was removed at the centre's request: a password
+ * is issued and rotated by an administrator from the Accounts screen, and there
+ * is no endpoint a signed-in user can call to change their own.
+ */
+describe('POST /auth/password — removed', () => {
+  it('is not routed at all', async () => {
     await makeUser()
     const { accessToken } = await signIn('+998901112233')
 
     const response = await request(app)
       .post('/api/v1/auth/password')
       .set('Authorization', `Bearer ${accessToken}`)
-      .send({ currentPassword: PASSWORD, newPassword: 'Parol123', confirmPassword: 'Parol123' })
-      .expect(400)
-
-    expect(response.body.error.details.newPassword).toContain('passwordTooCommon')
-  })
-
-  it('rejects a wrong current password', async () => {
-    await makeUser()
-    const { accessToken } = await signIn('+998901112233')
-
-    await request(app)
-      .post('/api/v1/auth/password')
-      .set('Authorization', `Bearer ${accessToken}`)
       .send({
-        currentPassword: 'not-the-password',
+        currentPassword: PASSWORD,
         newPassword: 'Yangi-Parol-2026!',
         confirmPassword: 'Yangi-Parol-2026!',
       })
-      .expect(401)
+      .expect(404)
+
+    expect(response.body.error.code).toBe('NOT_FOUND')
+  })
+
+  it('leaves an administrator reset as the only way a password changes', async () => {
+    const user = await makeUser()
+    await User.create({
+      fullName: 'Boss',
+      phone: '+998900000001',
+      passwordHash: await hashPassword(PASSWORD),
+      roles: [{ role: 'superadmin' }],
+    })
+    const boss = await signIn('+998900000001')
+
+    await request(app)
+      .post(`/api/v1/users/${user.id}/password`)
+      .set('Authorization', `Bearer ${boss.accessToken}`)
+      .send({ newPassword: 'Yangi-Parol-2026!' })
+      .expect(200)
+
+    await request(app)
+      .post('/api/v1/auth/login')
+      .send({ phone: '+998901112233', password: 'Yangi-Parol-2026!' })
+      .expect(200)
   })
 })
 

@@ -160,7 +160,7 @@ testRouter.get(
   asyncRoute(async (req, res) => {
     const user = currentUser(req)
     const isStaff = user.roles.some((assignment) =>
-      ['superadmin', 'admin', 'manager', 'teacher'].includes(assignment.role),
+      ['superadmin', 'manager', 'teacher'].includes(assignment.role),
     )
 
     const student = isStaff ? null : await ownStudent(req)

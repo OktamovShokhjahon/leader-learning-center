@@ -12,11 +12,21 @@ import {
   BadgeCheck,
   FileCheck2,
   UserRound,
+  UsersRound,
+  Inbox,
+  Receipt,
+  Gavel,
+  BookOpen,
+  Banknote,
+  Building2,
+  SlidersHorizontal,
+  ScrollText,
   type LucideIcon,
 } from 'lucide-react'
-import { can, type Role, type Action } from '@leader/shared/permissions'
+import { can, canFully, type Role, type Action } from '@leader/shared/permissions'
 import { Link, usePathname } from '@/i18n/navigation'
 import { useAuth } from '@/lib/auth/auth-context'
+import { BranchSwitcher } from './branch-switcher'
 import { cn } from '@/lib/utils'
 
 type NavItem = {
@@ -25,6 +35,8 @@ type NavItem = {
   Icon: LucideIcon
   /** Shown only if the signed-in role holds this permission (§4.2). */
   action?: Action
+  /** Require a *full* grant — a `limited` one is not enough for this section. */
+  full?: boolean
   /** Or only to these roles outright. */
   roles?: Role[]
 }
@@ -39,13 +51,27 @@ type NavItem = {
  * is a convenience, never the control (§4.3).
  */
 const ITEMS: NavItem[] = [
-  { href: '/crm', key: 'dashboard', Icon: LayoutDashboard, roles: ['admin', 'manager', 'teacher'] },
+  { href: '/crm', key: 'dashboard', Icon: LayoutDashboard, roles: ['manager', 'teacher'] },
   { href: '/crm/groups', key: 'groups', Icon: CalendarCheck, action: 'attendance.mark' },
   { href: '/crm/students', key: 'students', Icon: Users, action: 'student.manage' },
   { href: '/crm/payments', key: 'payments', Icon: Wallet, action: 'payment.accept' },
   { href: '/crm/debtors', key: 'debtors', Icon: AlertTriangle, action: 'debtor.view' },
   { href: '/crm/approvals', key: 'approvals', Icon: BadgeCheck, action: 'payment.approve' },
   { href: '/crm/tests', key: 'tests', Icon: FileCheck2, action: 'test.manage' },
+  // §23 STAFF — the boss, an Admin and (note 11) a Manager all land on the same
+  // screen; the API decides which accounts each of them gets back.
+  { href: '/crm/leads', key: 'leads', Icon: Inbox, action: 'lead.manage' },
+  { href: '/crm/expenses', key: 'expenses', Icon: Receipt, action: 'expense.create' },
+  { href: '/crm/fines', key: 'fines', Icon: Gavel, action: 'fine.issue' },
+  // §4.2 note 7 — a teacher's `content.manage` is for their own materials, not
+  // for the centre's catalogue, so this one asks for the full grant.
+  { href: '/crm/courses', key: 'courses', Icon: BookOpen, action: 'content.manage', full: true },
+  { href: '/crm/staff', key: 'staff', Icon: UsersRound, action: 'staff.createTeacher' },
+  // §21.1 / §14 / §21.3 / §5.3 — the boss's own corner.
+  { href: '/boss/payroll', key: 'payroll', Icon: Banknote, roles: ['superadmin'] },
+  { href: '/boss/branches', key: 'branches', Icon: Building2, roles: ['superadmin'] },
+  { href: '/boss/settings', key: 'settings', Icon: SlidersHorizontal, roles: ['superadmin'] },
+  { href: '/boss/audit', key: 'audit', Icon: ScrollText, roles: ['superadmin'] },
   { href: '/boss', key: 'finance', Icon: PieChart, roles: ['superadmin'] },
   { href: '/cabinet', key: 'cabinet', Icon: GraduationCap, roles: ['student', 'parent'] },
   { href: '/account', key: 'account', Icon: UserRound },
@@ -61,7 +87,10 @@ export function PanelNav() {
 
   const visible = ITEMS.filter((item) => {
     if (item.roles && !item.roles.some((role) => roles.includes(role))) return false
-    if (item.action && !roles.some((role) => can(role, item.action!))) return false
+    if (item.action) {
+      const check = item.full ? canFully : can
+      if (!roles.some((role) => check(role, item.action!))) return false
+    }
     return true
   })
 
@@ -70,12 +99,16 @@ export function PanelNav() {
       aria-label={t('label')}
       className="sticky top-20 z-30 border-b border-border-subtle bg-background/88 backdrop-blur-xl"
     >
-      <div className="container-site flex gap-1 overflow-x-auto py-2">
+      <div className="container-site flex items-center gap-3 py-2">
+        <div className="flex flex-1 gap-1 overflow-x-auto">
         {visible.map((item) => {
-          // `/crm` must not light up on `/crm/students`, but `/crm/students/42` should.
+          // `/crm` must not light up on `/crm/students`, nor `/boss` on
+          // `/boss/payroll` — both are section roots with siblings of their own.
+          // A leaf like `/crm/students` still lights up on `/crm/students/42`.
+          const isSectionRoot = item.href === '/crm' || item.href === '/boss'
           const active =
             pathname === item.href ||
-            (item.href !== '/crm' && pathname.startsWith(`${item.href}/`))
+            (!isSectionRoot && pathname.startsWith(`${item.href}/`))
 
           return (
             <Link
@@ -94,6 +127,11 @@ export function PanelNav() {
             </Link>
           )
         })}
+        </div>
+
+        {/* §5.2 — pinned outside the scroller: the branch in force has to stay
+            visible while paging through the sections it scopes. */}
+        <BranchSwitcher />
       </div>
     </nav>
   )

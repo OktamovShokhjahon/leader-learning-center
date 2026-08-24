@@ -2,14 +2,13 @@
 
 import { useEffect, useState } from 'react'
 import { useTranslations } from 'next-intl'
-import { LogOut, Loader2, ShieldCheck, ShieldAlert, KeyRound, MonitorSmartphone } from 'lucide-react'
+import { LogOut, Loader2, ShieldCheck, ShieldAlert, MonitorSmartphone } from 'lucide-react'
 import type { Role } from '@leader/shared/permissions'
 import { useRouter } from '@/i18n/navigation'
 import { useAuth, apiFetch } from '@/lib/auth/auth-context'
 import { GirihStar } from '@/components/ui/girih-star'
 import { cn } from '@/lib/utils'
 import { describeDevice } from '@/lib/auth/device-name'
-import { ChangePassword } from './change-password'
 
 type Session = {
   id: string
@@ -120,13 +119,6 @@ export function PanelShell({ expectedRole }: { expectedRole?: Role[] }) {
         </p>
       ) : null}
 
-      {user.mustChangePassword ? (
-        <p className="flex items-start gap-2 rounded-input border border-info/30 bg-info/5 p-4 text-xs text-info">
-          <KeyRound className="mt-0.5 size-4 shrink-0" aria-hidden />
-          {t('mustChangePassword')}
-        </p>
-      ) : null}
-
       <div className="grid gap-5 lg:grid-cols-2">
         {/* Roles and branches — §4.1, one role per branch. */}
         <section className="panel-frame-ink flex flex-col gap-4 rounded-card bg-surface p-6">
@@ -209,12 +201,11 @@ export function PanelShell({ expectedRole }: { expectedRole?: Role[] }) {
         </section>
       </div>
 
-      <div className="grid gap-5 lg:grid-cols-2">
-        <ChangePassword />
-        <p className="rounded-card border border-dashed border-border-subtle bg-surface/50 p-6 text-xs leading-relaxed text-ink-soft dark:text-navy-200">
-          {t('underConstruction')}
-        </p>
-      </div>
+      {/* Passwords are issued and rotated by an administrator from the Accounts
+          screen; there is no self-service change anywhere on the site. */}
+      <p className="rounded-card border border-dashed border-border-subtle bg-surface/50 p-6 text-xs leading-relaxed text-ink-soft dark:text-navy-200">
+        {t('passwordPolicy')}
+      </p>
     </div>
   )
 }

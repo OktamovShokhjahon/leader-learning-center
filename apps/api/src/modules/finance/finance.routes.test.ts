@@ -73,22 +73,20 @@ beforeEach(async () => {
 })
 
 describe('finance is SuperAdmin-only (§4.3, §15, §30.2)', () => {
-  it('refuses an Admin on every finance endpoint', async () => {
-    const admin = await makeActor('admin')
-
-    for (const route of FINANCE_ROUTES) {
-      const response = await request(app).get(route).set(auth(admin.token))
-      expect(response.status, `${route} must refuse an admin`).toBe(403)
-      expect(response.body.error.code).toBe('FORBIDDEN')
-    }
-  })
-
-  it('refuses a Manager and a Teacher too', async () => {
+  /**
+   * §30.2 words this as "an Admin account receives 403 on every finance
+   * endpoint". The Admin role is gone (ADR 0004) and the Manager inherited the
+   * front-desk half of it — including payment approval — so the Manager is now
+   * the account that criterion is really about: the one that handles money
+   * daily and still must not see the centre's finances.
+   */
+  it('refuses a Manager and a Teacher on every finance endpoint', async () => {
     for (const role of ['manager', 'teacher']) {
       const actor = await makeActor(role)
       for (const route of FINANCE_ROUTES) {
         const response = await request(app).get(route).set(auth(actor.token))
         expect(response.status, `${route} must refuse a ${role}`).toBe(403)
+        expect(response.body.error.code).toBe('FORBIDDEN')
       }
     }
   })
@@ -110,9 +108,9 @@ describe('finance is SuperAdmin-only (§4.3, §15, §30.2)', () => {
 
   /** §21.3 — "any 403 on a finance endpoint" is a mandatory audit entry. */
   it('writes the refused attempt to the audit log', async () => {
-    const admin = await makeActor('admin')
+    const manager = await makeActor('manager')
 
-    await request(app).get('/api/v1/finance/overview').set(auth(admin.token)).expect(403)
+    await request(app).get('/api/v1/finance/overview').set(auth(manager.token)).expect(403)
 
     // The audit write is deliberately not awaited by the guard, so give the
     // insert a moment rather than asserting on a race.

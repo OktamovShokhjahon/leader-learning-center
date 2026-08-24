@@ -10,6 +10,7 @@ import { AuditLog } from '../audit/audit.model.js'
 import { hashPassword } from '../auth/password.service.js'
 import { generateSecret, generateTotp } from '../auth/totp.service.js'
 import { encryptField } from '../../config/crypto.js'
+import { ROLES } from '@leader/shared/permissions'
 
 /**
  * TZ §4.2 / §4.3 — the permission matrix, enforced by the API.
@@ -70,7 +71,7 @@ async function makeActor(role: string, branchId?: unknown) {
 const auth = (token: string) => ({ Authorization: `Bearer ${token}` })
 
 describe('POST /users — who may create whom (§4.2 Staff)', () => {
-  it('lets a SuperAdmin create an Admin', async () => {
+  it('lets a SuperAdmin create a Manager', async () => {
     const branch = await makeBranch('urganch-markaz')
     const boss = await makeActor('superadmin')
 
@@ -78,60 +79,83 @@ describe('POST /users — who may create whom (§4.2 Staff)', () => {
       .post('/api/v1/users')
       .set(auth(boss.token))
       .send({
-        fullName: 'Yangi Admin',
+        fullName: 'Yangi Menejer',
         phone: nextPhone(),
         password: PASSWORD,
-        roles: [{ role: 'admin', branchId: branch.id }],
+        roles: [{ role: 'manager', branchId: branch.id }],
       })
       .expect(201)
 
-    // An administrator has seen this password, so it is not yet the user's own.
-    expect(response.body.data.mustChangePassword).toBe(true)
+    // Self-service password change is gone, so an issued password carries no
+    // "change me" flag — only another administrator reset can replace it.
+    expect(response.body.data.mustChangePassword).toBe(false)
     expect(response.body.data.passwordHash).toBeUndefined()
   })
 
-  it('refuses an Admin creating another Admin', async () => {
+  /** The Admin role no longer exists — creating one must fail validation, not quietly work. */
+  it('rejects the retired "admin" role outright (ADR 0004)', async () => {
     const branch = await makeBranch('urganch-markaz')
-    const admin = await makeActor('admin', branch._id)
+    const boss = await makeActor('superadmin')
 
     const response = await request(app)
       .post('/api/v1/users')
-      .set(auth(admin.token))
+      .set(auth(boss.token))
       .send({
-        fullName: 'Sherik Admin',
+        fullName: 'Eski Admin',
         phone: nextPhone(),
         password: PASSWORD,
         roles: [{ role: 'admin', branchId: branch.id }],
       })
-      .expect(403)
+      .expect(400)
 
-    expect(response.body.error.code).toBe('FORBIDDEN')
+    expect(response.body.error.code).toBe('VALIDATION_FAILED')
+    expect(await User.countDocuments({ 'roles.role': 'admin' })).toBe(0)
   })
 
-  it('lets an Admin create a Teacher in their own branch', async () => {
+  it('lets a Manager create a Teacher and a Student in their own branch (note 11)', async () => {
     const branch = await makeBranch('urganch-markaz')
-    const admin = await makeActor('admin', branch._id)
+    const manager = await makeActor('manager', branch._id)
 
-    await request(app)
-      .post('/api/v1/users')
-      .set(auth(admin.token))
-      .send({
-        fullName: 'Yangi Ustoz',
-        phone: nextPhone(),
-        password: PASSWORD,
-        roles: [{ role: 'teacher', branchId: branch.id }],
-      })
-      .expect(201)
+    for (const role of ['teacher', 'student'] as const) {
+      await request(app)
+        .post('/api/v1/users')
+        .set(auth(manager.token))
+        .send({
+          fullName: `Yangi ${role}`,
+          phone: nextPhone(),
+          password: PASSWORD,
+          roles: [{ role, branchId: branch.id }],
+        })
+        .expect(201)
+    }
   })
 
-  it('refuses an Admin creating a Teacher in someone else’s branch', async () => {
+  it('refuses a Manager creating another Manager or a SuperAdmin', async () => {
+    const branch = await makeBranch('urganch-markaz')
+    const manager = await makeActor('manager', branch._id)
+
+    for (const role of ['manager', 'superadmin'] as const) {
+      await request(app)
+        .post('/api/v1/users')
+        .set(auth(manager.token))
+        .send({
+          fullName: 'Boshqaruvchi',
+          phone: nextPhone(),
+          password: PASSWORD,
+          roles: [role === 'superadmin' ? { role } : { role, branchId: branch.id }],
+        })
+        .expect(403)
+    }
+  })
+
+  it('refuses a Manager staffing someone else’s branch', async () => {
     const own = await makeBranch('urganch-markaz')
     const other = await makeBranch('urganch-2')
-    const admin = await makeActor('admin', own._id)
+    const manager = await makeActor('manager', own._id)
 
     await request(app)
       .post('/api/v1/users')
-      .set(auth(admin.token))
+      .set(auth(manager.token))
       .send({
         fullName: 'Boshqa filial ustozi',
         phone: nextPhone(),
@@ -141,20 +165,22 @@ describe('POST /users — who may create whom (§4.2 Staff)', () => {
       .expect(403)
   })
 
-  it('refuses a Manager creating staff at all', async () => {
+  it('lets a SuperAdmin create every role, including a second SuperAdmin', async () => {
     const branch = await makeBranch('urganch-markaz')
-    const manager = await makeActor('manager', branch._id)
+    const boss = await makeActor('superadmin')
 
-    await request(app)
-      .post('/api/v1/users')
-      .set(auth(manager.token))
-      .send({
-        fullName: 'Ustoz',
-        phone: nextPhone(),
-        password: PASSWORD,
-        roles: [{ role: 'teacher', branchId: branch.id }],
-      })
-      .expect(403)
+    for (const role of ROLES) {
+      await request(app)
+        .post('/api/v1/users')
+        .set(auth(boss.token))
+        .send({
+          fullName: `Yangi ${role}`,
+          phone: nextPhone(),
+          password: PASSWORD,
+          roles: [role === 'superadmin' ? { role } : { role, branchId: branch.id }],
+        })
+        .expect(201)
+    }
   })
 
   it('refuses a Teacher outright', async () => {
@@ -206,10 +232,10 @@ describe('POST /users — who may create whom (§4.2 Staff)', () => {
       .post('/api/v1/users')
       .set(auth(boss.token))
       .send({
-        fullName: 'Filialsiz admin',
+        fullName: 'Filialsiz menejer',
         phone: nextPhone(),
         password: PASSWORD,
-        roles: [{ role: 'admin' }],
+        roles: [{ role: 'manager' }],
       })
       .expect(400)
   })
@@ -235,14 +261,14 @@ describe('POST /users — who may create whom (§4.2 Staff)', () => {
 })
 
 describe('GET /users — visibility', () => {
-  it('shows an Admin only their own branch’s staff (§4.2 note 9 in spirit)', async () => {
+  it('shows a Manager only their own branch’s staff', async () => {
     const own = await makeBranch('urganch-markaz')
     const other = await makeBranch('urganch-2')
-    const admin = await makeActor('admin', own._id)
+    const manager = await makeActor('manager', own._id)
     await makeActor('teacher', own._id)
     await makeActor('teacher', other._id)
 
-    const response = await request(app).get('/api/v1/users').set(auth(admin.token)).expect(200)
+    const response = await request(app).get('/api/v1/users').set(auth(manager.token)).expect(200)
 
     const branchIds = response.body.data.items.flatMap((user: { roles: { branchId: string }[] }) =>
       user.roles.map((role) => role.branchId),
@@ -274,6 +300,178 @@ describe('GET /users — visibility', () => {
 
     expect(response.body.data.items).toHaveLength(2)
     expect(response.body.data).toMatchObject({ page: 2, limit: 2, total: 6, pages: 3 })
+  })
+})
+
+/**
+ * Granting a role and administering an existing account are separate questions.
+ * Note 11 opened `POST /users` to a Manager, and the same route guard covers
+ * `PATCH`, `POST /:id/password` and `DELETE` — so without a rank check a Manager
+ * would inherit the ability to take over the peer Manager in their own branch.
+ */
+describe('rank — who may administer whom', () => {
+  it('refuses a Manager touching the peer Manager of their own branch', async () => {
+    const branch = await makeBranch('urganch-markaz')
+    const manager = await makeActor('manager', branch._id)
+    const peer = await makeActor('manager', branch._id)
+    const peerDoc = await User.findOne({ phone: peer.phone })
+
+    await request(app)
+      .post(`/api/v1/users/${peerDoc!.id}/password`)
+      .set(auth(manager.token))
+      .send({ newPassword: 'Qorao-2026-strong' })
+      .expect(403)
+
+    await request(app)
+      .patch(`/api/v1/users/${peerDoc!.id}`)
+      .set(auth(manager.token))
+      .send({ isActive: false })
+      .expect(403)
+
+    await request(app)
+      .delete(`/api/v1/users/${peerDoc!.id}`)
+      .set(auth(manager.token))
+      .send({})
+      .expect(403)
+
+    // Untouched: the peer can still sign in with the password they had.
+    expect((await User.findById(peerDoc!._id))!.isActive).toBe(true)
+    await request(app)
+      .post('/api/v1/auth/login')
+      .send({ phone: peer.phone, password: PASSWORD })
+      .expect(200)
+  })
+
+  it('refuses a Manager promoting a Teacher into a SuperAdmin', async () => {
+    const branch = await makeBranch('urganch-markaz')
+    const manager = await makeActor('manager', branch._id)
+    const teacher = await makeActor('teacher', branch._id)
+    const teacherDoc = await User.findOne({ phone: teacher.phone })
+
+    await request(app)
+      .patch(`/api/v1/users/${teacherDoc!.id}/roles`)
+      .set(auth(manager.token))
+      .send({ roles: [{ role: 'superadmin' }] })
+      .expect(403)
+  })
+
+  it('lets a Manager reset a Teacher’s password', async () => {
+    const branch = await makeBranch('urganch-markaz')
+    const manager = await makeActor('manager', branch._id)
+    const teacher = await makeActor('teacher', branch._id)
+    const teacherDoc = await User.findOne({ phone: teacher.phone })
+
+    await request(app)
+      .post(`/api/v1/users/${teacherDoc!.id}/password`)
+      .set(auth(manager.token))
+      .send({ newPassword: 'Qorao-2026-strong' })
+      .expect(200)
+
+    await request(app)
+      .post('/api/v1/auth/login')
+      .send({ phone: teacher.phone, password: 'Qorao-2026-strong' })
+      .expect(200)
+  })
+
+  /**
+   * The retired Admin role must not be a way back in: an account still carrying
+   * it is unknown to the permission map, and `grantFor` answers `none` for an
+   * unknown role rather than `undefined` — which `can()` would have read as
+   * "allowed for everything" (ADR 0004).
+   */
+  it('gives an account still holding the retired admin role no powers at all', async () => {
+    const branch = await makeBranch('urganch-markaz')
+    const boss = await makeActor('superadmin')
+    const stale = await makeActor('teacher', branch._id)
+    const staleDoc = await User.findOne({ phone: stale.phone })
+
+    // Write the retired role straight past the enum, as an unmigrated row would.
+    await User.collection.updateOne(
+      { _id: staleDoc!._id },
+      { $set: { roles: [{ role: 'admin', branchId: branch._id }] } },
+    )
+
+    const login = await request(app)
+      .post('/api/v1/auth/login')
+      .send({ phone: stale.phone, password: PASSWORD })
+
+    // Either the session is refused outright, or it is powerless — never both open.
+    if (login.status === 200) {
+      await request(app)
+        .get('/api/v1/users')
+        .set(auth(login.body.data.accessToken))
+        .expect(403)
+    } else {
+      expect(login.status).toBeGreaterThanOrEqual(400)
+    }
+
+    // And the boss can still see and repair the account.
+    await request(app)
+      .patch(`/api/v1/users/${staleDoc!.id}/roles`)
+      .set(auth(boss.token))
+      .send({ roles: [{ role: 'manager', branchId: branch.id }] })
+      .expect(200)
+  })
+})
+
+describe('GET /users — filters', () => {
+  it('narrows by role and by status', async () => {
+    const branch = await makeBranch('urganch-markaz')
+    const boss = await makeActor('superadmin')
+    const teacher = await makeActor('teacher', branch._id)
+    await makeActor('manager', branch._id)
+    const teacherDoc = await User.findOne({ phone: teacher.phone })
+
+    const byRole = await request(app)
+      .get('/api/v1/users?role=teacher')
+      .set(auth(boss.token))
+      .expect(200)
+    expect(byRole.body.data.total).toBe(1)
+
+    await request(app)
+      .delete(`/api/v1/users/${teacherDoc!.id}`)
+      .set(auth(boss.token))
+      .send({})
+      .expect(200)
+
+    const inactive = await request(app)
+      .get('/api/v1/users?status=inactive')
+      .set(auth(boss.token))
+      .expect(200)
+    expect(inactive.body.data.total).toBe(1)
+    expect(inactive.body.data.items[0].phone).toBe(teacher.phone)
+  })
+
+  it('lets the boss narrow to one branch, and reactivate an account', async () => {
+    const own = await makeBranch('urganch-markaz')
+    const other = await makeBranch('urganch-2')
+    const boss = await makeActor('superadmin')
+    const teacher = await makeActor('teacher', own._id)
+    await makeActor('teacher', other._id)
+    const teacherDoc = await User.findOne({ phone: teacher.phone })
+
+    const scoped = await request(app)
+      .get(`/api/v1/users?branchId=${own.id}`)
+      .set(auth(boss.token))
+      .expect(200)
+    expect(scoped.body.data.total).toBe(1)
+
+    await request(app)
+      .delete(`/api/v1/users/${teacherDoc!.id}`)
+      .set(auth(boss.token))
+      .send({})
+      .expect(200)
+
+    await request(app)
+      .patch(`/api/v1/users/${teacherDoc!.id}`)
+      .set(auth(boss.token))
+      .send({ isActive: true })
+      .expect(200)
+
+    await request(app)
+      .post('/api/v1/auth/login')
+      .send({ phone: teacher.phone, password: PASSWORD })
+      .expect(200)
   })
 })
 

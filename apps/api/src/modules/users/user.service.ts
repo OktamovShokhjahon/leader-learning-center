@@ -1,7 +1,7 @@
 import { ApiError, ERROR_CODES } from '@leader/shared/errors'
 import type { CreateUserInput, RoleAssignmentInput, PaginationQuery } from '@leader/shared/schemas'
 import { parseSort } from '@leader/shared/schemas'
-import type { Role } from '@leader/shared/permissions'
+import { GRANTABLE_ROLES, mayAdminister, type Role } from '@leader/shared/permissions'
 import { User, type UserDocument, isSuperadmin, branchIdsOf } from './user.model.js'
 import { Branch } from '../branches/branch.model.js'
 import { hashPassword } from '../auth/password.service.js'
@@ -18,20 +18,30 @@ import { getScope } from '../../middleware/branch-scope.js'
  * because the answer depends on the *role being granted*, not on the endpoint.
  */
 
-/** §4.2 — "Create Admin / Manager accounts: SuperAdmin only". */
-const ROLES_GRANTABLE_BY: Record<Role, Role[]> = {
-  superadmin: ['superadmin', 'admin', 'manager', 'teacher', 'student', 'parent'],
-  // §4.2 grants an Admin `staff.createTeacher` and nothing above it. Students
-  // and parents are accounts too, and creating those is part of enrolment.
-  admin: ['teacher', 'student', 'parent'],
-  manager: ['student', 'parent'],
-  teacher: [],
-  student: [],
-  parent: [],
+function rolesOf(user: UserDocument): Role[] {
+  return user.roles.map((assignment) => assignment.role as Role)
+}
+
+/**
+ * An actor may act on an account below their own rank (§4.2 `GRANTABLE_ROLES`
+ * covers only what they may *hand out*), on their own account, or — as
+ * SuperAdmin — on anyone at all. `updateRoles` and `deactivateUser` add their
+ * own self-checks on top, because nobody edits their own permissions or locks
+ * themselves out.
+ */
+function assertMayAdminister(actor: UserDocument, target: UserDocument) {
+  if (actor.id === target.id) return
+  if (mayAdminister(rolesOf(actor), rolesOf(target))) return
+
+  throw ApiError.forbidden(
+    isSuperadmin(target)
+      ? 'Only a SuperAdmin can manage a SuperAdmin account'
+      : 'You cannot manage an account at or above your own role',
+  )
 }
 
 function assertMayGrant(actorRole: Role, actor: UserDocument, roles: RoleAssignmentInput[]) {
-  const allowed = ROLES_GRANTABLE_BY[actorRole]
+  const allowed = GRANTABLE_ROLES[actorRole]
   const actorBranches = branchIdsOf(actor)
 
   for (const assignment of roles) {
@@ -58,21 +68,31 @@ async function assertBranchesExist(roles: RoleAssignmentInput[]) {
   if (found !== new Set(branchIds).size) throw ApiError.badRequest('Unknown branch in roles')
 }
 
-export async function listUsers(actor: UserDocument, query: PaginationQuery & { role?: Role }) {
+export async function listUsers(
+  actor: UserDocument,
+  query: PaginationQuery & { role?: Role; status?: 'active' | 'inactive' },
+) {
   const filter: Record<string, unknown> = { deletedAt: null }
 
   if (!isSuperadmin(actor)) {
-    // §4.2 — an Admin sees the staff of their own branch, nobody else's.
+    // §4.2 — an Admin or Manager sees the staff of their own branch, nobody else's.
     filter['roles.branchId'] = { $in: branchIdsOf(actor) }
   } else if (query.branchId) {
+    // Only the boss may narrow to a branch they are not in — for everyone else
+    // the branch filter above is already the tighter of the two.
     filter['roles.branchId'] = query.branchId
   }
 
   if (query.role) filter['roles.role'] = query.role
+  if (query.status) filter.isActive = query.status === 'active'
   if (query.search) {
+    // Escaped: a stray `(` in the search box must not reach Mongo as a broken
+    // regular expression, and `.*` must not turn a filter into a full scan.
+    const term = query.search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
     filter.$or = [
-      { fullName: { $regex: query.search, $options: 'i' } },
-      { phone: { $regex: query.search, $options: 'i' } },
+      { fullName: { $regex: term, $options: 'i' } },
+      { phone: { $regex: term, $options: 'i' } },
+      { email: { $regex: term, $options: 'i' } },
     ]
   }
 
@@ -128,8 +148,9 @@ export async function createUser(actor: UserDocument, input: CreateUserInput, re
     photo: input.photo,
     locale: input.locale ?? 'uz',
     passwordHash: await hashPassword(input.password),
-    // An administrator has seen this password, so it is not the user's yet.
-    mustChangePassword: true,
+    // Self-service password change was removed at the centre's request, so an
+    // issued password stays until an administrator issues another one.
+    mustChangePassword: false,
     roles: input.roles,
     createdBy: actor._id,
   })
@@ -154,6 +175,7 @@ export async function updateUser(
   req: RequestMeta,
 ) {
   const user = await getUser(actor, userId)
+  assertMayAdminister(actor, user)
   const before = user.toObject()
 
   // Roles are changed only through `updateRoles`, which has its own checks.
@@ -202,9 +224,7 @@ export async function updateRoles(
     // Nobody edits their own permissions — that is the whole point of having them.
     throw ApiError.forbidden('You cannot change your own roles')
   }
-  if (isSuperadmin(user) && !isSuperadmin(actor)) {
-    throw ApiError.forbidden('Only a SuperAdmin can change a SuperAdmin account')
-  }
+  assertMayAdminister(actor, user)
 
   const before = user.roles.map((assignment) => ({
     role: assignment.role,
@@ -239,10 +259,7 @@ export async function resetPassword(
   req: RequestMeta,
 ) {
   const user = await getUser(actor, userId)
-
-  if (isSuperadmin(user) && !isSuperadmin(actor)) {
-    throw ApiError.forbidden('Only a SuperAdmin can reset a SuperAdmin password')
-  }
+  assertMayAdminister(actor, user)
 
   user.passwordHash = await hashPassword(input.newPassword)
   user.passwordChangedAt = new Date()
@@ -278,9 +295,7 @@ export async function deactivateUser(
   const user = await getUser(actor, userId)
 
   if (user.id === actor.id) throw ApiError.forbidden('You cannot deactivate your own account')
-  if (isSuperadmin(user) && !isSuperadmin(actor)) {
-    throw ApiError.forbidden('Only a SuperAdmin can deactivate a SuperAdmin account')
-  }
+  assertMayAdminister(actor, user)
   if (isSuperadmin(user)) {
     const remaining = await User.countDocuments({
       'roles.role': 'superadmin',

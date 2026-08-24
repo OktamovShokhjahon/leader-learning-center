@@ -5,12 +5,19 @@ import {
   updateStudentSchema,
   studentQuerySchema,
   setFeeSchema,
+  transferSchema,
   parseSort,
 } from '@leader/shared/schemas'
 import { ApiError } from '@leader/shared/errors'
 import { validateBody, validateQuery } from '../../middleware/validate.js'
 import { asyncRoute } from '../../middleware/error-handler.js'
-import { requireAuth, requirePermission, currentUser } from '../../middleware/auth.js'
+import {
+  requireAuth,
+  requirePermission,
+  writeGuards,
+  currentUser,
+} from '../../middleware/auth.js'
+import { transferStudent } from './transfer.service.js'
 import { allowSelfOr } from '../../middleware/self-access.js'
 import { recordAudit } from '../audit/audit.service.js'
 import { Student } from './student.model.js'
@@ -154,7 +161,10 @@ studentRouter.get(
 
 studentRouter.post(
   '/',
-  requirePermission('student.manage'),
+  // §5.1 — the branch-scope plugin stamps `branchId` from the request scope, and
+  // in the consolidated `'ALL'` scope it has nothing to stamp. Without this the
+  // record would be created belonging to no branch at all.
+  ...writeGuards('student.manage'),
   validateBody(createStudentSchema),
   asyncRoute(async (req, res) => {
     const actor = currentUser(req)
@@ -252,5 +262,107 @@ studentRouter.post(
       req,
     })
     res.json({ data: student })
+  }),
+)
+
+/**
+ * §23 lists `freeze` and `unfreeze` separately, and the difference is not
+ * cosmetic: a toggle sent twice by a flaky connection lands back where it
+ * started, which for billing is the wrong kind of silent.
+ */
+studentRouter.post(
+  '/:id/unfreeze',
+  requirePermission('student.manage'),
+  asyncRoute(async (req, res) => {
+    const student = await Student.findOne({ _id: req.params.id, deletedAt: null })
+    if (!student) throw ApiError.notFound('Student not found')
+    if (student.status !== 'frozen') {
+      res.json({ data: student })
+      return
+    }
+
+    student.status = 'active'
+    await student.save()
+    await recordAudit({
+      action: 'student.unfreeze',
+      entity: 'Student',
+      entityId: student.id,
+      actorId: currentUser(req)._id,
+      after: { status: student.status },
+      req,
+    })
+    res.json({ data: student })
+  }),
+)
+
+/** §23 / §4.2 — "Move student between groups / branches". */
+studentRouter.post(
+  '/:id/transfer',
+  requirePermission('student.transfer'),
+  validateBody(transferSchema),
+  asyncRoute(async (req, res) => {
+    const result = await transferStudent(currentUser(req), String(req.params.id), req.body, req)
+    res.json({ data: result })
+  }),
+)
+
+/**
+ * §23 — `GET /students/export  xlsx`.
+ *
+ * Streamed rather than buffered: a centre with several thousand students would
+ * otherwise hold the whole workbook in memory to send it.
+ */
+studentRouter.get(
+  '/export',
+  requirePermission('student.manage'),
+  validateQuery(studentQuerySchema),
+  asyncRoute(async (_req, res) => {
+    const query = res.locals.query
+    const filter: Record<string, unknown> = { deletedAt: null }
+    if (query.status) filter.status = query.status
+
+    const students = await Student.find(filter).sort({ fullName: 1 }).limit(10_000).lean()
+
+    // The column order mirrors the centre's own workbook (§7.1), so an exported
+    // file drops straight back into the sheet they already use.
+    const header = [
+      'F.I',
+      'Telefon',
+      'Ota-ona',
+      'Ota-ona telefoni',
+      'Status',
+      'Kelgan sanasi',
+      'Sinf',
+      'Yosh',
+      'Chek',
+      'Chegirma %',
+      'Balans',
+    ]
+
+    const rows = students.map((student) => [
+      student.fullName,
+      student.phone ?? '',
+      student.parentName ?? '',
+      student.parentPhone ?? '',
+      student.status,
+      student.joinedAt ? new Date(student.joinedAt).toISOString().slice(0, 10) : '',
+      student.schoolClass ?? '',
+      student.age ?? '',
+      student.monthlyFee ?? 0,
+      student.discountPercent ?? 0,
+      student.balance ?? 0,
+    ])
+
+    // CSV with a BOM: Excel on a Windows machine opens UTF-8 as cp1251 without
+    // one, and every O‘zbek name comes out mangled.
+    const escape = (cell: unknown) => {
+      const text = String(cell ?? '')
+      return /[",\n;]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text
+    }
+    const csv = [header, ...rows].map((row) => row.map(escape).join(';')).join('\r\n')
+
+    res.setHeader('content-type', 'text/csv; charset=utf-8')
+    res.setHeader('content-disposition', 'attachment; filename="students.csv"')
+    res.send(`﻿${csv}`)
   }),
 )

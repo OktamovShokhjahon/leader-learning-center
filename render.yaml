@@ -1,0 +1,63 @@
+# Render blueprint — both services, free tier.
+#
+# Deploy with: Render dashboard → New → Blueprint → pick this repo.
+# Render reads this file and creates both services. Everything marked
+# `sync: false` is a secret you paste into the dashboard once; nothing
+# secret is committed here.
+#
+# ⚠️ Free-tier web services sleep after ~15 minutes idle and take 30–60 s to
+# wake. Open both URLs a minute before showing the client, or move the API to
+# the paid Starter tier for a demo that must be instant.
+services:
+  # ── Express API (TZ §24.1 — all business logic lives here) ───────────────
+  - type: web
+    name: leader-api
+    runtime: node
+    plan: free
+    region: frankfurt # closest Render region to Uzbekistan
+    # The API depends on the shared workspace package, so that is built first.
+    buildCommand: npm ci && npm run build:shared && npm run build --workspace=@leader/api
+    startCommand: node apps/api/dist/server.js
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: LOG_LEVEL
+        value: info
+      # MongoDB Atlas connection string, including the database name.
+      - key: MONGO_URL
+        sync: false
+      # §8 — signs the 15-minute access token. At least 32 characters.
+      - key: JWT_SECRET
+        sync: false
+      # §8 — AES-256-GCM key for TOTP secrets at rest. Exactly 64 hex chars.
+      - key: ENCRYPTION_KEY
+        sync: false
+      # The web origin allowed to call this API. Set once the web URL exists.
+      - key: CORS_ORIGINS
+        sync: false
+      # Bootstrap the first account on an empty database (§8). Remove both
+      # after the first sign-in.
+      - key: SEED_SUPERADMIN_PHONE
+        sync: false
+      - key: SEED_SUPERADMIN_PASSWORD
+        sync: false
+
+  # ── Next.js site and panels ─────────────────────────────────────────────
+  - type: web
+    name: leader-web
+    runtime: node
+    plan: free
+    region: frankfurt
+    buildCommand: npm ci && npm run build:shared && npm run build --workspace=@leader/web
+    startCommand: npm run start --workspace=@leader/web
+    envVars:
+      - key: NODE_ENV
+        value: production
+      # Read by the browser, so it is baked into the client bundle at BUILD
+      # time — changing it later needs a redeploy, not just a restart.
+      - key: NEXT_PUBLIC_API_URL
+        sync: false
+      # Read by the Next server for the BFF auth proxy (/api/auth/*).
+      - key: API_URL
+        sync: false

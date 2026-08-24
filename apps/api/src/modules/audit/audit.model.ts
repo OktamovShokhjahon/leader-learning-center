@@ -1,5 +1,4 @@
 import { Schema, model, type InferSchemaType } from 'mongoose'
-import { ROLES } from '@leader/shared/permissions'
 
 /**
  * TZ §21.3 / §22 — `auditLogs`.
@@ -14,8 +13,13 @@ import { ROLES } from '@leader/shared/permissions'
 const auditLogSchema = new Schema(
   {
     actorId: { type: Schema.Types.ObjectId, ref: 'User', index: true },
-    /** Denormalised so the log still reads correctly after a role change. */
-    role: { type: String, enum: ROLES },
+    /**
+     * Denormalised so the log still reads correctly after a role change, and
+     * deliberately **not** pinned to the `ROLES` enum: §21.3 retains these rows
+     * for three years, so an entry written by a role that has since been
+     * retired — `admin`, say — must stay writable and readable.
+     */
+    role: { type: String },
     actorName: String,
     branchId: { type: Schema.Types.ObjectId, ref: 'Branch', index: true },
 
@@ -23,6 +27,17 @@ const auditLogSchema = new Schema(
     action: { type: String, required: true, index: true },
     entity: String,
     entityId: { type: Schema.Types.ObjectId },
+
+    /**
+     * The identifier for entities that are not keyed by an ObjectId — a setting
+     * (`money.discountCeilingPercent`) or a payroll period (`2026-08`).
+     *
+     * §21.3 puts settings and payroll on the mandatory audit list, and both were
+     * being dropped: `recordAudit` swallows its own errors so a failed ObjectId
+     * cast lost the entry silently, which is the worst possible failure mode for
+     * a log whose whole job is to be complete.
+     */
+    entityKey: String,
 
     /**
      * The request path, for events that are about a *route* rather than a

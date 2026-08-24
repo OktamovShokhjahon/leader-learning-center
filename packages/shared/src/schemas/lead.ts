@@ -4,6 +4,7 @@
  * the two can never disagree about what a valid application is.
  */
 import { z } from 'zod'
+import { paginationSchema } from './common.js'
 
 /** Uzbek mobile numbers: +998 followed by 9 digits. Stored normalised as +998XXXXXXXXX. */
 export const UZ_PHONE_REGEX = /^\+998\d{9}$/
@@ -163,3 +164,59 @@ export const LEAD_STATUSES = [
   'rad_etdi',
 ] as const
 export type LeadStatus = (typeof LEAD_STATUSES)[number]
+
+/**
+ * §7.2 — the manager's side of the funnel.
+ *
+ * Every field is optional because the kanban moves one thing at a time: dragging
+ * a card sends only a status, assigning sends only an owner. Sending the whole
+ * lead back on each interaction is how two managers working the same list
+ * overwrite each other.
+ */
+export const updateLeadSchema = z.object({
+  status: z.enum(LEAD_STATUSES).optional(),
+  assignedTo: z
+    .string()
+    .regex(/^[a-f\d]{24}$/i, 'invalidId')
+    .nullable()
+    .optional(),
+  nextActionAt: z.coerce.date().nullable().optional(),
+  comment: z.string().trim().max(1000).optional(),
+  /** Required by the service when the status becomes `rad_etdi` (§7.2 churn report). */
+  rejectReason: z.string().trim().max(200).optional(),
+})
+export type UpdateLeadInput = z.infer<typeof updateLeadSchema>
+
+/** §7.2 — booking the trial lesson, the step the whole funnel turns on. */
+export const trialLessonSchema = z.object({
+  at: z.coerce.date(),
+  groupId: z
+    .string()
+    .regex(/^[a-f\d]{24}$/i, 'invalidId')
+    .optional(),
+  note: z.string().trim().max(500).optional(),
+})
+
+/** §23 — `POST /leads/:id/convert`, the lead becoming a student. */
+export const convertLeadSchema = z.object({
+  groupId: z
+    .string()
+    .regex(/^[a-f\d]{24}$/i, 'invalidId')
+    .optional(),
+  monthlyFee: z.coerce.number().int().min(0).optional(),
+  /** Opens a cabinet login for the student at the same time (§10.2). */
+  createLogin: z.boolean().default(false),
+  password: z.string().min(8).max(128).optional(),
+})
+export type ConvertLeadInput = z.infer<typeof convertLeadSchema>
+
+export const leadQuerySchema = paginationSchema.extend({
+  status: z.enum(LEAD_STATUSES).optional(),
+  assignedTo: z
+    .string()
+    .regex(/^[a-f\d]{24}$/i, 'invalidId')
+    .optional(),
+  source: z.enum(LEAD_SOURCES).optional(),
+  /** §7.2 — cards untouched past this many hours, the red-flag filter. */
+  staleHours: z.coerce.number().int().min(1).optional(),
+})

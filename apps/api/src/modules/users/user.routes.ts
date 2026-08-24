@@ -25,15 +25,21 @@ import {
  * TZ §23 — `STAFF`.
  *
  * The route guard is `staff.createTeacher`, the weakest grant in the §4.2 Staff
- * block, so an Admin gets through the door; the service then decides which roles
- * they may actually hand out. Putting that decision in the service is deliberate
- * — it depends on the role in the request body, which a route guard cannot see.
+ * block, so an Admin and (per note 11) a Manager get through the door; the
+ * service then decides which roles they may actually hand out, and which
+ * existing accounts they may touch. Putting those decisions in the service is
+ * deliberate — the first depends on the role in the request body and the second
+ * on the rank of the target account, neither of which a route guard can see.
  */
 export const userRouter = Router()
 
 userRouter.use(requireAuth)
 
-const listQuerySchema = paginationSchema.extend({ role: z.enum(ROLES).optional() })
+const listQuerySchema = paginationSchema.extend({
+  role: z.enum(ROLES).optional(),
+  /** Deactivated accounts stay in the list by default — they are still records. */
+  status: z.enum(['active', 'inactive']).optional(),
+})
 
 userRouter.get(
   '/',

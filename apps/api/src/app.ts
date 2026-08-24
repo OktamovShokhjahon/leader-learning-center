@@ -20,6 +20,12 @@ import { studentRouter } from './modules/students/student.routes.js'
 import { groupRouter } from './modules/groups/group.routes.js'
 import { paymentRouter } from './modules/payments/payment.routes.js'
 import { financeRouter } from './modules/finance/finance.routes.js'
+import { settingsRouter } from './modules/settings/settings.routes.js'
+import { courseRouter, roomRouter } from './modules/catalog/catalog.routes.js'
+import { auditRouter } from './modules/audit/audit.routes.js'
+import { expenseRouter } from './modules/expenses/expense.routes.js'
+import { fineRouter, fineRuleRouter } from './modules/fines/fine.routes.js'
+import { payrollRouter } from './modules/payroll/payroll.routes.js'
 
 export function createApp() {
   const app = express()
@@ -85,10 +91,23 @@ export function createApp() {
   app.use('/api/v1/payments', paymentRouter)
   // §4.3 / §15 — the finance router carries its own hard superadmin guard.
   app.use('/api/v1/finance', financeRouter)
+  // §21.1 / §21.3 — both superadmin-only at mount level, same reasoning.
+  app.use('/api/v1/settings', settingsRouter)
+  app.use('/api/v1/audit', auditRouter)
+  // §21.1 — courses and rooms. Mounted on their own prefixes rather than on a
+  // shared one: a router mounted at the bare `/api/v1` runs its `use(requireAuth)`
+  // for every unmatched path too, which turns the §23 404 envelope into a 401.
+  app.use('/api/v1/courses', courseRouter)
+  app.use('/api/v1/rooms', roomRouter)
 
-  // TODO Phase 1+: /students, /groups, /attendance, /payments,
-  // /fines, /expenses, /payroll, /finance (§23). Finance and payroll routers get
-  // a hard requireRole('superadmin') at mount time (§4.3, §15).
+  app.use('/api/v1/expenses', expenseRouter)
+  app.use('/api/v1/fines', fineRouter)
+  // §4.3 — `/fine-rules` and `/payroll` are both in SUPERADMIN_ONLY_ROUTE_PREFIXES
+  // and both carry their own mount-level guard, for the same reason finance does.
+  app.use('/api/v1/fine-rules', fineRuleRouter)
+  app.use('/api/v1/payroll', payrollRouter)
+
+  // TODO: /materials, /notifications, /exams (§23).
 
   app.use(notFoundHandler)
   app.use(errorHandler)

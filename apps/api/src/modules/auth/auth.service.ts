@@ -192,47 +192,6 @@ export async function terminateSession(userId: string, sessionId: string, req: R
   })
 }
 
-/** §8 — a password change signs every *other* device out. */
-export async function changePassword(
-  userId: string,
-  currentSessionId: string,
-  input: { currentPassword: string; newPassword: string },
-  req: RequestMeta,
-) {
-  const user = await User.findById(userId).select('+passwordHash')
-  if (!user) throw ApiError.notFound('User not found')
-
-  if (!(await verifyPassword(user.passwordHash, input.currentPassword))) {
-    await recordAudit({
-      action: 'auth.password.change',
-      actorId: user._id,
-      outcome: 'failure',
-      reason: 'wrong_current_password',
-      req,
-    })
-    throw new ApiError(401, ERROR_CODES.INVALID_CREDENTIALS, 'Current password is incorrect')
-  }
-
-  user.passwordHash = await hashPassword(input.newPassword)
-  user.passwordChangedAt = new Date()
-  user.mustChangePassword = false
-  await user.save()
-
-  const revoked = await revokeAllSessions(user.id, 'password_changed', currentSessionId)
-
-  await recordAudit({
-    action: 'auth.password.change',
-    actorId: user._id,
-    actorName: user.fullName,
-    entity: 'User',
-    entityId: user._id,
-    after: { sessionsRevoked: revoked },
-    req,
-  })
-
-  return { sessionsRevoked: revoked }
-}
-
 /** §5.2 — the branch switcher, stored server-side so it cannot be spoofed. */
 export async function switchBranch(
   user: UserDocument,

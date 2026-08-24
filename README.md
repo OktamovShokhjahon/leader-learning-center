@@ -97,7 +97,12 @@ Done:
 - **Branches (§5)** — CRUD, archive-not-delete, and the SuperAdmin branch
   switcher whose selection lives on the session document, not in a cookie
 - **Staff (§4.2)** — user CRUD, role assignment, password reset and
-  deactivation, with the "who may create whom" matrix enforced in the service
+  deactivation, with the "who may create whom" matrix enforced in the service,
+  plus a separate account-rank check so a grant never doubles as a takeover. The
+  screen is `/crm/staff`: one route for the boss, an Admin and a Manager, with
+  the API deciding which accounts each of them gets back. A Manager opening
+  teacher and student accounts is a documented departure from the §4.2 table —
+  see `docs/adr/0003-manager-opens-teacher-and-student-accounts.md`
 - `GET /leads` and the funnel counts (§7.2, §23), which double as the end-to-end
   proof that the §5.1 branch-scope plugin filters a controller that never
   mentions `branchId`

@@ -46,12 +46,18 @@ export function useQuery<T>(path: string | null) {
   const { getToken, status } = useAuth()
   const [data, setData] = useState<T | null>(null)
   const [error, setError] = useState<ApiError | null>(null)
-  const [loading, setLoading] = useState(true)
+  // A query that will never run must not start out `loading` — a null path is
+  // how callers express "not applicable" (CrmDashboard gates its fetches that
+  // way), and leaving the flag set renders a spinner that never resolves.
+  const [loading, setLoading] = useState(Boolean(path) && status === 'authenticated')
   // Guards against a slow earlier response overwriting a newer one.
   const generation = useRef(0)
 
   const run = useCallback(async () => {
-    if (!path || status !== 'authenticated') return
+    if (!path || status !== 'authenticated') {
+      setLoading(false)
+      return
+    }
     const current = ++generation.current
     setLoading(true)
     const token = await getToken()
