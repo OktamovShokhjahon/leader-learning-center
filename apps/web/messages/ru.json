@@ -1167,7 +1167,9 @@
       "archived": "В архиве",
       "archive": "В архив",
       "archiveTitle": "Архивировать филиал",
-      "archiveBody": "«{name}» уйдёт в архив. Данные сохраняются."
+      "archiveBody": "«{name}» уйдёт в архив. Данные сохраняются.",
+      "rooms": "Кабинеты",
+      "roomsFor": "{branch} — кабинеты"
     },
     "settings": {
       "scope": "Область:",

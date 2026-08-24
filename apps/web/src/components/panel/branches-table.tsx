@@ -2,11 +2,12 @@
 
 import { useState } from 'react'
 import { useLocale, useTranslations } from 'next-intl'
-import { Building2, Pencil, Archive, MapPin } from 'lucide-react'
+import { Building2, Pencil, Archive, MapPin, DoorOpen } from 'lucide-react'
 import type { Locale } from '@leader/shared/locales'
 import { useQuery, useMutation, type Paginated } from '@/lib/api/use-api'
 import { Panel, TableShell, Th, Td, Loading, ErrorBox, Empty } from './primitives'
 import { NewButton, RowAction } from './table-kit'
+import { RoomsTable } from './rooms-table'
 import {
   Dialog,
   Field,
@@ -45,6 +46,7 @@ export function BranchesTable() {
 
   const [editing, setEditing] = useState<Branch | 'new' | null>(null)
   const [archiving, setArchiving] = useState<Branch | null>(null)
+  const [rooms, setRooms] = useState<Branch | null>(null)
 
   const { data, loading, error, refetch } = useQuery<Paginated<Branch>>('/branches?limit=100')
   const archive = useMutation<undefined, unknown>(
@@ -109,6 +111,13 @@ export function BranchesTable() {
                   </Td>
                   <Td className="text-right">
                     <span className="flex justify-end gap-2">
+                      {/* §21.1 — rooms belong to a branch, so they are managed
+                          from the branch rather than from a global list. */}
+                      <RowAction
+                        label={t('rooms')}
+                        Icon={DoorOpen}
+                        onClick={() => setRooms(branch)}
+                      />
                       <RowAction label={t('edit')} Icon={Pencil} onClick={() => setEditing(branch)} />
                       {branch.isActive ? (
                         <RowAction
@@ -125,6 +134,16 @@ export function BranchesTable() {
             </tbody>
           </TableShell>
         </Panel>
+      ) : null}
+
+      {rooms ? (
+        <Dialog
+          title={t('roomsFor', { branch: rooms.name?.uz ?? '—' })}
+          onClose={() => setRooms(null)}
+          wide
+        >
+          <RoomsTable branchId={rooms._id} />
+        </Dialog>
       ) : null}
 
       {editing ? (

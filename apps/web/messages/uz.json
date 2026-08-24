@@ -1167,7 +1167,9 @@
       "archived": "Arxivda",
       "archive": "Arxivlash",
       "archiveTitle": "Filialni arxivlash",
-      "archiveBody": "«{name}» arxivlanadi. Ma’lumotlar saqlanadi."
+      "archiveBody": "«{name}» arxivlanadi. Ma’lumotlar saqlanadi.",
+      "rooms": "Xonalar",
+      "roomsFor": "{branch} — xonalar"
     },
     "settings": {
       "scope": "Qamrov:",

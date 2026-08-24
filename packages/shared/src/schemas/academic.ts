@@ -105,6 +105,16 @@ export const createRoomSchema = z.object({
   name: z.string().trim().min(1, 'required').max(60),
   capacity: z.coerce.number().int().min(1).max(200).default(12),
   equipment: z.array(z.string().trim().max(40)).max(20).default([]),
+  /**
+   * Which branch the room is in.
+   *
+   * Normally omitted — the branch-scope plugin stamps the active branch and a
+   * room belongs to exactly one building. It is spelled out when the boss adds
+   * rooms from the branches screen, where the session sits in the consolidated
+   * `'ALL'` scope and there is no active branch to stamp. Only a SuperAdmin may
+   * name a branch other than their own; the route enforces that.
+   */
+  branchId: objectIdSchema.optional(),
 })
 export const updateRoomSchema = createRoomSchema.partial()
 export type CreateRoomInput = z.infer<typeof createRoomSchema>

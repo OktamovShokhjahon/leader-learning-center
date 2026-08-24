@@ -1167,7 +1167,9 @@
       "archived": "Archived",
       "archive": "Archive",
       "archiveTitle": "Archive branch",
-      "archiveBody": "“{name}” will be archived. The data is kept."
+      "archiveBody": "“{name}” will be archived. The data is kept.",
+      "rooms": "Rooms",
+      "roomsFor": "{branch} — rooms"
     },
     "settings": {
       "scope": "Scope:",

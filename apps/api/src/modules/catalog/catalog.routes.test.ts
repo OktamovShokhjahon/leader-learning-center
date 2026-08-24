@@ -188,3 +188,91 @@ describe('unmatched paths', () => {
     expect(response.body.error.code).toBe('NOT_FOUND')
   })
 })
+
+/**
+ * §21.1 — rooms managed from the branches screen.
+ *
+ * The boss works that screen in the consolidated `'ALL'` scope, so the branch
+ * cannot come from the session; it is named per request. These check that the
+ * naming works for the boss and that it is not a way around §5.1 for anyone else.
+ */
+describe('rooms — naming a branch explicitly', () => {
+  it('lets the boss add a room to a named branch from the consolidated scope', async () => {
+    const own = await makeBranch('urganch-markaz')
+    const other = await makeBranch('urganch-2')
+    const boss = await makeActor(app, 'superadmin')
+    // No selectBranch: the session stays in 'ALL', as it is on that screen.
+
+    const created = await request(app)
+      .post('/api/v1/rooms')
+      .set(auth(boss.token))
+      .send({ name: '3-xona', capacity: 10, branchId: other.id })
+      .expect(201)
+
+    expect(created.body.data.branchId).toBe(other.id)
+
+    // And it lands in that branch, not the other one.
+    const there = await request(app)
+      .get(`/api/v1/rooms?branchId=${other.id}`)
+      .set(auth(boss.token))
+      .expect(200)
+    expect(there.body.data.items.map((r: { name: string }) => r.name)).toContain('3-xona')
+
+    const elsewhere = await request(app)
+      .get(`/api/v1/rooms?branchId=${own.id}`)
+      .set(auth(boss.token))
+      .expect(200)
+    expect(elsewhere.body.data.items.map((r: { name: string }) => r.name)).not.toContain('3-xona')
+  })
+
+  it('refuses the consolidated scope when no branch is named', async () => {
+    await makeBranch('urganch-markaz')
+    const boss = await makeActor(app, 'superadmin')
+
+    const response = await request(app)
+      .post('/api/v1/rooms')
+      .set(auth(boss.token))
+      .send({ name: 'Nomsiz xona', capacity: 10 })
+      .expect(400)
+
+    expect(response.body.error.code).toBe('BRANCH_SCOPE_REQUIRED')
+  })
+
+  it('refuses a Manager naming someone else’s branch', async () => {
+    const own = await makeBranch('urganch-markaz')
+    const other = await makeBranch('urganch-2')
+    const manager = await makeActor(app, 'manager', own._id)
+
+    await request(app)
+      .post('/api/v1/rooms')
+      .set(auth(manager.token))
+      .send({ name: 'Bosqinchi xona', capacity: 10, branchId: other.id })
+      .expect(403)
+
+    expect(await Room.countDocuments({ branchId: other._id })).toBe(0)
+  })
+
+  it('does not let a Manager read another branch’s rooms by asking for it', async () => {
+    const own = await makeBranch('urganch-markaz')
+    const other = await makeBranch('urganch-2')
+    const boss = await makeActor(app, 'superadmin')
+    const manager = await makeActor(app, 'manager', own._id)
+
+    await selectBranch(app, boss.token, other.id)
+    await request(app)
+      .post('/api/v1/rooms')
+      .set(auth(boss.token))
+      .send({ name: 'Yashirin xona', capacity: 10 })
+      .expect(201)
+
+    // The Manager asks for the other branch and gets their own instead.
+    const response = await request(app)
+      .get(`/api/v1/rooms?branchId=${other.id}`)
+      .set(auth(manager.token))
+      .expect(200)
+
+    expect(response.body.data.items.map((r: { name: string }) => r.name)).not.toContain(
+      'Yashirin xona',
+    )
+  })
+})

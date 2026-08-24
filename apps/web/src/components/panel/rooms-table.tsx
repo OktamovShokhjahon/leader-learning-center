@@ -15,15 +15,21 @@ type Room = { _id: string; name: string; capacity: number; equipment?: string[] 
  * TZ §21.1 — "Rooms", and the other axis of the §9.3 schedule grid.
  *
  * A room existed as a model with no way to create one, so every group had to be
- * timetabled against an id somebody wrote into Mongo by hand. Rooms are
- * branch-scoped, so this list is already the current branch's — no filter needed.
+ * timetabled against an id somebody wrote into Mongo by hand.
+ *
+ * `branchId` names the branch to work in. It is left out on the catalogue
+ * screen, where rooms are branch-scoped and the session's active branch is
+ * already the right answer. It is passed in from the branches screen, where the
+ * boss sits in the consolidated `'ALL'` scope — there is no active branch to
+ * infer, and each branch has its own list.
  */
-export function RoomsTable() {
+export function RoomsTable({ branchId }: { branchId?: string } = {}) {
   const t = useTranslations('panel.rooms')
   const [editing, setEditing] = useState<Room | 'new' | null>(null)
   const [deleting, setDeleting] = useState<Room | null>(null)
 
-  const { data, loading, error, refetch } = useQuery<Paginated<Room>>('/rooms?limit=100')
+  const scope = branchId ? `&branchId=${branchId}` : ''
+  const { data, loading, error, refetch } = useQuery<Paginated<Room>>(`/rooms?limit=100${scope}`)
   const remove = useMutation<undefined, unknown>(() => `/rooms/${deleting?._id ?? ''}`, 'DELETE')
 
   return (
@@ -77,6 +83,7 @@ export function RoomsTable() {
       {editing ? (
         <RoomDialog
           room={editing === 'new' ? null : editing}
+          branchId={branchId}
           onClose={() => setEditing(null)}
           onSaved={() => {
             setEditing(null)
@@ -107,10 +114,12 @@ export function RoomsTable() {
 
 function RoomDialog({
   room,
+  branchId,
   onClose,
   onSaved,
 }: {
   room: Room | null
+  branchId?: string
   onClose: () => void
   onSaved: () => void
 }) {
@@ -172,6 +181,8 @@ function RoomDialog({
                 .split(',')
                 .map((item) => item.trim())
                 .filter(Boolean),
+              // Only on create: a room does not move between buildings.
+              ...(creating && branchId ? { branchId } : {}),
             })
             if (result) onSaved()
           }}

@@ -8,7 +8,7 @@ import {
   paginationSchema,
   parseSort,
 } from '@leader/shared/schemas'
-import { ApiError } from '@leader/shared/errors'
+import { ApiError, ERROR_CODES } from '@leader/shared/errors'
 import { validateBody, validateQuery } from '../../middleware/validate.js'
 import { asyncRoute } from '../../middleware/error-handler.js'
 import {
@@ -18,8 +18,11 @@ import {
   requireSingleBranch,
   currentUser,
 } from '../../middleware/auth.js'
+import { getScope } from '../../middleware/branch-scope.js'
 import { recordAudit, diff } from '../audit/audit.service.js'
 import { Course, Room, Group } from '../groups/group.model.js'
+import { Branch } from '../branches/branch.model.js'
+import { isSuperadmin, branchIdsOf } from '../users/user.model.js'
 
 /**
  * TZ §21.1 — "Courses and prices · Rooms".
@@ -182,11 +185,23 @@ courseRouter.delete(
 roomRouter.get(
   '/',
   validateQuery(paginationSchema),
-  asyncRoute(async (_req, res) => {
+  asyncRoute(async (req, res) => {
     const query = res.locals.query
     const filter: Record<string, unknown> = { deletedAt: null }
     if (query.search) {
       filter.name = { $regex: query.search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), $options: 'i' }
+    }
+
+    // §5.1 — the scope plugin fills in the active branch, but an explicit
+    // `branchId` in the filter wins. That is how the boss reads one branch's
+    // rooms from the branches screen while sitting in the consolidated scope.
+    // Anyone else asking after a branch they hold no role in simply keeps their
+    // own: the picker on that screen never offers them another.
+    if (query.branchId) {
+      const actor = currentUser(req)
+      if (isSuperadmin(actor) || branchIdsOf(actor).includes(query.branchId)) {
+        filter.branchId = query.branchId
+      }
     }
 
     const [items, total] = await Promise.all([
@@ -204,14 +219,40 @@ roomRouter.get(
   }),
 )
 
+/**
+ * `requireSingleBranch` is deliberately not mounted here.
+ *
+ * It would be the right guard if the active branch were the only way to say
+ * where a room goes, but the boss adds rooms from the branches screen while in
+ * the consolidated `'ALL'` scope, naming the branch per room. So the branch is
+ * resolved from the body first and the scope second, and the request is refused
+ * only when neither answers.
+ */
 roomRouter.post(
   '/',
   requirePermission('group.manage'),
-  requireSingleBranch,
   validateBody(createRoomSchema),
   asyncRoute(async (req, res) => {
     const actor = currentUser(req)
-    const room = await Room.create({ ...req.body, createdBy: actor._id })
+    const scope = getScope()?.branchId
+    const branchId = req.body.branchId ?? (scope && scope !== 'ALL' ? scope : undefined)
+
+    if (!branchId) {
+      throw new ApiError(
+        400,
+        ERROR_CODES.BRANCH_SCOPE_REQUIRED,
+        'Select a branch, or name one on the room',
+      )
+    }
+    // Naming someone else's branch is the boss's privilege alone.
+    if (!isSuperadmin(actor) && !branchIdsOf(actor).includes(branchId)) {
+      throw ApiError.forbidden('You can only add rooms to your own branch')
+    }
+    if (!(await Branch.exists({ _id: branchId, deletedAt: null }))) {
+      throw ApiError.badRequest('Unknown branch')
+    }
+
+    const room = await Room.create({ ...req.body, branchId, createdBy: actor._id })
 
     await recordAudit({
       action: 'room.create',
