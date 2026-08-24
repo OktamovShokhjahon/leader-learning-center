@@ -389,26 +389,12 @@
     "twoFactorOn": "Ikki bosqichli himoya yoqilgan.",
     "twoFactorOff": "Ikki bosqichli himoya o‘chirilgan. Uni yoqish tavsiya etiladi.",
     "roleMismatch": "Bu bo‘lim sizning rolingiz uchun emas. O‘zingizga tegishli bo‘limga o‘ting.",
-    "mustChangePassword": "Parolingizni o‘zgartirishingiz kerak.",
-    "underConstruction": "O‘quvchilar, guruhlar, davomat, to‘lovlar, jarimalar va moliya bo‘limlari keyingi bosqichlarda ishga tushiriladi.",
     "roles": {
       "superadmin": "SuperAdmin",
       "manager": "Menejer",
       "teacher": "O‘qituvchi",
       "student": "O‘quvchi",
       "parent": "Ota-ona"
-    },
-    "password": {
-      "title": "Parolni o‘zgartirish",
-      "current": "Joriy parol",
-      "next": "Yangi parol",
-      "confirm": "Yangi parolni takrorlang",
-      "hint": "Kamida 8 belgi. Ommabop parollar qabul qilinmaydi.",
-      "submit": "Parolni o‘zgartirish",
-      "wrongCurrent": "Joriy parol noto‘g‘ri.",
-      "failed": "Parolni o‘zgartirib bo‘lmadi. Qaytadan urinib ko‘ring.",
-      "doneTitle": "Parol o‘zgartirildi",
-      "doneBody": "Boshqa barcha qurilmalardagi seanslar tugatildi."
     },
     "nav": {
       "label": "Panel navigatsiyasi",
@@ -423,7 +409,15 @@
       "approvals": "Tasdiqlash",
       "modules": "Modullar",
       "tests": "Testlar",
-      "staff": "Hisoblar"
+      "staff": "Hisoblar",
+      "leads": "Murojaatlar",
+      "expenses": "Harajatlar",
+      "fines": "Jarimalar",
+      "courses": "Kurslar",
+      "payroll": "Oyliklar",
+      "branches": "Filiallar",
+      "settings": "Sozlamalar",
+      "audit": "Audit"
     },
     "errors": {
       "FORBIDDEN": "Bu bo‘lim sizning rolingiz uchun ochiq emas.",
@@ -435,7 +429,8 @@
       "GROUP_FULL": "Guruh to‘lgan.",
       "UPSTREAM_UNAVAILABLE": "Server bilan bog‘lanib bo‘lmadi.",
       "UNKNOWN": "Xatolik yuz berdi. Qaytadan urinib ko‘ring.",
-      "DUPLICATE_PHONE": "Bu telefon raqamli hisob allaqachon mavjud."
+      "DUPLICATE_PHONE": "Bu telefon raqamli hisob allaqachon mavjud.",
+      "BRANCH_SCOPE_REQUIRED": "Avval filialni tanlang — bu amal bitta filialga yozadi."
     },
     "pages": {
       "dashboard": {
@@ -476,7 +471,7 @@
       "account": {
         "eyebrow": "Hisob",
         "title": "Mening hisobim",
-        "subtitle": "Ruxsatlar, qurilmalar va parol."
+        "subtitle": "Ruxsatlar va faol qurilmalar."
       },
       "student": {
         "eyebrow": "O‘quvchi",
@@ -511,6 +506,46 @@
         "eyebrow": "Kirish huquqi",
         "title": "Hisoblar",
         "subtitle": "Hisob ochish, rollarni belgilash, parolni tiklash."
+      },
+      "leads": {
+        "eyebrow": "Savdo",
+        "title": "Murojaatlar",
+        "subtitle": "Ariza berganlar va ular bilan ish."
+      },
+      "expenses": {
+        "eyebrow": "Moliya",
+        "title": "Harajatlar",
+        "subtitle": "Tez qo‘shish, tasdiqlash va hisobot."
+      },
+      "fines": {
+        "eyebrow": "Nazorat",
+        "title": "Jarimalar",
+        "subtitle": "O‘quvchi va xodim jarimalari."
+      },
+      "courses": {
+        "eyebrow": "Katalog",
+        "title": "Kurslar va xonalar",
+        "subtitle": "Guruh ochish uchun kerak bo‘lgan hamma narsa."
+      },
+      "settings": {
+        "eyebrow": "Tizim",
+        "title": "Sozlamalar",
+        "subtitle": "Cheklovlar, chegaralar va integratsiyalar."
+      },
+      "audit": {
+        "eyebrow": "Tizim",
+        "title": "Audit jurnali",
+        "subtitle": "Kim, nima qildi va qachon."
+      },
+      "payroll": {
+        "eyebrow": "Moliya",
+        "title": "Oyliklar",
+        "subtitle": "Maosh sxemalari va oylik hisob-kitob."
+      },
+      "branches": {
+        "eyebrow": "Tashkilot",
+        "title": "Filiallar",
+        "subtitle": "Butun tizim shu bo‘yicha bo‘linadi."
       }
     },
     "dashboard": {
@@ -607,7 +642,9 @@
         "completed": "Tugatgan",
         "frozen": "Muzlatilgan",
         "dropped": "Tark etgan"
-      }
+      },
+      "create": "Yangi o‘quvchi",
+      "edit": "Tahrirlash"
     },
     "groups": {
       "none": "Guruh yo‘q",
@@ -621,6 +658,18 @@
         "fri": "Ju",
         "sat": "Sh",
         "sun": "Ya"
+      },
+      "create": "Yangi guruh",
+      "edit": "Tahrirlash",
+      "archive": "Arxivlash",
+      "archiveTitle": "Guruhni arxivlash",
+      "archiveBody": "«{name}» arxivlanadi. Tarix saqlanadi, kelgusi darslar bekor qilinadi.",
+      "filter": {
+        "active": "Faol",
+        "planned": "Rejalashtirilgan",
+        "finished": "Tugagan",
+        "archived": "Arxivda",
+        "all": "Hammasi"
       }
     },
     "finance": {
@@ -704,7 +753,8 @@
         "payme": "Payme",
         "click": "Click",
         "uzum": "Uzum"
-      }
+      },
+      "modules": "Onlayn modullar"
     },
     "tests": {
       "noModules": "Bu kurs uchun onlayn modullar hali qo‘shilmagan.",
@@ -790,7 +840,6 @@
       "branchAll": "Barcha filiallar",
       "allBranches": "Barcha filiallar",
       "outranked": "Sizning rolingizdan yuqori",
-      "mustChangePassword": "Keyingi kirishda parolni almashtirishi shart",
       "twoFactorOn": "Ikki bosqichli tasdiqlash yoqilgan",
       "prev": "Oldingi",
       "next": "Keyingi",
@@ -824,7 +873,362 @@
         "student": "O‘quvchi",
         "parent": "Ota-ona"
       }
-    }
+    },
+    "form": {
+      "close": "Yopish",
+      "cancel": "Bekor qilish",
+      "prev": "Oldingi",
+      "next": "Keyingi"
+    },
+    "courses": {
+      "searchPlaceholder": "Kurs nomi yoki manzili…",
+      "create": "Yangi kurs",
+      "edit": "Tahrirlash",
+      "save": "Saqlash",
+      "delete": "O‘chirish",
+      "none": "Kurs topilmadi",
+      "count": "{n} ta kurs",
+      "name": "Nomi",
+      "slug": "Manzil (slug)",
+      "slugHint": "Sayt manzilida ko‘rinadi: /courses/general-english",
+      "description": "Tavsif",
+      "level": "Daraja",
+      "duration": "Davomiyligi",
+      "months": "{n} oy",
+      "defaultPrice": "Standart narx",
+      "priceHint": "Haqiqiy narx guruhda, har filial uchun alohida belgilanadi.",
+      "order": "Tartib",
+      "orderHint": "Ro‘yxatda nechanchi bo‘lib turadi",
+      "visibility": "Ko‘rinishi",
+      "public": "Saytda ko‘rinadi",
+      "hidden": "Yashirin",
+      "publicHint": "Ommaviy saytdagi kurslar ro‘yxatida chiqadi.",
+      "deleteTitle": "Kursni o‘chirish",
+      "deleteBody": "«{name}» o‘chiriladi. Faol guruhlari bo‘lsa, o‘chirilmaydi."
+    },
+    "rooms": {
+      "title": "Xonalar",
+      "create": "Yangi xona",
+      "edit": "Tahrirlash",
+      "save": "Saqlash",
+      "delete": "O‘chirish",
+      "none": "Xona qo‘shilmagan",
+      "name": "Nomi",
+      "capacity": "Sig‘imi",
+      "equipment": "Jihozlar",
+      "equipmentHint": "Vergul bilan ajrating: proyektor, doska",
+      "deleteTitle": "Xonani o‘chirish",
+      "deleteBody": "«{name}» o‘chiriladi. Dars jadvalida bo‘lsa, o‘chirilmaydi."
+    },
+    "groupForm": {
+      "create": "Yangi guruh",
+      "save": "Saqlash",
+      "name": "Guruh nomi",
+      "course": "Kurs",
+      "teacher": "O‘qituvchi",
+      "room": "Xona",
+      "noRoom": "Xonasiz",
+      "choose": "Tanlang",
+      "capacity": "Sig‘imi",
+      "pattern": "Kunlar tartibi",
+      "patternHint": "Tartibni tanlasangiz, kunlar avtomatik belgilanadi.",
+      "patterns": {
+        "har_kun": "Har kuni",
+        "toq": "Toq kunlar",
+        "juft": "Juft kunlar",
+        "custom": "Boshqacha"
+      },
+      "days": "Dars kunlari",
+      "weekday": {
+        "1": "Du",
+        "2": "Se",
+        "3": "Ch",
+        "4": "Pa",
+        "5": "Ju",
+        "6": "Sh",
+        "7": "Ya"
+      },
+      "startTime": "Boshlanishi",
+      "endTime": "Tugashi",
+      "startDate": "Boshlanish sanasi",
+      "endDate": "Tugash sanasi",
+      "endDateHint": "Bo‘sh qoldirsangiz, kurs davomiyligi bo‘yicha hisoblanadi.",
+      "price": "Narxi",
+      "priceHint": "Shu filial uchun oylik to‘lov.",
+      "status": "Holati",
+      "statuses": {
+        "planned": "Rejalashtirilgan",
+        "active": "Faol",
+        "finished": "Tugagan",
+        "archived": "Arxivda"
+      },
+      "conflict": "Bu vaqt band: «{group}». Boshqa vaqt yoki xona tanlang."
+    },
+    "studentForm": {
+      "create": "Yangi o‘quvchi",
+      "save": "Saqlash",
+      "saved": "Saqlandi",
+      "choose": "Tanlang",
+      "fullName": "To‘liq ism",
+      "phone": "Telefon",
+      "telegram": "Telegram",
+      "parentName": "Ota-ona ismi",
+      "parentPhone": "Ota-ona telefoni",
+      "birthDate": "Tug‘ilgan sana",
+      "gender": "Jinsi",
+      "genders": {
+        "male": "O‘g‘il bola",
+        "female": "Qiz bola",
+        "other": "Boshqa"
+      },
+      "age": "Yoshi",
+      "schoolClass": "Sinf",
+      "joinedAt": "Kelgan sanasi",
+      "address": "Manzil",
+      "status": "Holati",
+      "notes": "Izohlar",
+      "monthlyFee": "Oylik to‘lov (chek)",
+      "feeHint": "Chegirmasiz summa.",
+      "statuses": {
+        "active": "Faol",
+        "pending": "Kutilmoqda",
+        "overdue": "Qarzdor",
+        "paid": "To‘langan",
+        "completed": "Tugatgan",
+        "frozen": "Muzlatilgan",
+        "dropped": "Ketgan"
+      },
+      "dropReason": "Ketish sababi",
+      "reasonRequired": "Sabab ko‘rsatilishi shart.",
+      "dropReasons": {
+        "price": "Narx",
+        "moved": "Ko‘chib ketdi",
+        "dissatisfied": "Norozi",
+        "other": "Boshqa"
+      },
+      "freeze": "Muzlatish",
+      "unfreeze": "Muzlatishni bekor qilish",
+      "freezeHint": "Muzlatilgan o‘quvchiga hisob-faktura chiqarilmaydi.",
+      "transfer": "Ko‘chirish",
+      "toBranch": "Qaysi filialga",
+      "sameBranch": "Shu filialda qoladi",
+      "toGroup": "Qaysi guruhga",
+      "noGroup": "Guruhsiz",
+      "confirmTransfer": "Ko‘chirishni tasdiqlash",
+      "transferHint": "To‘lanmagan hisob-fakturalar o‘quvchi bilan ketadi, to‘langanlari eski filialda qoladi."
+    },
+    "leads": {
+      "none": "Murojaat yo‘q",
+      "returning": "Qayta murojaat",
+      "phone": "Telefon",
+      "source": "Manba",
+      "age": "Yoshi",
+      "course": "Kurs",
+      "call": "Qo‘ng‘iroq",
+      "telegram": "Telegram",
+      "statusLabel": "Holati",
+      "save": "Saqlash",
+      "rejectReason": "Rad etish sababi",
+      "nextAction": "Keyingi qadam sanasi",
+      "nextActionHint": "Sinov darsi yoki qayta qo‘ng‘iroq sanasi.",
+      "scheduleTrial": "Sinov darsiga yozish",
+      "convert": "O‘quvchiga aylantirish",
+      "convertTitle": "{name} — o‘quvchiga aylantirish",
+      "group": "Guruh",
+      "groupHint": "Darhol guruhga yozish (ixtiyoriy).",
+      "noGroup": "Guruhsiz",
+      "monthlyFee": "Oylik to‘lov",
+      "createLogin": "Kabinet uchun login ochish",
+      "createLoginHint": "O‘quvchi o‘z kabinetiga kira oladi.",
+      "password": "Parol",
+      "passwordHint": "Kamida 8 ta belgi. Birinchi kirishda almashtiriladi.",
+      "status": {
+        "yangi": "Yangi",
+        "boglanildi": "Bog‘lanildi",
+        "sinov_darsiga_yozildi": "Sinov darsiga yozildi",
+        "sinov_darsida_qatnashdi": "Sinov darsida qatnashdi",
+        "oquvchi_boldi": "O‘quvchi bo‘ldi",
+        "rad_etdi": "Rad etdi"
+      }
+    },
+    "expenses": {
+      "add": "+ Harajat",
+      "save": "Saqlash",
+      "all": "Hammasi",
+      "none": "Harajat yo‘q",
+      "count": "{n} ta yozuv",
+      "total": "Jami:",
+      "date": "Sana",
+      "category": "Turkum",
+      "comment": "Izoh",
+      "amount": "Summa",
+      "statusLabel": "Holati",
+      "approve": "Tasdiqlash",
+      "reject": "Rad etish",
+      "status": {
+        "draft": "Qoralama",
+        "pending_approval": "Tasdiq kutmoqda",
+        "approved": "Tasdiqlangan",
+        "rejected": "Rad etilgan"
+      },
+      "ceilingHint": "Belgilangan chegaradan yuqori summa boshliq tasdig‘iga yuboriladi."
+    },
+    "fines": {
+      "issue": "Jarima solish",
+      "none": "Jarima yo‘q",
+      "count": "{n} ta jarima",
+      "total": "Jami:",
+      "allTargets": "Hammasi",
+      "date": "Sana",
+      "target": "Kimga",
+      "person": "Shaxs",
+      "choose": "Tanlang",
+      "reason": "Sabab",
+      "reasonHint": "Kamida 10 ta belgi — keyinchalik tushunarli bo‘lishi uchun.",
+      "amount": "Summa",
+      "statusLabel": "Holati",
+      "cancel": "Bekor qilish",
+      "cancelTitle": "Jarimani bekor qilish",
+      "cancelBody": "{name} uchun jarima bekor qilinadi. Yozuv o‘chirilmaydi.",
+      "cancelReason": "Bekor qilish sababi",
+      "issueHint": "Jarima darhol yechilmaydi: o‘quvchiniki keyingi hisob-fakturaga, xodimniki oylikka tushadi.",
+      "targets": {
+        "student": "O‘quvchi",
+        "employee": "Xodim"
+      },
+      "statuses": {
+        "issued": "Solingan",
+        "paid": "To‘langan",
+        "cancelled": "Bekor qilingan",
+        "appealed": "Shikoyat qilingan",
+        "waived": "Kechirilgan"
+      }
+    },
+    "payroll": {
+      "runs": "Hisob-kitob",
+      "schemes": "Sxemalar",
+      "calculate": "Hisoblash",
+      "newScheme": "Yangi sxema",
+      "editScheme": "Sxemani tahrirlash",
+      "none": "Bu oy uchun hisob-kitob yo‘q",
+      "noSchemes": "Sxema belgilanmagan",
+      "person": "Xodim",
+      "scheme": "Sxema",
+      "schemeHint": "Maosh qanday hisoblanadi.",
+      "gross": "Jami",
+      "deductions": "Ushlab qolindi",
+      "net": "Qo‘lga",
+      "statusLabel": "Holati",
+      "approve": "Tasdiqlash",
+      "markPaid": "To‘landi",
+      "edit": "Tahrirlash",
+      "save": "Saqlash",
+      "choose": "Tanlang",
+      "base": "Asosiy summa",
+      "share": "Ulush",
+      "shareHint": "0.6 — yig‘ilgan pulning 60 foizi.",
+      "rate": "Stavka",
+      "rateHint": "Bitta dars yoki bitta o‘quvchi uchun.",
+      "unknown": "Noma’lum",
+      "collected": "Yig‘ilgan",
+      "lessons": "Darslar",
+      "students": "O‘quvchilar",
+      "payments": "To‘lovlar soni",
+      "schemeNames": {
+        "fixed": "Qat’iy",
+        "percentage": "Foizli",
+        "per_lesson": "Dars uchun",
+        "per_student": "O‘quvchi uchun",
+        "mixed": "Aralash"
+      },
+      "statuses": {
+        "draft": "Qoralama",
+        "approved": "Tasdiqlangan",
+        "paid": "To‘langan"
+      }
+    },
+    "branches": {
+      "create": "Yangi filial",
+      "edit": "Tahrirlash",
+      "save": "Saqlash",
+      "none": "Filial yo‘q",
+      "count": "{n} ta filial",
+      "name": "Nomi",
+      "slug": "Manzil (slug)",
+      "slugHint": "Sayt manzilida ko‘rinadi va keyin o‘zgartirilmaydi.",
+      "city": "Shahar",
+      "address": "Manzil",
+      "workingHours": "Ish vaqti",
+      "phones": "Telefonlar",
+      "phonesHint": "Vergul bilan ajrating.",
+      "email": "Email",
+      "statusLabel": "Holati",
+      "active": "Faol",
+      "archived": "Arxivda",
+      "archive": "Arxivlash",
+      "archiveTitle": "Filialni arxivlash",
+      "archiveBody": "«{name}» arxivlanadi. Ma’lumotlar saqlanadi."
+    },
+    "settings": {
+      "scope": "Qamrov:",
+      "centreWide": "Butun markaz",
+      "save": "Saqlash",
+      "saved": "Saqlandi",
+      "reset": "Tiklash",
+      "default": "Standart",
+      "overridden": "O‘zgartirilgan",
+      "secretPlaceholder": "Yangi qiymat kiriting",
+      "globalOnly": "Bu sozlama butun markaz uchun; filial bo‘yicha o‘zgartirilmaydi.",
+      "groups": {
+        "money": "Pul",
+        "academic": "O‘quv",
+        "notifications": "Xabarnomalar",
+        "integrations": "Integratsiyalar",
+        "content": "Kontent"
+      },
+      "keys": {
+        "money_discountCeilingPercent": "Chegirma chegarasi",
+        "money_expenseApprovalCeiling": "Harajat tasdiq chegarasi",
+        "money_pettyCashCeiling": "Menejer uchun harajat chegarasi",
+        "money_overdueGraceDays": "Kechikish uchun imtiyoz kunlari",
+        "money_defaultTeacherShare": "O‘qituvchi ulushi (standart)",
+        "money_invoiceDayOfMonth": "Hisob-faktura kuni",
+        "academic_attendanceEditWindowHours": "Davomatni tahrirlash oynasi (soat)",
+        "academic_lowAttendanceThresholdPercent": "Past davomat chegarasi",
+        "academic_absenceStreakAlert": "Ketma-ket qatnashmaslik ogohlantirishi",
+        "academic_holidays": "Bayram kunlari",
+        "academic_anonymiseLeaderboard": "Reytingda ismlarni yashirish",
+        "fines_autoIssueEnabled": "Jarimalar avtomatik solinsin",
+        "notify_smsEnabled": "SMS yoqilgan",
+        "notify_telegramEnabled": "Telegram yoqilgan",
+        "notify_quietHours": "Sokin soatlar",
+        "notify_reminderOffsetDays": "Eslatma kunlari",
+        "integration_eskizToken": "Eskiz.uz tokeni",
+        "integration_eskizSender": "Eskiz.uz jo‘natuvchi nomi",
+        "integration_telegramBotToken": "Telegram bot tokeni",
+        "content_showResultsWall": "Natijalar bo‘limi ko‘rinsin",
+        "content_defaultLocale": "Standart til"
+      }
+    },
+    "audit": {
+      "searchPlaceholder": "Ism, amal yoki manzil…",
+      "allActions": "Barcha amallar",
+      "denied": "Rad etilgan",
+      "none": "Yozuv topilmadi",
+      "count": "{n} ta yozuv",
+      "when": "Qachon",
+      "who": "Kim",
+      "action": "Amal",
+      "entity": "Obyekt",
+      "outcome": "Natija",
+      "retentionNote": "Jurnal 3 yil saqlanadi va hech kim, boshliq ham, uni o‘chira olmaydi."
+    },
+    "branchSwitcher": {
+      "allBranches": "Barcha filiallar",
+      "allBranchesHint": "Hisobotlar uchun; bu holatda yozib bo‘lmaydi",
+      "pickOne": "Filialni tanlang"
+    },
+    "passwordPolicy": "Parol markaz ma’muriyati tomonidan beriladi va almashtiriladi. O‘zingiz o‘zgartira olmaysiz — parolni unutgan bo‘lsangiz, administratorga murojaat qiling."
   },
   "validation": {
     "required": "Bu maydonni to‘ldiring.",

@@ -29,6 +29,17 @@ const auditLogSchema = new Schema(
     entityId: { type: Schema.Types.ObjectId },
 
     /**
+     * The identifier for entities that are not keyed by an ObjectId — a setting
+     * (`money.discountCeilingPercent`) or a payroll period (`2026-08`).
+     *
+     * §21.3 puts settings and payroll on the mandatory audit list, and both were
+     * being dropped: `recordAudit` swallows its own errors so a failed ObjectId
+     * cast lost the entry silently, which is the worst possible failure mode for
+     * a log whose whole job is to be complete.
+     */
+    entityKey: String,
+
+    /**
      * The request path, for events that are about a *route* rather than a
      * document — §21.3's "any 403 on a finance endpoint" being the reason this
      * exists. Those have no entity id to record, and forcing a URL into

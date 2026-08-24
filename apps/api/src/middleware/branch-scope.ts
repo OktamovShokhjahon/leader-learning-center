@@ -112,13 +112,26 @@ export function branchScopePlugin(schema: Schema) {
     this.pipeline().unshift({ $match: { branchId: toObjectId(scope.branchId) } })
   })
 
-  schema.pre(
-    'save',
-    function setBranchOnCreate(this: { branchId?: Types.ObjectId | string; isNew: boolean }) {
-      const scope = getScope()
-      if (this.isNew && !this.branchId && scope?.branchId && scope.branchId !== 'ALL') {
-        this.branchId = scope.branchId
-      }
-    },
-  )
+  function setBranchOnCreate(this: { branchId?: Types.ObjectId | string; isNew: boolean }) {
+    const scope = getScope()
+    if (this.isNew && !this.branchId && scope?.branchId && scope.branchId !== 'ALL') {
+      this.branchId = scope.branchId
+    }
+  }
+
+  /**
+   * Both hooks, and `validate` is the one that matters.
+   *
+   * Mongoose runs `pre('validate')` → validation → `pre('save')`, so a plugin
+   * that only hooked `save` stamped the branch *after* the required-field check
+   * had already rejected the document. Every model whose `branchId` is
+   * `required: true` — which is all of them — therefore threw a
+   * `ValidationError` unless the caller happened to pass the branch by hand,
+   * which is exactly the boilerplate this plugin exists to remove.
+   *
+   * `save` stays because a document built and saved without `validate()` (a
+   * bulk path, say) should still get its branch.
+   */
+  schema.pre('validate', setBranchOnCreate)
+  schema.pre('save', setBranchOnCreate)
 }

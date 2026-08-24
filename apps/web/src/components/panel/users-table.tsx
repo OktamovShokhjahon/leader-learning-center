@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import { useTranslations } from 'next-intl'
-import { Search, UserPlus, Users, ShieldCheck, Lock, Ban, RotateCcw, Pencil } from 'lucide-react'
+import { Search, UserPlus, Users, ShieldCheck, Ban, RotateCcw, Pencil } from 'lucide-react'
 import { ROLES, GRANTABLE_ROLES, mayAdminister, type Role } from '@leader/shared/permissions'
 import { useQuery, type Paginated } from '@/lib/api/use-api'
 import { useAuth } from '@/lib/auth/auth-context'
@@ -232,14 +232,6 @@ export function UsersTable() {
                         >
                           {t(row.isActive ? 'status.active' : 'status.inactive')}
                         </span>
-                        {row.mustChangePassword ? (
-                          <span
-                            title={t('mustChangePassword')}
-                            className="inline-flex items-center gap-1 rounded-pill bg-warning/15 px-2 py-1 text-2xs text-warning"
-                          >
-                            <Lock className="size-3" aria-hidden />
-                          </span>
-                        ) : null}
                         {row.twoFactor?.enabled ? (
                           <span
                             title={t('twoFactorOn')}

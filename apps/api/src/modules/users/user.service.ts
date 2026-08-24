@@ -148,8 +148,9 @@ export async function createUser(actor: UserDocument, input: CreateUserInput, re
     photo: input.photo,
     locale: input.locale ?? 'uz',
     passwordHash: await hashPassword(input.password),
-    // An administrator has seen this password, so it is not the user's yet.
-    mustChangePassword: true,
+    // Self-service password change was removed at the centre's request, so an
+    // issued password stays until an administrator issues another one.
+    mustChangePassword: false,
     roles: input.roles,
     createdBy: actor._id,
   })

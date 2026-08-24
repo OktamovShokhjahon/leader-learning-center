@@ -169,6 +169,27 @@ export const requireSingleBranch: RequestHandler = (req, _res, next) => {
   next()
 }
 
+/**
+ * The guard pair every write route needs: may you do this, and *where*.
+ *
+ * `requireSingleBranch` existed for a long time without being mounted anywhere,
+ * which meant a SuperAdmin sitting in the consolidated `'ALL'` scope could POST
+ * a student, a group or a payment into no branch at all — the scope plugin has
+ * nothing to stamp on the document, so it lands unowned. Pairing the two here
+ * means a new router cannot forget the second one by omission: you reach for
+ * `writeGuards(action)` and get both.
+ *
+ *   router.post('/', ...writeGuards('student.manage'), validateBody(s), handler)
+ */
+export function writeGuards(action: Action): RequestHandler[] {
+  return [requirePermission(action), requireSingleBranch]
+}
+
+/** Same, for the routes where a `limited` grant means "not through this door". */
+export function fullWriteGuards(action: Action): RequestHandler[] {
+  return [requireFullGrant(action), requireSingleBranch]
+}
+
 /** Convenience for controllers: the authenticated user, or a 401. */
 export function currentUser(req: Express.Request): UserDocument {
   if (!req.user) throw ApiError.unauthenticated()

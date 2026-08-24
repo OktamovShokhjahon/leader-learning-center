@@ -25,7 +25,8 @@
     "pretest": "npm run build:shared",
     "seed": "npm run seed --workspace=@leader/api",
     "preseed": "npm run build:shared",
-    "smoke": "npm run smoke --workspace=@leader/api"
+    "smoke": "npm run smoke --workspace=@leader/api",
+    "smoke:full": "npm run smoke:full --workspace=@leader/api"
   },
   "devDependencies": {
     "prettier": "^3.4.2",

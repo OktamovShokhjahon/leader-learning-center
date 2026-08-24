@@ -3,7 +3,6 @@ import rateLimit from 'express-rate-limit'
 import { ApiError, ERROR_CODES } from '@leader/shared/errors'
 import {
   loginSchema,
-  changePasswordSchema,
   branchSwitchSchema,
   totpVerifySchema,
   totpDisableSchema,
@@ -20,7 +19,6 @@ import {
   login,
   listSessions,
   terminateSession,
-  changePassword,
   switchBranch,
   describeUser,
   beginTwoFactorSetup,
@@ -143,16 +141,6 @@ authRouter.delete(
     // Terminating the session you are holding is a valid way to sign out.
     if (sessionId === req.session!.id) clearRefreshCookie(res)
     res.json({ data: { ok: true } })
-  }),
-)
-
-authRouter.post(
-  '/password',
-  requireAuth,
-  validateBody(changePasswordSchema),
-  asyncRoute(async (req, res) => {
-    const result = await changePassword(currentUser(req).id, req.session!.id, req.body, req)
-    res.json({ data: result })
   }),
 )
 

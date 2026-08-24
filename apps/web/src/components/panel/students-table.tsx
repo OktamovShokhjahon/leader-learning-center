@@ -2,9 +2,11 @@
 
 import { useState } from 'react'
 import { useTranslations } from 'next-intl'
-import { Search, Users } from 'lucide-react'
+import { Search, Users, Pencil } from 'lucide-react'
 import { STUDENT_STATUSES } from '@leader/shared/schemas'
 import { useQuery, type Paginated } from '@/lib/api/use-api'
+import { NewButton, RowAction } from './table-kit'
+import { StudentDialog, type PanelStudent } from './student-dialog'
 import { Link } from '@/i18n/navigation'
 import {
   Panel,
@@ -41,7 +43,8 @@ export function StudentsTable() {
   if (search.trim().length >= 2) query.set('search', search.trim())
   if (status) query.set('status', status)
 
-  const { data, loading, error } = useQuery<Paginated<Student>>(`/students?${query}`)
+  const { data, loading, error, refetch } = useQuery<Paginated<Student>>(`/students?${query}`)
+  const [editing, setEditing] = useState<PanelStudent | 'new' | null>(null)
 
   return (
     <div className="flex flex-col gap-5">
@@ -62,6 +65,8 @@ export function StudentsTable() {
             className="h-12 w-full rounded-input border border-border-subtle bg-surface pl-11 pr-4 text-sm text-ink outline-none focus:border-glaze-500 dark:text-white"
           />
         </div>
+
+        <NewButton label={t('create')} onClick={() => setEditing('new')} />
 
         <div className="flex flex-wrap gap-1.5">
           <FilterChip label={t('all')} active={status === null} onClick={() => setStatus(null)} />
@@ -94,6 +99,7 @@ export function StudentsTable() {
                 <Th>{t('statusLabel')}</Th>
                 <Th className="text-right">{t('fee')}</Th>
                 <Th className="text-right">{t('balance')}</Th>
+                <Th className="text-right" />
               </tr>
             </thead>
             <tbody>
@@ -129,6 +135,13 @@ export function StudentsTable() {
                       <span className="text-ink-muted">—</span>
                     )}
                   </Td>
+                  <Td className="text-right">
+                    <RowAction
+                      label={t('edit')}
+                      Icon={Pencil}
+                      onClick={() => setEditing(student as unknown as PanelStudent)}
+                    />
+                  </Td>
                 </tr>
               ))}
             </tbody>
@@ -159,7 +172,31 @@ export function StudentsTable() {
           </button>
         </div>
       ) : null}
+
+      <StudentsDialogs editing={editing} setEditing={setEditing} refetch={refetch} />
     </div>
+  )
+}
+
+function StudentsDialogs({
+  editing,
+  setEditing,
+  refetch,
+}: {
+  editing: PanelStudent | 'new' | null
+  setEditing: (value: PanelStudent | 'new' | null) => void
+  refetch: () => void
+}) {
+  if (!editing) return null
+  return (
+    <StudentDialog
+      student={editing === 'new' ? null : editing}
+      onClose={() => setEditing(null)}
+      onSaved={() => {
+        setEditing(null)
+        refetch()
+      }}
+    />
   )
 }
 

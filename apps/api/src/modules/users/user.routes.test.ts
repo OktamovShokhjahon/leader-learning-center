@@ -86,8 +86,9 @@ describe('POST /users — who may create whom (§4.2 Staff)', () => {
       })
       .expect(201)
 
-    // An administrator has seen this password, so it is not yet the user's own.
-    expect(response.body.data.mustChangePassword).toBe(true)
+    // Self-service password change is gone, so an issued password carries no
+    // "change me" flag — only another administrator reset can replace it.
+    expect(response.body.data.mustChangePassword).toBe(false)
     expect(response.body.data.passwordHash).toBeUndefined()
   })
 

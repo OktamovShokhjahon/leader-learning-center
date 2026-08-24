@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "seed": "tsx src/seed/index.ts",
-    "smoke": "node scripts/crm-smoke.mjs"
+    "smoke": "node scripts/crm-smoke.mjs",
+    "smoke:full": "node scripts/full-smoke.mjs"
   },
   "dependencies": {
     "@leader/shared": "*",

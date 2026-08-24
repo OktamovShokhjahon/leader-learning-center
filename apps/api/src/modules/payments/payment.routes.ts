@@ -17,6 +17,7 @@ import {
   requirePermission,
   requireFullGrant,
   requireRole,
+  writeGuards,
   currentUser,
 } from '../../middleware/auth.js'
 import { Invoice, Payment } from './invoice.model.js'
@@ -110,7 +111,8 @@ paymentRouter.post(
  */
 paymentRouter.post(
   '/',
-  requirePermission('payment.accept'),
+  // §5.1 — money must land in a named branch, never in the consolidated scope.
+  ...writeGuards('payment.accept'),
   validateBody(acceptPaymentSchema),
   asyncRoute(async (req, res) => {
     const { payment, replayed } = await acceptPayment(req.body, currentUser(req).id)

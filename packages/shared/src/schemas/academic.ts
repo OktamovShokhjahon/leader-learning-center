@@ -82,11 +82,43 @@ export const createCourseSchema = z.object({
 })
 export const updateCourseSchema = createCourseSchema.partial()
 
+/** §23 — `POST /students/:id/transfer { toBranchId | toGroupId }`. */
+export const transferSchema = z
+  .object({
+    toBranchId: objectIdSchema.optional(),
+    toGroupId: objectIdSchema.optional(),
+    reason: z.string().trim().max(500).optional(),
+  })
+  .refine((value) => value.toBranchId || value.toGroupId, {
+    message: 'transferTargetRequired',
+    path: ['toBranchId'],
+  })
+export type TransferInput = z.infer<typeof transferSchema>
+
+export const courseQuerySchema = paginationSchema.extend({
+  isPublic: z.coerce.boolean().optional(),
+})
+
+/* ── Rooms (§9.3 — the schedule grid's other axis) ─────────────────────── */
+
+export const createRoomSchema = z.object({
+  name: z.string().trim().min(1, 'required').max(60),
+  capacity: z.coerce.number().int().min(1).max(200).default(12),
+  equipment: z.array(z.string().trim().max(40)).max(20).default([]),
+})
+export const updateRoomSchema = createRoomSchema.partial()
+export type CreateRoomInput = z.infer<typeof createRoomSchema>
+
 /* ── Groups ────────────────────────────────────────────────────────────── */
 
 /** §9.2 — matches the workbook's `Kun` column. */
 export const SCHEDULE_PATTERNS_GROUP = ['har_kun', 'toq', 'juft', 'custom'] as const
-export const GROUP_STATUSES = ['planned', 'active', 'finished'] as const
+/**
+ * §9.2 — "Group archive keeps all history; archived groups are excluded from all
+ * default views." Archiving is therefore a status, not a delete: the lessons,
+ * attendance and invoices that point at the group all stay valid.
+ */
+export const GROUP_STATUSES = ['planned', 'active', 'finished', 'archived'] as const
 
 /** `HH:mm`, 24-hour. */
 export const timeSchema = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'invalidTime')

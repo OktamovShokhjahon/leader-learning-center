@@ -19,6 +19,7 @@ import {
   requireAuth,
   requirePermission,
   requireFullGrant,
+  writeGuards,
   currentUser,
 } from '../../middleware/auth.js'
 import { allowSelfOr } from '../../middleware/self-access.js'
@@ -119,7 +120,9 @@ groupRouter.get(
 
 groupRouter.post(
   '/',
-  requirePermission('group.manage'),
+  // §5.1 — see the note on `POST /students`: a group created in the `'ALL'`
+  // scope would carry no branch and appear in none of them.
+  ...writeGuards('group.manage'),
   validateBody(createGroupSchema),
   asyncRoute(async (req, res) => {
     const actor = currentUser(req)
@@ -241,6 +244,55 @@ groupRouter.post(
       req,
     })
     res.status(201).json({ data: enrollment })
+  }),
+)
+
+/**
+ * §9.2 — "Group archive keeps all history; archived groups are excluded from all
+ * default views."
+ *
+ * So this is a status change, not a delete. Lessons, attendance rows, invoices
+ * and payroll lines all point at the group, and removing the document would turn
+ * every one of them into a dangling id. Future lessons are cancelled, because a
+ * timetable slot held by an archived group would block the room forever.
+ */
+groupRouter.delete(
+  '/:id',
+  requirePermission('group.manage'),
+  asyncRoute(async (req, res) => {
+    const actor = currentUser(req)
+    const group = await Group.findOne({ _id: req.params.id, deletedAt: null })
+    if (!group) throw ApiError.notFound('Group not found')
+
+    const active = await Enrollment.countDocuments({ groupId: group._id, status: 'active' })
+    if (active > 0) {
+      throw ApiError.conflict(`${active} student(s) are still enrolled — move them first`, {
+        enrolled: active,
+      })
+    }
+
+    const before = group.status
+    group.status = 'archived'
+    group.updatedBy = actor._id
+    await group.save()
+
+    // Only lessons that have not happened yet — a past lesson is a record.
+    const cancelled = await Lesson.updateMany(
+      { groupId: group._id, date: { $gte: new Date() }, status: { $ne: 'cancelled' } },
+      { $set: { status: 'cancelled', cancelReason: 'group_archived' } },
+    )
+
+    await recordAudit({
+      action: 'group.archive',
+      entity: 'Group',
+      entityId: group.id,
+      actorId: actor._id,
+      before: { status: before },
+      after: { status: group.status, lessonsCancelled: cancelled.modifiedCount },
+      req,
+    })
+
+    res.json({ data: { archived: true, lessonsCancelled: cancelled.modifiedCount } })
   }),
 )
 

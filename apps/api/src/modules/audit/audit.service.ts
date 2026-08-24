@@ -1,3 +1,4 @@
+import { Types } from 'mongoose'
 import { AuditLog } from './audit.model.js'
 import { getScope } from '../../middleware/branch-scope.js'
 import { logger } from '../../config/logger.js'
@@ -62,6 +63,22 @@ function sanitize(value: Record<string, unknown> | undefined) {
   return output
 }
 
+/**
+ * Callers pass whatever identifies the thing they touched, and most of the time
+ * that is an ObjectId. When it is not — a setting key, a payroll period — it
+ * belongs in `entityKey`, because forcing it into `entityId` fails the cast and
+ * the entry is lost.
+ */
+function splitEntityId(value: unknown): { entityId?: unknown; entityKey?: string } {
+  if (value === undefined || value === null) return {}
+  if (value instanceof Types.ObjectId) return { entityId: value }
+
+  const text = String(value)
+  return Types.ObjectId.isValid(text) && String(new Types.ObjectId(text)) === text
+    ? { entityId: text }
+    : { entityKey: text }
+}
+
 export async function recordAudit(input: AuditInput): Promise<void> {
   const scope = getScope()
   try {
@@ -74,7 +91,7 @@ export async function recordAudit(input: AuditInput): Promise<void> {
         (scope?.branchId && scope.branchId !== 'ALL' ? scope.branchId : undefined),
       action: input.action,
       entity: input.entity,
-      entityId: input.entityId,
+      ...splitEntityId(input.entityId),
       path: input.path,
       before: sanitize(input.before),
       after: sanitize(input.after),

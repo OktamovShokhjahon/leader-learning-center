@@ -48,21 +48,6 @@ export const otpLoginVerifySchema = z.object({
   deviceName: z.string().trim().max(80).optional(),
 })
 
-export const changePasswordSchema = z
-  .object({
-    currentPassword: passwordAttemptSchema,
-    newPassword: passwordSchema,
-    confirmPassword: z.string(),
-  })
-  .refine((data) => data.newPassword === data.confirmPassword, {
-    message: 'passwordsDoNotMatch',
-    path: ['confirmPassword'],
-  })
-  .refine((data) => data.newPassword !== data.currentPassword, {
-    message: 'passwordUnchanged',
-    path: ['newPassword'],
-  })
-
 /** An administrator resetting someone else's password — no current password known. */
 export const resetPasswordSchema = z.object({
   newPassword: passwordSchema,
