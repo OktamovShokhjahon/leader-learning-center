@@ -41,6 +41,25 @@ type AuthState = {
 
 const AuthContext = createContext<AuthState | null>(null)
 
+/**
+ * §8 — the API ends a session out from under the browser on purpose: a role
+ * change, a password reset and a deactivation all revoke every session the
+ * account holds, and the next request comes back `401 SESSION_REVOKED`.
+ *
+ * Without somewhere to report that, each panel screen just rendered the error
+ * and sat there — "This session is no longer valid" on a page that never
+ * recovered, with no way forward but a manual reload. This is the seam the data
+ * layer reports through; `AuthProvider` registers the handler below.
+ *
+ * A module-level slot rather than context because `request()` in `use-api.ts` is
+ * a plain function called from outside React as well as inside it.
+ */
+let reportLost: (() => void) | null = null
+
+export function reportSessionLost() {
+  reportLost?.()
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<SessionUser | null>(null)
   const [accessToken, setAccessToken] = useState<string | null>(null)
@@ -102,6 +121,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const getToken = useCallback(async () => accessToken ?? (await refresh()), [accessToken, refresh])
+
+  /**
+   * Drop the dead session and let the guards take over.
+   *
+   * Deliberately not a redirect from here: `RequirePermission` and `PanelShell`
+   * already send an anonymous visitor to `/login`, and doing it twice is how you
+   * get a redirect fighting a render. Clearing the state is enough.
+   *
+   * The refresh cookie is cleared too — the session it points at is gone, so
+   * leaving it would just make the next mount spend a request rediscovering that.
+   */
+  useEffect(() => {
+    reportLost = () => {
+      setUser(null)
+      setAccessToken(null)
+      setStatus('anonymous')
+      void fetch('/api/auth/logout', { method: 'POST' }).catch(() => {})
+    }
+    return () => {
+      reportLost = null
+    }
+  }, [])
 
   return (
     <AuthContext.Provider value={{ user, accessToken, status, signIn, signOut, getToken }}>

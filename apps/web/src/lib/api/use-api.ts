@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { useAuth, apiFetch } from '@/lib/auth/auth-context'
+import { useAuth, apiFetch, reportSessionLost } from '@/lib/auth/auth-context'
 
 /**
  * The panels' data layer.
@@ -30,6 +30,14 @@ export async function request<T>(
     })
     const body = await response.json().catch(() => ({}))
     if (!response.ok) {
+      /**
+       * §8 — a `401` here does not mean "this screen failed", it means the
+       * session is over: revoked because the account's role changed, its
+       * password was reset, or it was deactivated. Rendering that as an error
+       * box leaves every panel stuck on a dead page. Report it once and let the
+       * auth context clear the session so the guards send them to sign in.
+       */
+      if (response.status === 401) reportSessionLost()
       return { data: null, error: body?.error ?? { code: 'UNKNOWN', message: 'Request failed' } }
     }
     return { data: (body?.data ?? null) as T, error: null }

@@ -430,7 +430,10 @@
       "UPSTREAM_UNAVAILABLE": "Could not reach the server.",
       "UNKNOWN": "Something went wrong. Please try again.",
       "DUPLICATE_PHONE": "An account with this phone already exists.",
-      "BRANCH_SCOPE_REQUIRED": "Pick a single branch first — this action writes into one."
+      "BRANCH_SCOPE_REQUIRED": "Pick a single branch first — this action writes into one.",
+      "SESSION_REVOKED": "Your session has ended. Please sign in again.",
+      "TOKEN_INVALID": "Your session has ended. Please sign in again.",
+      "ACCOUNT_DISABLED": "This account has been deactivated. Contact the centre administrator."
     },
     "pages": {
       "dashboard": {

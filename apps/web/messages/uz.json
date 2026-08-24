@@ -430,7 +430,10 @@
       "UPSTREAM_UNAVAILABLE": "Server bilan bog‘lanib bo‘lmadi.",
       "UNKNOWN": "Xatolik yuz berdi. Qaytadan urinib ko‘ring.",
       "DUPLICATE_PHONE": "Bu telefon raqamli hisob allaqachon mavjud.",
-      "BRANCH_SCOPE_REQUIRED": "Avval filialni tanlang — bu amal bitta filialga yozadi."
+      "BRANCH_SCOPE_REQUIRED": "Avval filialni tanlang — bu amal bitta filialga yozadi.",
+      "SESSION_REVOKED": "Seans tugadi. Iltimos, qaytadan kiring.",
+      "TOKEN_INVALID": "Seans tugadi. Iltimos, qaytadan kiring.",
+      "ACCOUNT_DISABLED": "Bu hisob o‘chirilgan. O‘quv markazi administratoriga murojaat qiling."
     },
     "pages": {
       "dashboard": {
