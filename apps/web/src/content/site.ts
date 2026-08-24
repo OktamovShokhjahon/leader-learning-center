@@ -9,10 +9,41 @@
  */
 import type { Localized } from '@leader/shared/locales'
 
+const DEFAULT_SITE_URL = 'https://leaderonline.uz'
+
+/**
+ * The site's own origin, from `NEXT_PUBLIC_SITE_URL`.
+ *
+ * Normalised rather than trusted, because the root layout feeds it to
+ * `new URL()` for `metadataBase` and `new URL()` throws on anything that is not
+ * absolute. A host pasted without a scheme — `leader-web.vercel.app`, exactly
+ * what a hosting dashboard shows you — took the whole build down, and did it in
+ * the least debuggable way available: `generateMetadata` runs for every page, so
+ * the throw surfaced as a masked "Server Components render" digest against
+ * whichever page a build worker happened to reach first. Three builds of the
+ * same commit blamed three different pages, none of them at fault.
+ *
+ * So: add the scheme when it is missing, and fall back to the default if the
+ * result still will not parse. A misconfigured environment variable should cost
+ * a wrong canonical URL, never a red build.
+ */
+function resolveSiteUrl(): string {
+  const configured = process.env.NEXT_PUBLIC_SITE_URL?.trim()
+  if (!configured) return DEFAULT_SITE_URL
+
+  const candidate = /^https?:\/\//i.test(configured) ? configured : `https://${configured}`
+  try {
+    // Trailing slashes matter: `metadataBase` joins paths onto this.
+    return new URL(candidate).origin
+  } catch {
+    return DEFAULT_SITE_URL
+  }
+}
+
 export const SITE = {
   name: 'Leader Learning Centre',
   shortName: 'Leader LC',
-  url: process.env.NEXT_PUBLIC_SITE_URL ?? 'https://leaderonline.uz',
+  url: resolveSiteUrl(),
   foundedYear: 2018,
   email: 'info@leaderonline.uz',
   phones: ['+998 62 224 00 00'],
