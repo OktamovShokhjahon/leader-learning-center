@@ -1,3 +1,4 @@
+import { headers } from 'next/headers'
 import { notFound } from 'next/navigation'
 import { isLocale } from '@leader/shared/locales'
 import { AuthProvider } from '@/lib/auth/auth-context'
