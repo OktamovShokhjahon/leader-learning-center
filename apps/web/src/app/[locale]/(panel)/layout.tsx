@@ -43,6 +43,12 @@ export default async function PanelLayout({
   const { locale } = await params
   if (!isLocale(locale)) notFound()
 
+  // Reading a request header is what actually opts this subtree out of
+  // prerendering. `export const dynamic` above is ignored here, because the
+  // `[locale]` layout supplies `generateStaticParams` and that wins; touching a
+  // runtime API is the mechanism Next honours either way.
+  await headers()
+
   return (
     <AuthProvider>
       <div className="flex min-h-dvh flex-col bg-background">
