@@ -577,6 +577,8 @@ export async function listDebtors(options: {
   page: number
   limit: number
 }) {
+  await recalculateOverdue()
+
   const now = new Date()
 
   const match: Record<string, unknown> = {
@@ -646,8 +648,20 @@ export async function listDebtors(options: {
   const facet = rows[0] ?? { items: [], summary: [] }
   const summary = facet.summary[0] ?? { total: 0, count: 0 }
 
+  const localizeName = (value: unknown): string | undefined => {
+    if (!value) return undefined
+    if (typeof value === 'string') return value
+    if (typeof value === 'object' && value !== null && 'uz' in value) {
+      return String((value as { uz?: string }).uz ?? '')
+    }
+    return undefined
+  }
+
   return {
-    items: facet.items,
+    items: facet.items.map((row: Record<string, unknown>) => ({
+      ...row,
+      groupName: localizeName(row.groupName),
+    })),
     total: summary.count,
     totalDebt: summary.total,
     page: options.page,

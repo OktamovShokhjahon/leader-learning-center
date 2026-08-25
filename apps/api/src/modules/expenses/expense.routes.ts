@@ -28,6 +28,26 @@ import { recordAudit, diff } from '../audit/audit.service.js'
 import { resolveSetting } from '../settings/settings.service.js'
 import { Expense, ExpenseCategory } from './expense.model.js'
 
+async function ensureCategoriesSeeded(branchId: string, actorId: unknown) {
+  const existing = await ExpenseCategory.countDocuments({ branchId, deletedAt: null })
+  if (existing > 0) return
+
+  for (const seed of EXPENSE_CATEGORY_SEED) {
+    const exists = await ExpenseCategory.exists({ slug: seed.slug, branchId })
+    if (exists) continue
+    await ExpenseCategory.create({
+      branchId,
+      slug: seed.slug,
+      name: { uz: seed.uz, ru: seed.ru },
+      icon: seed.icon,
+      color: seed.color,
+      petty: 'petty' in seed ? seed.petty : false,
+      payrollOnly: 'payroll' in seed ? seed.payroll : false,
+      createdBy: actorId,
+    })
+  }
+}
+
 /**
  * TZ §13 — `harajat`. The client's words: *"харажат кисми хам булсин супер ва
  * простой админдда"* — powerful, but simple.
@@ -45,8 +65,13 @@ expenseRouter.use(requireAuth)
 expenseRouter.get(
   '/categories',
   requirePermission('expense.create'),
+  requireSingleBranch,
   validateQuery(paginationSchema),
-  asyncRoute(async (_req, res) => {
+  asyncRoute(async (req, res) => {
+    const branchId = getScope()?.branchId
+    if (branchId && branchId !== 'ALL') {
+      await ensureCategoriesSeeded(branchId, currentUser(req)._id)
+    }
     const categories = await ExpenseCategory.find({ deletedAt: null }).sort({ slug: 1 }).lean()
     res.json({ data: { items: categories, total: categories.length } })
   }),

@@ -1,6 +1,10 @@
 import 'dotenv/config'
 import { randomBytes } from 'node:crypto'
+import { join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { z } from 'zod'
+
+const apiRoot = join(fileURLToPath(new URL('.', import.meta.url)), '..', '..')
 
 /**
  * TZ §26.1 — env is zod-validated at boot. A missing or malformed variable
@@ -57,6 +61,11 @@ const envSchema = z.object({
   /** Bootstrap SuperAdmin, seeded once on an empty database. */
   SEED_SUPERADMIN_PHONE: z.string().optional(),
   SEED_SUPERADMIN_PASSWORD: z.string().optional(),
+
+  /** Local folder for uploaded lesson and library files. */
+  UPLOAD_DIR: z.string().optional(),
+  /** Max upload size in megabytes. */
+  UPLOAD_MAX_MB: z.coerce.number().int().min(1).max(500).default(200),
 })
 
 const parsed = envSchema.safeParse(process.env)
@@ -95,6 +104,8 @@ export const env = {
   isTest: parsed.data.NODE_ENV === 'test',
   jwtSecret: requiredSecret('JWT_SECRET', parsed.data.JWT_SECRET, 32),
   encryptionKey: requiredSecret('ENCRYPTION_KEY', parsed.data.ENCRYPTION_KEY, 32),
+  uploadDir: parsed.data.UPLOAD_DIR ?? join(apiRoot, 'uploads'),
+  uploadMaxBytes: parsed.data.UPLOAD_MAX_MB * 1024 * 1024,
 }
 
 if (env.isProduction && env.USE_MEMORY_DB) {

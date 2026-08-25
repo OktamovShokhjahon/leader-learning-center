@@ -3,8 +3,8 @@ import { ArrowRight, Trophy, MessageSquareQuote, Award } from 'lucide-react'
 import type { Locale } from '@leader/shared/locales'
 import { pick } from '@leader/shared/locales'
 import { Link } from '@/i18n/navigation'
-import { getTeachers, getResults, TESTIMONIALS } from '@/content/people'
-import { getCourse } from '@/content/courses'
+import { getResults, TESTIMONIALS } from '@/content/people'
+import { fetchTeachers, fetchCourses } from '@/content/remote'
 import { Section, SectionHeading } from '@/components/ui/section'
 import { EmptyState } from '@/components/ui/empty-state'
 import { CeramicTile, initials } from '@/components/ui/ceramic-tile'
@@ -32,13 +32,16 @@ export async function ResultsSection({
   const all = getResults()
   const results = limit ? all.slice(0, limit) : all
 
+  // Course names come from the API now, so resolve the catalogue once rather
+  // than awaiting inside a map.
+  const catalogue = await fetchCourses()
   const entries = results.map((result) => ({
     id: result.id,
     studentName: result.studentName,
     achievement: result.achievement,
     year: result.year,
     courseSlug: result.courseSlug,
-    courseName: pick(getCourse(result.courseSlug)?.name, locale) || result.courseSlug,
+    courseName: pick(catalogue.find((course) => course.slug === result.courseSlug)?.name, locale) || result.courseSlug,
     quote: result.quote ? pick(result.quote, locale) : null,
   }))
 
@@ -85,7 +88,7 @@ export async function TeachersSection({
   const t = await getTranslations('home.teachers')
   const tc = await getTranslations('common')
   const locale = (await getLocale()) as Locale
-  const all = getTeachers()
+  const all = await fetchTeachers()
   const teachers = limit ? all.slice(0, limit) : all
 
   return (

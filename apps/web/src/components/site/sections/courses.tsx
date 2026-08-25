@@ -4,7 +4,8 @@ import type { Locale } from '@leader/shared/locales'
 import { pick } from '@leader/shared/locales'
 import { formatSoum } from '@leader/shared/money'
 import { Link } from '@/i18n/navigation'
-import { getCourses, courseGradient, type Course } from '@/content/courses'
+import { courseGradient, type Course } from '@/content/courses'
+import { fetchCourses } from '@/content/remote'
 import { Section, SectionHeading } from '@/components/ui/section'
 import { Reveal } from '../reveal'
 
@@ -88,7 +89,8 @@ export async function CoursesSection({
 }) {
   const t = await getTranslations('home.courses')
   const tc = await getTranslations('common')
-  const courses = limit ? getCourses().slice(0, limit) : getCourses()
+  const all = await fetchCourses()
+  const courses = limit ? all.slice(0, limit) : all
 
   return (
     <Section id="courses">

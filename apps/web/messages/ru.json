@@ -417,7 +417,12 @@
       "payroll": "Зарплаты",
       "branches": "Филиалы",
       "settings": "Настройки",
-      "audit": "Аудит"
+      "audit": "Аудит",
+      "lessons": "Видеоуроки",
+      "libraryBoss": "Библиотека",
+      "teacherProfiles": "Преподаватели",
+      "videoLessons": "Видеоуроки",
+      "library": "Библиотека"
     },
     "errors": {
       "FORBIDDEN": "Этот раздел недоступен для вашей роли.",
@@ -549,6 +554,21 @@
         "eyebrow": "Организация",
         "title": "Филиалы",
         "subtitle": "По ним разделяется вся система."
+      },
+      "lessons": {
+        "eyebrow": "Контент",
+        "title": "Онлайн видеоуроки",
+        "subtitle": "Загружайте и управляйте видеоуроками по курсам."
+      },
+      "library": {
+        "eyebrow": "Контент",
+        "title": "Библиотека",
+        "subtitle": "Загружайте PDF, аудио и видео материалы."
+      },
+      "libraryStudent": {
+        "eyebrow": "Кабинет",
+        "title": "Библиотека",
+        "subtitle": "Материалы, доступные вам."
       }
     },
     "dashboard": {
@@ -1227,6 +1247,85 @@
       "entity": "Объект",
       "outcome": "Результат",
       "retentionNote": "Журнал хранится 3 года; удалить его не может никто, включая руководителя."
+    },
+    "lessons": {
+      "create": "Новый урок",
+      "edit": "Изменить",
+      "save": "Сохранить",
+      "delete": "Удалить",
+      "deleteTitle": "Удалить урок",
+      "deleteBody": "«{name}» будет удалён.",
+      "none": "Видеоуроков нет",
+      "count": "{n} уроков",
+      "allCourses": "Все курсы",
+      "title": "Название",
+      "course": "Курс",
+      "chooseCourse": "Выберите курс",
+      "description": "Описание",
+      "provider": "Источник",
+      "duration": "Длительность (мин)",
+      "videoId": "ID видео",
+      "videoIdHint": "Вставьте ссылку YouTube или Vimeo — ID извлекается автоматически.",
+      "videoFile": "Видеофайл",
+      "videoFileHint": "Выберите MP4 или WebM с компьютера.",
+      "order": "Порядок",
+      "orderHint": "Позиция в курсе",
+      "published": "Опубликован",
+      "publishedHint": "Ученики могут смотреть",
+      "free": "Бесплатно",
+      "freeHint": "Доступно всем авторизованным",
+      "source": "Источник",
+      "statusLabel": "Статус",
+      "minutes": "{n} мин",
+      "draft": "Черновик",
+      "providers": {
+        "youtube": "YouTube",
+        "vimeo": "Vimeo",
+        "file": "Файл с компьютера"
+      }
+    },
+    "library": {
+      "create": "Новый материал",
+      "edit": "Изменить",
+      "save": "Сохранить",
+      "delete": "Удалить",
+      "deleteTitle": "Удалить материал",
+      "deleteBody": "«{name}» будет удалён.",
+      "none": "Материалов нет",
+      "noneStudent": "Пока нет доступных материалов",
+      "count": "{n} материалов",
+      "allSections": "Все разделы",
+      "title": "Название",
+      "section": "Раздел",
+      "sectionHint": "Например: IELTS, Bestsellers",
+      "typeLabel": "Тип",
+      "file": "Файл",
+      "order": "Порядок",
+      "published": "Опубликован",
+      "free": "Бесплатно",
+      "freeHint": "Доступно всем ученикам",
+      "statusLabel": "Статус",
+      "draft": "Черновик",
+      "close": "Закрыть",
+      "types": {
+        "pdf": "PDF книга",
+        "audio": "Аудио",
+        "video": "Видео"
+      }
+    },
+    "upload": {
+      "choose": "Выбрать файл",
+      "replace": "Выбрать другой файл",
+      "failed": "Не удалось загрузить. Попробуйте снова."
+    },
+    "videoLessons": {
+      "none": "Видеоуроков нет",
+      "freeLessons": "Бесплатные уроки",
+      "progress": "{done}/{total} просмотрено",
+      "minutes": "{n} мин",
+      "watched": "Просмотрено",
+      "markWatched": "Отметить просмотренным",
+      "close": "Закрыть"
     },
     "branchSwitcher": {
       "allBranches": "Все филиалы",

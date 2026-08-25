@@ -19,3 +19,4 @@ npm-debug.log*
 infra/data/
 playwright-report/
 test-results/
+apps/api/uploads/

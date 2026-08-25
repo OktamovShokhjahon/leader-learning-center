@@ -6,6 +6,8 @@ import { validateBody } from '../../middleware/validate.js'
 import { asyncRoute } from '../../middleware/error-handler.js'
 import { createPublicLead } from '../leads/lead.service.js'
 import { Branch } from '../branches/branch.model.js'
+import { Course } from '../groups/group.model.js'
+import { TeacherProfile } from '../content/content.model.js'
 import { logger } from '../../config/logger.js'
 
 /**
@@ -98,5 +100,40 @@ publicRouter.get(
       .sort({ createdAt: 1 })
       .lean()
     res.json({ data: branches })
+  }),
+)
+
+/**
+ * §23 — `GET /public/courses`.
+ *
+ * Only `isPublic` courses, and only the fields a visitor needs. `defaultPrice`
+ * is included because §6.2 puts prices on the course cards; the real charge is
+ * still per branch and lives on the group (§5.3).
+ */
+publicRouter.get(
+  '/courses',
+  asyncRoute(async (_req, res) => {
+    const courses = await Course.find({ isPublic: true, deletedAt: null })
+      .select('slug name description level durationMonths defaultPrice cover order')
+      .sort({ order: 1 })
+      .lean()
+    res.json({ data: courses })
+  }),
+)
+
+/**
+ * §23 — `GET /public/teachers`.
+ *
+ * Deliberately narrow: no `userId`, no `branchIds`, nothing that maps a public
+ * face onto an internal account. A visitor gets the card and nothing else.
+ */
+publicRouter.get(
+  '/teachers',
+  asyncRoute(async (_req, res) => {
+    const teachers = await TeacherProfile.find({ isPublic: true, deletedAt: null })
+      .select('slug fullName role bio subjects certificates experienceYears photo order')
+      .sort({ order: 1 })
+      .lean()
+    res.json({ data: teachers })
   }),
 )

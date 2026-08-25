@@ -417,7 +417,12 @@
       "payroll": "Oyliklar",
       "branches": "Filiallar",
       "settings": "Sozlamalar",
-      "audit": "Audit"
+      "audit": "Audit",
+      "lessons": "Video darslar",
+      "libraryBoss": "Kutubxona",
+      "teacherProfiles": "O‘qituvchilar",
+      "videoLessons": "Video darslar",
+      "library": "Kutubxona"
     },
     "errors": {
       "FORBIDDEN": "Bu bo‘lim sizning rolingiz uchun ochiq emas.",
@@ -549,6 +554,21 @@
         "eyebrow": "Tashkilot",
         "title": "Filiallar",
         "subtitle": "Butun tizim shu bo‘yicha bo‘linadi."
+      },
+      "lessons": {
+        "eyebrow": "Kontent",
+        "title": "Onlayn video darslar",
+        "subtitle": "Kurs bo‘yicha video darslarni yuklang va boshqaring."
+      },
+      "library": {
+        "eyebrow": "Kontent",
+        "title": "Kutubxona",
+        "subtitle": "PDF, audio va video materiallarni yuklang."
+      },
+      "libraryStudent": {
+        "eyebrow": "Kabinet",
+        "title": "Kutubxona",
+        "subtitle": "Sizga ochiq materiallar."
       }
     },
     "dashboard": {
@@ -1227,6 +1247,85 @@
       "entity": "Obyekt",
       "outcome": "Natija",
       "retentionNote": "Jurnal 3 yil saqlanadi va hech kim, boshliq ham, uni o‘chira olmaydi."
+    },
+    "lessons": {
+      "create": "Yangi dars",
+      "edit": "Tahrirlash",
+      "save": "Saqlash",
+      "delete": "O‘chirish",
+      "deleteTitle": "Darsni o‘chirish",
+      "deleteBody": "«{name}» o‘chiriladi.",
+      "none": "Video dars yo‘q",
+      "count": "{n} ta dars",
+      "allCourses": "Barcha kurslar",
+      "title": "Sarlavha",
+      "course": "Kurs",
+      "chooseCourse": "Kursni tanlang",
+      "description": "Tavsif",
+      "provider": "Manba",
+      "duration": "Davomiyligi (daqiqa)",
+      "videoId": "Video ID",
+      "videoIdHint": "YouTube yoki Vimeo havolasini yopishtiring — ID avtomatik olinadi.",
+      "videoFile": "Video fayl",
+      "videoFileHint": "Kompyuterdan MP4 yoki WebM fayl tanlang.",
+      "order": "Tartib",
+      "orderHint": "Kurs ichidagi tartib raqami",
+      "published": "Chop etilgan",
+      "publishedHint": "O‘quvchilar ko‘ra oladi",
+      "free": "Bepul",
+      "freeHint": "Ro‘yxatdan o‘tgan har kim ko‘ra oladi",
+      "source": "Manba",
+      "statusLabel": "Holati",
+      "minutes": "{n} daq",
+      "draft": "Qoralama",
+      "providers": {
+        "youtube": "YouTube",
+        "vimeo": "Vimeo",
+        "file": "Kompyuterdan fayl"
+      }
+    },
+    "library": {
+      "create": "Yangi material",
+      "edit": "Tahrirlash",
+      "save": "Saqlash",
+      "delete": "O‘chirish",
+      "deleteTitle": "Materialni o‘chirish",
+      "deleteBody": "«{name}» o‘chiriladi.",
+      "none": "Material yo‘q",
+      "noneStudent": "Hozircha sizga ochiq material yo‘q",
+      "count": "{n} ta material",
+      "allSections": "Barcha bo‘limlar",
+      "title": "Sarlavha",
+      "section": "Bo‘lim",
+      "sectionHint": "Masalan: IELTS, Bestsellers",
+      "typeLabel": "Turi",
+      "file": "Fayl",
+      "order": "Tartib",
+      "published": "Chop etilgan",
+      "free": "Bepul",
+      "freeHint": "Barcha o‘quvchilar ko‘ra oladi",
+      "statusLabel": "Holati",
+      "draft": "Qoralama",
+      "close": "Yopish",
+      "types": {
+        "pdf": "PDF kitob",
+        "audio": "Audio",
+        "video": "Video"
+      }
+    },
+    "upload": {
+      "choose": "Fayl tanlash",
+      "replace": "Boshqa fayl tanlash",
+      "failed": "Yuklab bo‘lmadi. Qaytadan urinib ko‘ring."
+    },
+    "videoLessons": {
+      "none": "Video dars yo‘q",
+      "freeLessons": "Bepul darslar",
+      "progress": "{done}/{total} ko‘rilgan",
+      "minutes": "{n} daq",
+      "watched": "Ko‘rilgan",
+      "markWatched": "Ko‘rilgan deb belgilash",
+      "close": "Yopish"
     },
     "branchSwitcher": {
       "allBranches": "Barcha filiallar",

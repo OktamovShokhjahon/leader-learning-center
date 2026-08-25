@@ -12,6 +12,8 @@ import {
   BadgeCheck,
   FileCheck2,
   UserRound,
+  Video,
+  UserSquare2,
   UsersRound,
   Inbox,
   Receipt,
@@ -68,12 +70,19 @@ const ITEMS: NavItem[] = [
   { href: '/crm/courses', key: 'courses', Icon: BookOpen, action: 'content.manage', full: true },
   { href: '/crm/staff', key: 'staff', Icon: UsersRound, action: 'staff.createTeacher' },
   // §21.1 / §14 / §21.3 / §5.3 — the boss's own corner.
+  // §17.3 — the video lesson catalogue, and §21.1 the public teacher cards.
+  // Both are the boss's alone, enforced at the router mount on the API.
+  { href: '/boss/lessons', key: 'lessons', Icon: Video, roles: ['superadmin'] },
+  { href: '/boss/library', key: 'libraryBoss', Icon: BookOpen, roles: ['superadmin'] },
+  { href: '/boss/teachers', key: 'teacherProfiles', Icon: UserSquare2, roles: ['superadmin'] },
   { href: '/boss/payroll', key: 'payroll', Icon: Banknote, roles: ['superadmin'] },
   { href: '/boss/branches', key: 'branches', Icon: Building2, roles: ['superadmin'] },
   { href: '/boss/settings', key: 'settings', Icon: SlidersHorizontal, roles: ['superadmin'] },
   { href: '/boss/audit', key: 'audit', Icon: ScrollText, roles: ['superadmin'] },
   { href: '/boss', key: 'finance', Icon: PieChart, roles: ['superadmin'] },
   { href: '/cabinet', key: 'cabinet', Icon: GraduationCap, roles: ['student', 'parent'] },
+  { href: '/cabinet/library', key: 'library', Icon: BookOpen, roles: ['student', 'parent'] },
+  { href: '/cabinet/lessons', key: 'videoLessons', Icon: Video, roles: ['student', 'parent'] },
   { href: '/account', key: 'account', Icon: UserRound },
 ]
 

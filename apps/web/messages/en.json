@@ -417,7 +417,12 @@
       "payroll": "Payroll",
       "branches": "Branches",
       "settings": "Settings",
-      "audit": "Audit"
+      "audit": "Audit",
+      "lessons": "Video lessons",
+      "libraryBoss": "Library",
+      "teacherProfiles": "Teachers",
+      "videoLessons": "Video lessons",
+      "library": "Library"
     },
     "errors": {
       "FORBIDDEN": "This section is not open to your role.",
@@ -549,6 +554,21 @@
         "eyebrow": "Organisation",
         "title": "Branches",
         "subtitle": "What the whole system is scoped by."
+      },
+      "lessons": {
+        "eyebrow": "Content",
+        "title": "Online video lessons",
+        "subtitle": "Upload and manage video lessons by course."
+      },
+      "library": {
+        "eyebrow": "Content",
+        "title": "Library",
+        "subtitle": "Upload PDF, audio and video materials."
+      },
+      "libraryStudent": {
+        "eyebrow": "Cabinet",
+        "title": "Library",
+        "subtitle": "Materials available to you."
       }
     },
     "dashboard": {
@@ -1227,6 +1247,85 @@
       "entity": "Entity",
       "outcome": "Outcome",
       "retentionNote": "Kept for 3 years, and not deletable by anyone — the boss included."
+    },
+    "lessons": {
+      "create": "New lesson",
+      "edit": "Edit",
+      "save": "Save",
+      "delete": "Delete",
+      "deleteTitle": "Delete lesson",
+      "deleteBody": "“{name}” will be deleted.",
+      "none": "No video lessons",
+      "count": "{n} lessons",
+      "allCourses": "All courses",
+      "title": "Title",
+      "course": "Course",
+      "chooseCourse": "Choose a course",
+      "description": "Description",
+      "provider": "Source",
+      "duration": "Duration (minutes)",
+      "videoId": "Video ID",
+      "videoIdHint": "Paste a YouTube or Vimeo link — the ID is extracted automatically.",
+      "videoFile": "Video file",
+      "videoFileHint": "Choose an MP4 or WebM file from your computer.",
+      "order": "Order",
+      "orderHint": "Position within the course",
+      "published": "Published",
+      "publishedHint": "Students can watch it",
+      "free": "Free",
+      "freeHint": "Any signed-in user can watch",
+      "source": "Source",
+      "statusLabel": "Status",
+      "minutes": "{n} min",
+      "draft": "Draft",
+      "providers": {
+        "youtube": "YouTube",
+        "vimeo": "Vimeo",
+        "file": "File from computer"
+      }
+    },
+    "library": {
+      "create": "New material",
+      "edit": "Edit",
+      "save": "Save",
+      "delete": "Delete",
+      "deleteTitle": "Delete material",
+      "deleteBody": "“{name}” will be deleted.",
+      "none": "No materials",
+      "noneStudent": "No materials are available to you yet",
+      "count": "{n} materials",
+      "allSections": "All sections",
+      "title": "Title",
+      "section": "Section",
+      "sectionHint": "e.g. IELTS, Bestsellers",
+      "typeLabel": "Type",
+      "file": "File",
+      "order": "Order",
+      "published": "Published",
+      "free": "Free",
+      "freeHint": "All students can access",
+      "statusLabel": "Status",
+      "draft": "Draft",
+      "close": "Close",
+      "types": {
+        "pdf": "PDF book",
+        "audio": "Audio",
+        "video": "Video"
+      }
+    },
+    "upload": {
+      "choose": "Choose file",
+      "replace": "Choose another file",
+      "failed": "Upload failed. Please try again."
+    },
+    "videoLessons": {
+      "none": "No video lessons",
+      "freeLessons": "Free lessons",
+      "progress": "{done}/{total} watched",
+      "minutes": "{n} min",
+      "watched": "Watched",
+      "markWatched": "Mark as watched",
+      "close": "Close"
     },
     "branchSwitcher": {
       "allBranches": "All branches",

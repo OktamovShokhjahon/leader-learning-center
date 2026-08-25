@@ -1,4 +1,5 @@
 import express from 'express'
+import { mkdirSync } from 'node:fs'
 import helmet from 'helmet'
 import cors from 'cors'
 import rateLimit from 'express-rate-limit'
@@ -23,12 +24,16 @@ import { financeRouter } from './modules/finance/finance.routes.js'
 import { settingsRouter } from './modules/settings/settings.routes.js'
 import { courseRouter, roomRouter } from './modules/catalog/catalog.routes.js'
 import { auditRouter } from './modules/audit/audit.routes.js'
+import { contentRouter } from './modules/content/content.routes.js'
 import { expenseRouter } from './modules/expenses/expense.routes.js'
 import { fineRouter, fineRuleRouter } from './modules/fines/fine.routes.js'
 import { payrollRouter } from './modules/payroll/payroll.routes.js'
+import { uploadRouter } from './modules/uploads/upload.routes.js'
+import { materialRouter } from './modules/materials/material.routes.js'
 
 export function createApp() {
   const app = express()
+  mkdirSync(env.uploadDir, { recursive: true })
 
   // Behind Caddy/Nginx in every environment (§28) — needed for correct req.ip
   // and therefore for rate limiting to key on the real client.
@@ -52,6 +57,17 @@ export function createApp() {
       logger,
       autoLogging: { ignore: (req: { url?: string }) => req.url === '/api/v1/health' },
     }),
+  )
+
+  // Uploaded lesson and library files — served locally until object storage is wired.
+  app.use(
+    '/uploads',
+    (_req, res, next) => {
+      res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin')
+      res.setHeader('Access-Control-Allow-Origin', '*')
+      next()
+    },
+    express.static(env.uploadDir),
   )
 
   // §5.1 — request scope must wrap every handler, so it is registered before routes.
@@ -94,6 +110,9 @@ export function createApp() {
   // §21.1 / §21.3 — both superadmin-only at mount level, same reasoning.
   app.use('/api/v1/settings', settingsRouter)
   app.use('/api/v1/audit', auditRouter)
+  // §21.1 public site content and §17.3 video lessons — writes are boss-only,
+  // enforced at mount inside the router; students read their own lessons.  
+  app.use('/api/v1/content', contentRouter)
   // §21.1 — courses and rooms. Mounted on their own prefixes rather than on a
   // shared one: a router mounted at the bare `/api/v1` runs its `use(requireAuth)`
   // for every unmatched path too, which turns the §23 404 envelope into a 401.
@@ -106,8 +125,10 @@ export function createApp() {
   // and both carry their own mount-level guard, for the same reason finance does.
   app.use('/api/v1/fine-rules', fineRuleRouter)
   app.use('/api/v1/payroll', payrollRouter)
+  app.use('/api/v1/uploads', uploadRouter)
+  app.use('/api/v1/materials', materialRouter)
 
-  // TODO: /materials, /notifications, /exams (§23).
+  // TODO: /notifications, /exams (§23).
 
   app.use(notFoundHandler)
   app.use(errorHandler)

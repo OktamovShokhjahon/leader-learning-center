@@ -6,6 +6,7 @@ import { isLocale, LOCALES, pick } from '@leader/shared/locales'
 import { formatSoum } from '@leader/shared/money'
 import { Link } from '@/i18n/navigation'
 import { getCourse, getCourses, courseGradient } from '@/content/courses'
+import { fetchCourses, fetchCourse } from '@/content/remote'
 import { PageHeader } from '@/components/site/page-header'
 import { Section, SectionHeading } from '@/components/ui/section'
 import { CourseCard } from '@/components/site/sections/courses'
@@ -18,16 +19,18 @@ export const revalidate = 300
 type Props = { params: Promise<{ locale: string; slug: string }> }
 
 /** TZ §6.3 — every course, in every locale, in the static build and the sitemap. */
-export function generateStaticParams() {
+export async function generateStaticParams() {
+  // One fetch, then fan it out across the locales — not one per locale.
+  const courses = await fetchCourses()
   return LOCALES.flatMap((locale) =>
-    getCourses().map((course) => ({ locale, slug: course.slug })),
+    courses.map((course) => ({ locale, slug: course.slug })),
   )
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale, slug } = await params
   if (!isLocale(locale)) return {}
-  const course = getCourse(slug)
+  const course = await fetchCourse(slug)
   if (!course) return {}
 
   return pageMetadata({
@@ -43,14 +46,14 @@ export default async function CourseDetailPage({ params }: Props) {
   if (!isLocale(locale)) notFound()
   setRequestLocale(locale)
 
-  const course = getCourse(slug)
+  const course = await fetchCourse(slug)
   if (!course) notFound()
 
   const t = await getTranslations('pages.courseDetail')
   const tc = await getTranslations('common')
   const tn = await getTranslations('nav')
 
-  const related = getCourses()
+  const related = (await fetchCourses())
     .filter((item) => item.slug !== course.slug)
     .slice(0, 3)
 

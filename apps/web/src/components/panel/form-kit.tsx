@@ -6,6 +6,7 @@ import { X, Loader2, Check, type LucideIcon } from 'lucide-react'
 import { LOCALES, LOCALE_SHORT, type Locale } from '@leader/shared/locales'
 import { formatNumber, parseSoum } from '@leader/shared/money'
 import type { ApiError } from '@/lib/api/use-api'
+import { useAuth } from '@/lib/auth/auth-context'
 import { ErrorBox } from './primitives'
 import { cn } from '@/lib/utils'
 
@@ -458,5 +459,72 @@ export function Saved({ label }: { label: string }) {
       <Check className="size-3.5" aria-hidden />
       {label}
     </p>
+  )
+}
+
+/** Pick a file from the computer and upload it to `/uploads` on the API. */
+export function FileUpload({
+  label,
+  hint,
+  accept,
+  value,
+  onUploaded,
+  disabled,
+}: {
+  label: string
+  hint?: string
+  accept?: string
+  value?: string
+  onUploaded: (url: string) => void
+  disabled?: boolean
+}) {
+  const t = useTranslations('panel.upload')
+  const { getToken } = useAuth()
+  const [pending, setPending] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const inputId = useId()
+
+  return (
+    <Field label={label} hint={hint}>
+      <div className="flex flex-col gap-2">
+        <input
+          id={inputId}
+          type="file"
+          accept={accept}
+          disabled={disabled || pending}
+          className="sr-only"
+          onChange={async (event) => {
+            const file = event.target.files?.[0]
+            if (!file) return
+            setPending(true)
+            setError(null)
+            const token = await getToken()
+            const { uploadFile } = await import('@/lib/api/use-api')
+            const result = await uploadFile(file, token)
+            setPending(false)
+            if (!result?.url) {
+              setError(t('failed'))
+              return
+            }
+            onUploaded(result.url)
+          }}
+        />
+        <label
+          htmlFor={inputId}
+          className={cn(
+            INPUT,
+            'flex cursor-pointer items-center justify-center gap-2 border-dashed py-6 text-2xs',
+            (disabled || pending) && 'pointer-events-none opacity-50',
+          )}
+        >
+          {pending ? <Loader2 className="size-4 animate-spin" aria-hidden /> : null}
+          {value ? t('replace') : t('choose')}
+        </label>
+        {value ? (
+          <span className="truncate font-mono text-2xs text-ink-muted">{value.split('/').pop()}</span>
+        ) : null}
+        {error ? <span className="text-2xs text-danger">{error}</span> : null}
+      </div>
+    </Field>
   )
 }

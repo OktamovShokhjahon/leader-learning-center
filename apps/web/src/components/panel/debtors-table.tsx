@@ -143,7 +143,11 @@ export function DebtorsTable() {
                   <Td>
                     <span className="font-medium text-ink dark:text-white">{row.studentName}</span>
                   </Td>
-                  <Td className="text-ink-soft dark:text-navy-200">{row.groupName ?? '—'}</Td>
+                  <Td className="text-ink-soft dark:text-navy-200">
+                    {typeof row.groupName === 'object' && row.groupName !== null
+                      ? (row.groupName as { uz?: string }).uz ?? '—'
+                      : (row.groupName ?? '—')}
+                  </Td>
                   <Td className="font-mono text-2xs text-ink-muted">{row.period ?? '—'}</Td>
                   <Td className="text-right">
                     {/* A teacher is sent `hasDebt` and no amount — render the flag. */}

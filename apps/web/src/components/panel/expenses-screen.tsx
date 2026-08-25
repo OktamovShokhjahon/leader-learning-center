@@ -64,7 +64,9 @@ export function ExpensesScreen() {
   const { data, loading, error, refetch } = useQuery<
     Paginated<Expense> & { totalAmount: number }
   >(`/expenses?${query}`)
-  const { data: categories } = useQuery<{ items: Category[] }>('/expenses/categories')
+  const { data: categories, error: categoriesError } = useQuery<{ items: Category[] }>(
+    '/expenses/categories',
+  )
 
   const mayApprove = (user?.roles ?? []).some((assignment) =>
     can(assignment.role, 'expense.approve'),
@@ -112,6 +114,9 @@ export function ExpensesScreen() {
 
       {loading ? <Loading /> : null}
       {error ? <ErrorBox code={error.code} message={error.message} /> : null}
+      {categoriesError?.code === 'BRANCH_SCOPE_REQUIRED' ? (
+        <ErrorBox code={categoriesError.code} message={categoriesError.message} />
+      ) : null}
       {data && data.items.length === 0 ? <Empty title={t('none')} Icon={Receipt} /> : null}
 
       {data && data.items.length > 0 ? (

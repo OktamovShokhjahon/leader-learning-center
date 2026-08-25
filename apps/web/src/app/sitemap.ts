@@ -2,6 +2,7 @@ import type { MetadataRoute } from 'next'
 import { LOCALES } from '@leader/shared/locales'
 import { SITE } from '@/content/site'
 import { getCourses } from '@/content/courses'
+import { fetchCourses } from '@/content/remote'
 import { getBranches } from '@/content/branches'
 import { getPosts } from '@/content/posts'
 
@@ -9,7 +10,7 @@ import { getPosts } from '@/content/posts'
  * TZ §6.3 — sitemap generated dynamically, including all courses, branches and
  * news posts, in all three locales, each entry carrying its hreflang alternates.
  */
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticPaths = [
     { path: '', priority: 1, changeFrequency: 'weekly' as const },
     { path: '/courses', priority: 0.9, changeFrequency: 'weekly' as const },
@@ -27,7 +28,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   ]
 
   const dynamicPaths = [
-    ...getCourses().map((course) => ({
+    ...(await fetchCourses()).map((course) => ({
       path: `/courses/${course.slug}`,
       priority: 0.8,
       changeFrequency: 'monthly' as const,

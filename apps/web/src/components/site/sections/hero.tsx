@@ -2,7 +2,8 @@ import { getTranslations, getLocale } from 'next-intl/server'
 import { ArrowRight } from 'lucide-react'
 import { pick, type Locale } from '@leader/shared/locales'
 import { Link } from '@/i18n/navigation'
-import { getCourses } from '@/content/courses'
+import { } from '@/content/courses'
+import { fetchCourses } from '@/content/remote'
 import { GlazeCanvas } from '../glaze-canvas'
 import { HeroIntro } from './hero-intro'
 import { GirihStar } from '@/components/ui/girih-star'
@@ -25,7 +26,7 @@ export async function Hero() {
   const t = await getTranslations('home.hero')
   const tc = await getTranslations('common')
   const locale = (await getLocale()) as Locale
-  const courses = getCourses().slice(0, 6)
+  const courses = (await fetchCourses()).slice(0, 6)
 
   return (
     <section className="relative isolate flex min-h-[100svh] items-stretch overflow-hidden p-2.5 pt-20 sm:p-4 sm:pt-24">

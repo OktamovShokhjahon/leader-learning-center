@@ -124,3 +124,32 @@ export type Paginated<T> = {
   limit: number
   pages: number
 }
+
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000'
+
+/** Turn a stored `/uploads/...` path into a full URL for `<video>` / `<iframe>`. */
+export function mediaUrl(path: string): string {
+  if (path.startsWith('http://') || path.startsWith('https://')) return path
+  return `${API_BASE}${path.startsWith('/') ? path : `/${path}`}`
+}
+
+/** Upload a file to the API (SuperAdmin only). Returns the public URL path. */
+export async function uploadFile(
+  file: File,
+  token: string | null,
+): Promise<{ url: string; kind: string } | null> {
+  const form = new FormData()
+  form.append('file', file)
+  try {
+    const response = await fetch(`${API_BASE}/api/v1/uploads`, {
+      method: 'POST',
+      headers: token ? { authorization: `Bearer ${token}` } : {},
+      body: form,
+    })
+    const body = await response.json().catch(() => ({}))
+    if (!response.ok) return null
+    return body?.data ?? null
+  } catch {
+    return null
+  }
+}
