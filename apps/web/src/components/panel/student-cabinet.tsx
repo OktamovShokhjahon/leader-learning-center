@@ -2,12 +2,41 @@
 
 import { useMemo, useState } from 'react'
 import { useTranslations, useLocale } from 'next-intl'
-import { Wallet, ChevronLeft, ChevronRight, GraduationCap } from 'lucide-react'
+import {
+  Wallet,
+  ChevronLeft,
+  ChevronRight,
+  GraduationCap,
+  AlertTriangle,
+  CreditCard,
+  ArrowRight,
+  Download,
+  Undo2,
+  X,
+} from 'lucide-react'
 import type { Locale } from '@leader/shared/locales'
-import { useQuery } from '@/lib/api/use-api'
+import { can } from '@leader/shared/permissions'
+import { useAuth } from '@/lib/auth/auth-context'
+import { useQuery, useMutation, openReceipt, openBlankTab } from '@/lib/api/use-api'
+import { formatDate, formatMonthYear } from '@/lib/date'
+import { Link } from '@/i18n/navigation'
 import { Panel, Money, Loading, ErrorBox, Empty, StatusPill } from './primitives'
+import { CeramicTile, initials } from '@/components/ui/ceramic-tile'
 import { cn } from '@/lib/utils'
 import { ModuleList } from './module-list'
+
+type GradeRow = {
+  _id: string
+  value: number
+  comment?: string
+  lessonId?: { date: string } | null
+  groupId?: { name?: string; courseId?: { name?: Record<string, string> | string } } | null
+}
+
+type GradeAverage = {
+  overall: number | null
+  byGroup: { groupId: string; groupName?: string; courseName?: unknown; average: number; count: number }[]
+}
 
 type AttendanceRow = {
   _id: string
@@ -20,9 +49,14 @@ type AttendanceRow = {
 type StudentDetail = {
   _id: string
   fullName: string
+  phone?: string
+  photo?: string
   status: string
   monthlyFee: number
   balance: number
+  totalDebt?: number
+  daysOverdue?: number
+  isDebtor?: boolean
   invoices: {
     _id: string
     period: string
@@ -32,28 +66,47 @@ type StudentDetail = {
     dueDate: string
   }[]
   payments: { _id: string; amount: number; method: string; receivedAt: string; receiptNo?: string }[]
-  enrollments?: { groupId?: { courseId?: string } | null }[]
+  enrollments?: { groupId?: { _id?: string; name?: string; courseId?: string } | null }[]
 }
 
-const DATE_LOCALE: Record<Locale, string> = { uz: 'uz-UZ', ru: 'ru-RU', en: 'en-GB' }
 
 /**
- * TZ §10.2 and §16 — the student and parent view.
- *
- * "Monthly calendar, absences marked as red circles exactly as in PIC 2.
- * Tapping a red circle opens the info table: course · time · teacher."
- *
- * Everything here is read-only. §10.2 is explicit that students and parents can
- * never edit attendance, and there is no write path in this component at all —
- * the cabinet has no mutation to accidentally expose.
+ * TZ §10.2 and §16 — the student and parent view & staff student detail.
  */
 export function StudentCabinet({ studentId }: { studentId: string }) {
   const t = useTranslations('panel.cabinet')
+  const gradesT = useTranslations('panel.grades')
   const locale = useLocale() as Locale
+  const { user, getToken } = useAuth()
   const [monthOffset, setMonthOffset] = useState(0)
+  const [showPayModal, setShowPayModal] = useState(false)
+
+  const roles = user?.roles.map((assignment) => assignment.role) ?? []
+  const mayTakePayment = roles.some((role) => can(role, 'payment.accept'))
+  const mayRefund = roles.some((role) => can(role, 'payment.refund'))
 
   const detail = useQuery<StudentDetail>(`/students/${studentId}`)
   const attendance = useQuery<AttendanceRow[]>(`/groups/attendance/history?studentId=${studentId}`)
+  /**
+   * B1/B2/H1 — the attendance % shown here is computed once, server-side, by
+   * the same aggregation the teacher's group report and the dashboard read
+   * (`GET /groups/attendance/rate`) — not recomputed locally from whatever
+   * rows happen to be loaded for the visible calendar month.
+   */
+  const rateQuery = useQuery<{ total: number; absent: number; rate: number | null }>(
+    `/groups/attendance/rate?studentId=${studentId}`,
+  )
+  /** C2 — grades by subject/date, plus the average, both computed server-side. */
+  const grades = useQuery<GradeRow[]>(`/grades/history?studentId=${studentId}`)
+  const gradeAverage = useQuery<GradeAverage>(`/grades/average?studentId=${studentId}`)
+
+  const [refundTarget, setRefundTarget] = useState<{ _id: string; amount: number } | null>(null)
+  const [refundReason, setRefundReason] = useState('')
+  const [refundAmount, setRefundAmount] = useState('')
+  const refund = useMutation<{ reason: string; amount?: number }, { amount: number }>(
+    () => `/payments/${refundTarget?._id}/refund`,
+    'POST',
+  )
 
   const month = useMemo(() => {
     const now = new Date()
@@ -89,11 +142,8 @@ export function StudentCabinet({ studentId }: { studentId: string }) {
   // ISO weekday of the 1st, so the grid starts on the right column.
   const firstWeekday = ((new Date(month).getUTCDay() + 6) % 7) + 1
 
-  const marked = [...byDay.values()]
-  const absences = marked.filter((row) => row.status === 'absent').length
-  const rate = marked.length > 0
-    ? Math.round(((marked.length - absences) / marked.length) * 100)
-    : null
+  const rate = rateQuery.data?.rate ?? null
+  const absences = rateQuery.data?.absent ?? 0
 
   const courseId =
     student.enrollments?.find((entry) => entry.groupId?.courseId)?.groupId?.courseId ?? null
@@ -103,8 +153,107 @@ export function StudentCabinet({ studentId }: { studentId: string }) {
     0,
   )
 
+  const daysOverdue = student.daysOverdue ?? 0
+
+  /**
+   * A3 — prepayment/advance tracking. `student.balance` is the ledger's own
+   * running credit (§11.2 — an overpayment lands there and auto-applies to
+   * the next invoice), and the earliest open invoice is "next due" — both
+   * read straight off the existing records, nothing new is stored for this.
+   */
+  const nextDue = [...student.invoices]
+    .filter((invoice) => invoice.paidAmount < invoice.finalAmount)
+    .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())[0]
+
+  const groupNames = (student.enrollments ?? [])
+    .map((enrollment) => enrollment.groupId?.name)
+    .filter((name): name is string => Boolean(name))
+
   return (
     <div className="flex flex-col gap-6">
+      {/* G4 — the header card: everything about this person in one glance. */}
+      <div className="flex flex-wrap items-center gap-5 rounded-card border border-border-subtle bg-surface p-6">
+        {student.photo ? (
+          // eslint-disable-next-line @next/next/no-img-element -- swapping in
+          // a real photo the moment one exists, per CeramicTile's own contract.
+          <img
+            src={student.photo}
+            alt=""
+            className="size-16 shrink-0 rounded-input object-cover"
+          />
+        ) : (
+          <CeramicTile
+            seed={student._id}
+            label={initials(student.fullName)}
+            className="size-16 shrink-0 rounded-input"
+          />
+        )}
+        <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+          <div className="flex flex-wrap items-center gap-2.5">
+            <h2 className="truncate font-display text-lg text-ink dark:text-white">
+              {student.fullName}
+            </h2>
+            <StatusPill status={student.status} label={t(`studentStatus.${student.status}`)} />
+          </div>
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-2xs text-ink-muted">
+            <span>{t('roleStudent')}</span>
+            {student.phone ? <span className="font-mono">{student.phone}</span> : null}
+            {groupNames.length > 0 ? <span>{groupNames.join(', ')}</span> : null}
+          </div>
+        </div>
+        <div className="flex flex-col items-end gap-0.5">
+          <span className="text-2xs uppercase tracking-[0.1em] text-ink-muted">{t('balance')}</span>
+          <Money
+            amount={student.balance}
+            className={cn('text-lg', student.balance > 0 && 'text-success')}
+          />
+        </div>
+      </div>
+
+      {/* Debtor Alert Banner */}
+      {outstanding > 0 ? (
+        <div className="flex flex-wrap items-center justify-between gap-4 rounded-card border border-danger/30 bg-danger/10 p-5 dark:border-danger/40 dark:bg-danger/15">
+          <div className="flex items-center gap-3.5">
+            <span className="inline-flex size-11 shrink-0 items-center justify-center rounded-pill bg-danger/20 text-danger">
+              <AlertTriangle className="size-5.5" aria-hidden />
+            </span>
+            <div className="flex flex-col gap-0.5">
+              <h3 className="font-display text-sm font-semibold text-danger">
+                {t('debtAlertTitle')}
+              </h3>
+              <p className="text-xs text-ink-soft dark:text-navy-200">
+                {t('debtAlertMessage', {
+                  amount: outstanding.toLocaleString(),
+                  days: daysOverdue,
+                })}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {mayTakePayment ? (
+              <Link
+                href={`/crm/payments?studentId=${student._id}`}
+                className="inline-flex h-11 items-center gap-2 rounded-pill bg-danger px-5 text-xs font-medium text-white transition-colors hover:bg-danger/90"
+              >
+                <Wallet className="size-4" aria-hidden />
+                {t('acceptPayment')}
+                <ArrowRight className="size-4" aria-hidden />
+              </Link>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setShowPayModal(true)}
+                className="inline-flex h-11 items-center gap-2 rounded-pill bg-clay-500 px-5 text-xs font-medium text-white transition-colors hover:bg-clay-400"
+              >
+                <CreditCard className="size-4" aria-hidden />
+                {t('payOnline')}
+              </button>
+            )}
+          </div>
+        </div>
+      ) : null}
+
       <ul className="panel-frame-ink grid grid-cols-2 overflow-hidden rounded-card bg-surface lg:grid-cols-4">
         <Tile label={t('status')} value={<StatusPill status={student.status} label={t(`studentStatus.${student.status}`)} />} />
         <Tile label={t('attendanceRate')} value={rate === null ? '—' : `${rate}%`} />
@@ -115,6 +264,58 @@ export function StudentCabinet({ studentId }: { studentId: string }) {
           last
         />
       </ul>
+
+      {/* A3 — prepayment / next-due summary, read straight off the ledger. */}
+      {student.balance > 0 || nextDue ? (
+        <ul className="panel-frame-ink grid grid-cols-2 overflow-hidden rounded-card bg-surface lg:grid-cols-3">
+          <Tile
+            label={t('prepaidBalance')}
+            value={<Money amount={student.balance} className={student.balance > 0 ? 'text-success' : undefined} />}
+          />
+          <Tile
+            label={t('remainingBalance')}
+            value={<Money amount={nextDue ? nextDue.finalAmount - nextDue.paidAmount : 0} />}
+          />
+          <Tile
+            label={t('nextDueDate')}
+            value={nextDue ? formatDate(nextDue.dueDate, locale) : '—'}
+            last
+          />
+        </ul>
+      ) : null}
+
+      {/* Online Pay Modal */}
+      {showPayModal ? (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-ink/50 p-4 backdrop-blur-sm"
+          onClick={() => setShowPayModal(false)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-md rounded-card bg-surface p-6 shadow-float"
+          >
+            <h3 className="font-display text-base font-semibold text-ink dark:text-white">
+              {t('payOnline')}
+            </h3>
+            <p className="mt-2 text-xs text-ink-soft dark:text-navy-200">
+              {t('payOnlineHint')}
+            </p>
+            <div className="mt-4 flex flex-col gap-2 rounded-input border border-border-subtle p-3 text-xs">
+              <span className="text-ink-muted">{t('outstanding')}:</span>
+              <Money amount={outstanding} className="text-lg font-bold text-danger" />
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowPayModal(false)}
+              className="mt-5 inline-flex h-11 w-full items-center justify-center rounded-pill bg-navy-600 text-xs font-medium text-white"
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      ) : null}
 
       {/* §10.2 / PIC 2 — the attendance calendar */}
       <Panel
@@ -130,7 +331,7 @@ export function StudentCabinet({ studentId }: { studentId: string }) {
               <ChevronLeft className="size-4" aria-hidden />
             </button>
             <span className="min-w-32 text-center font-mono text-2xs text-ink-soft dark:text-navy-200">
-              {month.toLocaleDateString(DATE_LOCALE[locale], { month: 'long', year: 'numeric' })}
+              {formatMonthYear(month, locale)}
             </span>
             <button
               type="button"
@@ -212,6 +413,62 @@ export function StudentCabinet({ studentId }: { studentId: string }) {
         </div>
       </Panel>
 
+      {/* C2 — grades by subject/date, plus the average (computed once, server-side). */}
+      <Panel
+        title={gradesT('tab')}
+        action={
+          gradeAverage.data?.overall != null ? (
+            <span className="text-2xs text-ink-muted">
+              {gradesT('average')}: <span className="font-mono font-medium text-ink dark:text-white">{gradeAverage.data.overall}</span>
+            </span>
+          ) : undefined
+        }
+      >
+        {!grades.data || grades.data.length === 0 ? (
+          <div className="p-5">
+            <Empty title={gradesT('noGrades')} />
+          </div>
+        ) : (
+          <ul>
+            {grades.data.slice(0, 10).map((grade) => {
+              const courseName = grade.groupId?.courseId?.name
+              const subject =
+                typeof courseName === 'string'
+                  ? courseName
+                  : courseName?.[locale] ?? courseName?.uz ?? grade.groupId?.name
+              return (
+                <li
+                  key={grade._id}
+                  className="flex items-center justify-between gap-4 border-b border-border-subtle px-5 py-3.5 last:border-b-0"
+                >
+                  <span className="flex flex-col gap-0.5">
+                    <span className="text-xs text-ink dark:text-white">{subject ?? '—'}</span>
+                    <span className="text-2xs text-ink-muted">
+                      {grade.lessonId?.date
+                        ? formatDate(grade.lessonId.date, locale)
+                        : ''}
+                      {grade.comment ? ` · ${grade.comment}` : ''}
+                    </span>
+                  </span>
+                  <span
+                    className={cn(
+                      'inline-flex size-8 shrink-0 items-center justify-center rounded-pill text-sm font-medium',
+                      grade.value >= 4
+                        ? 'bg-success/12 text-success'
+                        : grade.value === 3
+                          ? 'bg-warning/15 text-warning'
+                          : 'bg-danger/12 text-danger',
+                    )}
+                  >
+                    {grade.value}
+                  </span>
+                </li>
+              )
+            })}
+          </ul>
+        )}
+      </Panel>
+
       {/*
         The online track (§16 extended): modules unlock at the pass mark.
         Shown only when the student is enrolled on a course that has any.
@@ -272,23 +529,130 @@ export function StudentCabinet({ studentId }: { studentId: string }) {
                 >
                   <span className="flex flex-col gap-0.5">
                     <span className="text-xs text-ink dark:text-white">
-                      {new Date(payment.receivedAt).toLocaleDateString(DATE_LOCALE[locale])}
+                      {formatDate(payment.receivedAt, locale)}
                     </span>
                     <span className="text-2xs text-ink-muted">
                       {t(`method.${payment.method}`)}
                       {payment.receiptNo ? ` · ${payment.receiptNo}` : ''}
                     </span>
                   </span>
-                  <Money
-                    amount={Math.abs(payment.amount)}
-                    className={cn('text-xs font-medium', payment.amount < 0 ? 'text-danger' : 'text-success')}
-                  />
+                  <span className="flex items-center gap-1">
+                    <Money
+                      amount={Math.abs(payment.amount)}
+                      className={cn('text-xs font-medium', payment.amount < 0 ? 'text-danger' : 'text-success')}
+                    />
+                    <button
+                      type="button"
+                      title={t('downloadReceipt')}
+                      aria-label={t('downloadReceipt')}
+                      onClick={() => {
+                        const tab = openBlankTab()
+                        void getToken().then((token) => openReceipt(payment._id, token, tab))
+                      }}
+                      className="inline-flex size-8 items-center justify-center rounded-pill text-ink-muted transition-colors hover:bg-navy-50 hover:text-ink dark:hover:bg-navy-800"
+                    >
+                      <Download className="size-3.5" aria-hidden />
+                    </button>
+                    {mayRefund && payment.amount > 0 ? (
+                      <button
+                        type="button"
+                        title={t('refund')}
+                        aria-label={t('refund')}
+                        onClick={() => {
+                          setRefundTarget({ _id: payment._id, amount: payment.amount })
+                          setRefundReason('')
+                          setRefundAmount('')
+                        }}
+                        className="inline-flex size-8 items-center justify-center rounded-pill text-ink-muted transition-colors hover:bg-danger/10 hover:text-danger"
+                      >
+                        <Undo2 className="size-3.5" aria-hidden />
+                      </button>
+                    ) : null}
+                  </span>
                 </li>
               ))}
             </ul>
           )}
         </Panel>
       </div>
+
+      {/* A2/§11.2 — a refund is a new ledger entry, never an edit to the original. */}
+      {refundTarget ? (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={t('refund')}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-ink/50 p-4 backdrop-blur-sm"
+          onClick={() => setRefundTarget(null)}
+        >
+          <div
+            onClick={(event) => event.stopPropagation()}
+            className="w-full max-w-md rounded-card bg-surface p-6 shadow-float"
+          >
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="font-display text-base font-semibold text-ink dark:text-white">
+                {t('refund')}
+              </h3>
+              <button
+                type="button"
+                onClick={() => setRefundTarget(null)}
+                aria-label={t('close')}
+                className="inline-flex size-9 items-center justify-center rounded-pill text-ink-muted hover:bg-navy-50 dark:hover:bg-navy-800"
+              >
+                <X className="size-4" aria-hidden />
+              </button>
+            </div>
+
+            <p className="mb-4 text-xs text-ink-soft dark:text-navy-200">
+              {t('refundHint', { amount: refundTarget.amount.toLocaleString() })}
+            </p>
+
+            <label className="mb-1.5 block text-xs font-medium text-ink-soft dark:text-navy-200">
+              {t('refundAmount')}
+            </label>
+            <input
+              type="text"
+              inputMode="numeric"
+              placeholder={String(refundTarget.amount)}
+              value={refundAmount}
+              onChange={(event) => setRefundAmount(event.target.value)}
+              className="mb-4 h-12 w-full rounded-input border border-border-subtle bg-background px-4 font-mono text-sm tabular-nums text-ink outline-none focus:border-glaze-500 dark:text-white"
+            />
+
+            <label className="mb-1.5 block text-xs font-medium text-ink-soft dark:text-navy-200">
+              {t('refundReason')}
+            </label>
+            <textarea
+              value={refundReason}
+              onChange={(event) => setRefundReason(event.target.value)}
+              rows={3}
+              className="mb-4 w-full rounded-input border border-border-subtle bg-background p-3 text-sm text-ink outline-none focus:border-glaze-500 dark:text-white"
+            />
+
+            {refund.error ? <ErrorBox code={refund.error.code} message={refund.error.message} /> : null}
+
+            <button
+              type="button"
+              disabled={refund.pending || refundReason.trim().length < 5}
+              onClick={async () => {
+                const parsedAmount = refundAmount.trim() ? Number(refundAmount) : undefined
+                const result = await refund.mutate({
+                  reason: refundReason.trim(),
+                  ...(parsedAmount ? { amount: parsedAmount } : {}),
+                })
+                if (result) {
+                  setRefundTarget(null)
+                  void detail.refetch()
+                }
+              }}
+              className="mt-2 inline-flex h-12 w-full items-center justify-center gap-2 rounded-pill bg-danger text-xs font-medium text-white transition-colors disabled:opacity-50"
+            >
+              <Undo2 className="size-4" aria-hidden />
+              {t('confirmRefund')}
+            </button>
+          </div>
+        </div>
+      ) : null}
     </div>
   )
 }

@@ -187,6 +187,23 @@ export const updateLeadSchema = z.object({
 })
 export type UpdateLeadInput = z.infer<typeof updateLeadSchema>
 
+/**
+ * E2 — "New Applicant" creation for Manager & SuperAdmin, added directly by
+ * staff rather than arriving through the public form. Deliberately a smaller
+ * shape than `leadSchema`: no consent/honeypot/OTP, none of which make sense
+ * when a human at the front desk is the one typing it in.
+ */
+export const createLeadSchema = z.object({
+  fullName: z.string().trim().min(3, 'nameTooShort').max(120, 'nameTooLong'),
+  phone: phoneSchema,
+  age: z.coerce.number().int().min(4, 'ageTooLow').max(80, 'ageTooHigh').optional(),
+  schoolClass: z.string().trim().max(20).optional(),
+  courseSlug: z.string().trim().min(1, 'courseRequired'),
+  source: z.enum(LEAD_SOURCES).optional(),
+  comment: z.string().trim().max(1000).optional(),
+})
+export type CreateLeadInput = z.infer<typeof createLeadSchema>
+
 /** §7.2 — booking the trial lesson, the step the whole funnel turns on. */
 export const trialLessonSchema = z.object({
   at: z.coerce.date(),

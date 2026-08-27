@@ -7,6 +7,7 @@ import {
   enrollSchema,
   markAttendanceSchema,
   attendanceQuerySchema,
+  attendanceRateQuerySchema,
   cancelLessonSchema,
   scheduleQuerySchema,
   parseSort,
@@ -26,6 +27,7 @@ import { allowSelfOr } from '../../middleware/self-access.js'
 import { recordAudit } from '../audit/audit.service.js'
 import { Group, Lesson, Enrollment, Attendance, Course } from './group.model.js'
 import { Student } from '../students/student.model.js'
+import { Invoice } from '../payments/invoice.model.js'
 import { findScheduleConflicts, generateLessons, enrollStudent } from './group.service.js'
 
 /** TZ §23 — `GROUPS & SCHEDULE` and `ATTENDANCE`. */
@@ -351,6 +353,8 @@ groupRouter.get(
       .sort({ date: 1 })
       .limit(500)
       .populate('groupId', 'name')
+      .populate('teacherId', 'fullName')
+      .populate('roomId', 'name')
       .lean()
 
     res.json({ data: lessons })
@@ -394,6 +398,39 @@ groupRouter.get(
       : []
     const markBy = new Map(marked.map((row) => [row.studentId.toString(), row]))
 
+    const studentIds = enrollments.map(
+      (e) => (e.studentId as unknown as { _id: Types.ObjectId })._id,
+    )
+    const now = new Date()
+    const overdueInvoices = await Invoice.find({
+      studentId: { $in: studentIds },
+      status: { $in: ['pending', 'partial', 'overdue'] },
+      deletedAt: null,
+      $expr: { $lt: ['$paidAmount', '$finalAmount'] },
+    }).lean()
+
+    const debtorMap = new Map<string, { debt: number; daysOverdue: number; hasDebt: boolean }>()
+    for (const inv of overdueInvoices) {
+      const sId = inv.studentId.toString()
+      const current = debtorMap.get(sId) ?? { debt: 0, daysOverdue: 0, hasDebt: false }
+      const remaining = Math.max(0, inv.finalAmount - inv.paidAmount)
+      current.debt += remaining
+      if (inv.dueDate && new Date(inv.dueDate) < now) {
+        current.hasDebt = true
+        const days = Math.max(
+          0,
+          Math.floor((now.getTime() - new Date(inv.dueDate).getTime()) / (1000 * 60 * 60 * 24)),
+        )
+        if (days > current.daysOverdue) current.daysOverdue = days
+      } else if (remaining > 0) {
+        current.hasDebt = true
+      }
+      debtorMap.set(sId, current)
+    }
+
+    const actor = currentUser(req)
+    const isFullDebtorViewer = actor.roles.some((r) => r.role === 'superadmin' || r.role === 'manager')
+
     res.json({
       data: {
         group: { id: group._id, name: group.name },
@@ -406,6 +443,7 @@ groupRouter.get(
             status: string
           }
           const row = markBy.get(student._id.toString())
+          const debtInfo = debtorMap.get(student._id.toString())
           return {
             studentId: student._id,
             fullName: student.fullName,
@@ -414,6 +452,9 @@ groupRouter.get(
             status: row?.status ?? 'present',
             reason: row?.reason,
             marked: Boolean(row),
+            hasDebt: Boolean(debtInfo?.hasDebt),
+            daysOverdue: debtInfo?.daysOverdue ?? 0,
+            debt: isFullDebtorViewer ? debtInfo?.debt : undefined,
           }
         }),
       },
@@ -490,6 +531,37 @@ groupRouter.post(
   }),
 )
 
+/**
+ * B1 — resolve which lessons a `from`/`to`/`teacherId` filter actually means,
+ * since `Attendance` rows only carry `groupId`/`lessonId`, not a lesson date
+ * or teacher of their own.
+ */
+async function matchingLessonIds(query: {
+  groupId?: string
+  teacherId?: string
+  from?: Date
+  to?: Date
+}): Promise<Types.ObjectId[] | null> {
+  if (!query.from && !query.to && !query.teacherId) return null
+
+  const lessonFilter: Record<string, unknown> = { deletedAt: null }
+  if (query.groupId) lessonFilter.groupId = query.groupId
+  if (query.from || query.to) {
+    lessonFilter.date = {
+      ...(query.from ? { $gte: query.from } : {}),
+      ...(query.to ? { $lte: query.to } : {}),
+    }
+  }
+  if (query.teacherId) {
+    const teacherGroupIds = await Group.find({ teacherId: query.teacherId }).distinct('_id')
+    lessonFilter.groupId = query.groupId
+      ? query.groupId
+      : { $in: teacherGroupIds }
+  }
+
+  return Lesson.find(lessonFilter).distinct('_id')
+}
+
 groupRouter.get(
   '/attendance/history',
   validateQuery(attendanceQuerySchema),
@@ -500,26 +572,90 @@ groupRouter.get(
     const query = res.locals.query as {
       groupId?: string
       studentId?: string
+      teacherId?: string
       from?: Date
       to?: Date
     }
     const filter: Record<string, unknown> = {}
-    if (query.groupId) filter.groupId = query.groupId
     if (query.studentId) filter.studentId = query.studentId
-    if (query.from || query.to) {
-      filter.markedAt = {
-        ...(query.from ? { $gte: query.from } : {}),
-        ...(query.to ? { $lte: query.to } : {}),
-      }
+
+    // B1 — the date range and teacher filters describe the lesson, not when it
+    // happened to be marked (`markedAt` is unset entirely for a late edit —
+    // see the write path above, which sets `editedAt` instead in that case).
+    const lessonIds = await matchingLessonIds(query)
+    if (lessonIds) {
+      filter.lessonId = { $in: lessonIds }
+    } else if (query.groupId) {
+      filter.groupId = query.groupId
     }
 
     const rows = await Attendance.find(filter)
-      .sort({ markedAt: -1 })
-      .limit(500)
+      .sort({ createdAt: -1 })
+      .limit(3000)
       .populate('lessonId', 'date status')
       .lean()
 
     res.json({ data: rows })
+  }),
+)
+
+/**
+ * B1/H1 — attendance %, computed once here so the teacher grid, the group
+ * report and the student dashboard all read the same number instead of each
+ * recomputing it (a late-edit's `absent` still counts once, not per screen).
+ */
+groupRouter.get(
+  '/attendance/rate',
+  validateQuery(attendanceRateQuerySchema),
+  allowSelfOr('attendance.mark', (req) => req.query.studentId?.toString()),
+  asyncRoute(async (req, res) => {
+    const query = res.locals.query as {
+      groupId?: string
+      studentId?: string
+      from?: Date
+      to?: Date
+    }
+
+    const lessonIds = await matchingLessonIds(query)
+    const filter: Record<string, unknown> = {}
+    if (query.studentId) filter.studentId = query.studentId
+    if (lessonIds) filter.lessonId = { $in: lessonIds }
+    else if (query.groupId) filter.groupId = query.groupId
+
+    const rows = await Attendance.find(filter).select('studentId status').lean()
+
+    const byStudent = new Map<string, { present: number; absent: number; late: number; excused: number }>()
+    for (const row of rows) {
+      const sid = row.studentId.toString()
+      const bucket = byStudent.get(sid) ?? { present: 0, absent: 0, late: 0, excused: 0 }
+      bucket[row.status as 'present' | 'absent' | 'late' | 'excused'] += 1
+      byStudent.set(sid, bucket)
+    }
+
+    // §10.1 — "davomat %": present + late + excused count toward it, only a
+    // flat absence does not. Matches the counting rule already used client-side
+    // in the student cabinet before this endpoint existed.
+    const rateOf = (bucket: { present: number; absent: number; late: number; excused: number }) => {
+      const total = bucket.present + bucket.absent + bucket.late + bucket.excused
+      return total === 0 ? null : Math.round(((total - bucket.absent) / total) * 100)
+    }
+
+    if (query.studentId) {
+      const bucket = byStudent.get(query.studentId) ?? { present: 0, absent: 0, late: 0, excused: 0 }
+      res.json({ data: { ...bucket, total: bucket.present + bucket.absent + bucket.late + bucket.excused, rate: rateOf(bucket) } })
+      return
+    }
+
+    res.json({
+      data: {
+        byStudent: [...byStudent.entries()].map(([studentId, bucket]) => ({
+          studentId,
+          ...bucket,
+          total: bucket.present + bucket.absent + bucket.late + bucket.excused,
+          rate: rateOf(bucket),
+        })),
+      },
+    })
   }),
 )
 

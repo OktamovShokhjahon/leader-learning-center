@@ -95,8 +95,11 @@ export function branchScopePlugin(schema: Schema) {
 
         const filter = this.getFilter?.() ?? {}
         // An explicit branchId in the query wins, so admin tooling can still be precise.
+        // Cast to ObjectId: `distinct` (and some chained queries) skip schema
+        // casting, so a string id matches nothing — SuperAdmin `'ALL'` skips
+        // this hook and still works, which is why a Manager-only bug shows up.
         if (filter.branchId === undefined) {
-          this.where({ branchId: scope.branchId })
+          this.where({ branchId: toObjectId(scope.branchId) })
         }
       },
     )

@@ -9,6 +9,8 @@ import {
   parseSort,
 } from '@leader/shared/schemas'
 import { ApiError } from '@leader/shared/errors'
+import { can } from '@leader/shared/permissions'
+import { formatDdMmYyyy } from '@leader/shared/date'
 import { validateBody, validateQuery } from '../../middleware/validate.js'
 import { asyncRoute } from '../../middleware/error-handler.js'
 import { recordAudit } from '../audit/audit.service.js'
@@ -21,13 +23,16 @@ import {
   currentUser,
 } from '../../middleware/auth.js'
 import { Invoice, Payment } from './invoice.model.js'
+import { Student } from '../students/student.model.js'
 import {
   acceptPayment,
   refundPayment,
   generateInvoices,
   listDebtors,
   recalculateOverdue,
+  reconcileBalances,
 } from './payment.service.js'
+import { streamReceiptPdf } from './receipt.service.js'
 
 /**
  * TZ §23 — the `PAYMENTS` block.
@@ -105,6 +110,15 @@ paymentRouter.post(
   }),
 )
 
+/** A5 — drift report between the Payment ledger and Student.balance/Invoice.paidAmount. */
+paymentRouter.get(
+  '/reconcile',
+  requireRole('superadmin'),
+  asyncRoute(async (_req, res) => {
+    res.json({ data: await reconcileBalances() })
+  }),
+)
+
 /**
  * §11.2 — the most-used endpoint in the CRM. Target: under 15 seconds from
  * search to printed receipt, so it does one thing and returns fast.
@@ -117,6 +131,32 @@ paymentRouter.post(
   asyncRoute(async (req, res) => {
     const { payment, replayed } = await acceptPayment(req.body, currentUser(req).id)
     res.status(replayed ? 200 : 201).json({ data: { payment, replayed } })
+  }),
+)
+
+/**
+ * A2 — the printable/downloadable receipt. Staff holding `payment.accept` may
+ * pull any receipt; a student/parent may only pull their own (checked against
+ * the `Student` record linked to their login, same pattern as `allowSelfOr`).
+ */
+paymentRouter.get(
+  '/:id/receipt.pdf',
+  asyncRoute(async (req, res) => {
+    const actor = currentUser(req)
+    const roles = actor.roles.map((assignment) => assignment.role)
+
+    if (!roles.some((role) => can(role, 'payment.accept'))) {
+      const payment = await Payment.findById(req.params.id).select('studentId').lean()
+      if (!payment) throw ApiError.notFound('Payment not found')
+      const ownStudent = await Student.findOne({ userId: actor._id, deletedAt: null })
+        .select('_id')
+        .lean()
+      if (!ownStudent || ownStudent._id.toString() !== payment.studentId.toString()) {
+        throw ApiError.forbidden('You may only download your own receipt')
+      }
+    }
+
+    await streamReceiptPdf(String(req.params.id), res)
   }),
 )
 
@@ -215,6 +255,8 @@ paymentRouter.get(
     const query = res.locals.query as {
       page: number
       limit: number
+      search?: string
+      courseId?: string
       groupId?: string
       teacherId?: string
       minDaysOverdue?: number
@@ -235,6 +277,8 @@ paymentRouter.get(
         data: {
           ...result,
           totalDebt: undefined,
+          unpaidCount: undefined,
+          criticalCount: undefined,
           items: result.items.map((row: Record<string, unknown>) => ({
             studentId: row.studentId,
             studentName: row.studentName,
@@ -257,8 +301,76 @@ paymentRouter.get(
   requireFullGrant('debtor.view'),
   validateQuery(debtorQuerySchema),
   asyncRoute(async (req, res) => {
-    const query = res.locals.query as { page: number; limit: number; groupId?: string }
+    const query = res.locals.query as {
+      page: number
+      limit: number
+      search?: string
+      courseId?: string
+      groupId?: string
+      teacherId?: string
+      minDaysOverdue?: number
+    }
     res.json({ data: await listDebtors({ ...query, unpaidOnly: true }) })
+  }),
+)
+
+/** §11.3 — Export debtors list to CSV. */
+paymentRouter.get(
+  '/debtors/export',
+  requirePermission('debtor.view'),
+  requireFullGrant('debtor.view'),
+  validateQuery(debtorQuerySchema),
+  asyncRoute(async (_req, res) => {
+    const query = res.locals.query as {
+      search?: string
+      courseId?: string
+      groupId?: string
+      teacherId?: string
+      minDaysOverdue?: number
+      unpaidOnly?: boolean
+    }
+
+    const result = await listDebtors({
+      ...query,
+      page: 1,
+      limit: 10_000,
+    })
+
+    const header = [
+      'F.I',
+      'Telefon',
+      'Ota-ona telefoni',
+      'Guruh',
+      'Davr',
+      'Qarz miqdori',
+      'Kechikkan kunlar',
+      'Jami summa',
+      'To\'langan',
+      'Muddati',
+    ]
+
+    const rows = result.items.map((row: Record<string, unknown>) => [
+      row.studentName ?? '',
+      row.phone ?? '',
+      row.parentPhone ?? '',
+      row.groupName ?? '',
+      row.period ?? '',
+      row.due ?? 0,
+      row.daysOverdue ?? 0,
+      row.finalAmount ?? 0,
+      row.paidAmount ?? 0,
+      row.dueDate ? formatDdMmYyyy(row.dueDate as string) : '',
+    ])
+
+    const escape = (cell: unknown) => {
+      const text = String(cell ?? '')
+      return /[",\n;]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text
+    }
+    const csv = [header, ...rows].map((row) => row.map(escape).join(';')).join('\r\n')
+
+    res.setHeader('content-type', 'text/csv; charset=utf-8')
+    res.setHeader('content-disposition', 'attachment; filename="debtors.csv"')
+    res.send(`\uFEFF${csv}`)
   }),
 )
 

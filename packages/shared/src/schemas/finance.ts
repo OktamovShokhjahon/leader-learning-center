@@ -73,6 +73,8 @@ export const paymentQuerySchema = paginationSchema.extend({
 
 /** §11.3 — the qarzdorlar page. */
 export const debtorQuerySchema = paginationSchema.extend({
+  search: z.string().trim().optional(),
+  courseId: objectIdSchema.optional(),
   groupId: objectIdSchema.optional(),
   teacherId: objectIdSchema.optional(),
   /** §11.3 colour bands: 1–3, 4–10, 10+ days overdue. */

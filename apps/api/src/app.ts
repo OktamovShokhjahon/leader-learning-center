@@ -19,6 +19,7 @@ import { leadRouter } from './modules/leads/lead.routes.js'
 import { testRouter } from './modules/tests/test.routes.js'
 import { studentRouter } from './modules/students/student.routes.js'
 import { groupRouter } from './modules/groups/group.routes.js'
+import { gradeRouter } from './modules/grades/grade.routes.js'
 import { paymentRouter } from './modules/payments/payment.routes.js'
 import { financeRouter } from './modules/finance/finance.routes.js'
 import { settingsRouter } from './modules/settings/settings.routes.js'
@@ -104,6 +105,7 @@ export function createApp() {
   app.use('/api/v1/tests', testRouter)
   app.use('/api/v1/students', studentRouter)
   app.use('/api/v1/groups', groupRouter)
+  app.use('/api/v1/grades', gradeRouter)
   app.use('/api/v1/payments', paymentRouter)
   // §4.3 / §15 — the finance router carries its own hard superadmin guard.
   app.use('/api/v1/finance', financeRouter)

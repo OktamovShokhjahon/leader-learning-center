@@ -6,6 +6,7 @@ import { motion, AnimatePresence, useReducedMotion } from 'motion/react'
 import { Check, X, Loader2, ShieldCheck, Inbox } from 'lucide-react'
 import type { Locale } from '@leader/shared/locales'
 import { useQuery, useMutation } from '@/lib/api/use-api'
+import { formatDate } from '@/lib/date'
 import { Panel, Money, Loading, ErrorBox, Empty } from './primitives'
 import { cn } from '@/lib/utils'
 
@@ -19,8 +20,6 @@ type PendingPayment = {
   student?: { _id: string; fullName: string } | null
   receivedByName?: string
 }
-
-const DATE_LOCALE: Record<Locale, string> = { uz: 'uz-UZ', ru: 'ru-RU', en: 'en-GB' }
 
 /**
  * The client's rule: an Admin approves payments, but never sees the centre's
@@ -113,7 +112,7 @@ export function PaymentApprovals() {
                         {payment.student?.fullName ?? t('unknownStudent')}
                       </span>
                       <span className="font-mono text-2xs text-ink-muted">
-                        {new Date(payment.receivedAt).toLocaleDateString(DATE_LOCALE[locale])}
+                        {formatDate(payment.receivedAt, locale)}
                         {' · '}
                         {t(`method.${payment.method}`)}
                         {payment.receiptNo ? ` · ${payment.receiptNo}` : ''}

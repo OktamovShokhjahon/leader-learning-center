@@ -133,6 +133,53 @@ export function mediaUrl(path: string): string {
   return `${API_BASE}${path.startsWith('/') ? path : `/${path}`}`
 }
 
+/**
+ * Open a blank tab *synchronously*, before any `await` in the click handler
+ * that calls this. A browser only honours `window.open` while it is still
+ * inside the click's user-activation window, which ends the moment the
+ * handler yields on a promise (e.g. `await getToken()`) — call this as the
+ * very first statement, then hand the returned tab to `openAuthenticatedFile`.
+ */
+export function openBlankTab(): Window | null {
+  return window.open('', '_blank')
+}
+
+/**
+ * Redirect an already-opened tab (see `openBlankTab`) to an authenticated API
+ * response (PDF, CSV, ...).
+ *
+ * Every download route needs the bearer token (§8's tokens are never
+ * cookies), so a plain `<a href>`/`window.open(url)` would 401 — the request
+ * has to carry the header itself, then hand the browser a blob: URL to open.
+ */
+export async function openAuthenticatedFile(
+  path: string,
+  token: string | null,
+  tab?: Window | null,
+): Promise<boolean> {
+  try {
+    const response = await apiFetch(path, token)
+    if (!response.ok) {
+      tab?.close()
+      return false
+    }
+    const blob = await response.blob()
+    const url = URL.createObjectURL(blob)
+    if (tab) tab.location.href = url
+    else window.open(url, '_blank')
+    setTimeout(() => URL.revokeObjectURL(url), 60_000)
+    return true
+  } catch {
+    tab?.close()
+    return false
+  }
+}
+
+/** A2 — open a payment's PDF receipt in a tab already opened via `openBlankTab`. */
+export function openReceipt(paymentId: string, token: string | null, tab?: Window | null): Promise<boolean> {
+  return openAuthenticatedFile(`/payments/${paymentId}/receipt.pdf`, token, tab)
+}
+
 /** Upload a file to the API (SuperAdmin only). Returns the public URL path. */
 export async function uploadFile(
   file: File,

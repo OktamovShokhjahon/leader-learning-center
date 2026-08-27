@@ -4,6 +4,7 @@ import { pick, type Locale } from '@leader/shared/locales'
 import { PageHeader } from '@/components/site/page-header'
 import { Section } from '@/components/ui/section'
 import { OFFER, PRIVACY, type LegalSection } from '@/content/legal'
+import { formatDate } from '@/lib/date'
 
 /**
  * TZ §6.1 — the public offer and privacy policy, both legally required before
@@ -26,10 +27,7 @@ export async function LegalPage({
   const locale = (await getLocale()) as Locale
 
   const sections: LegalSection[] = navKey === 'offer' ? OFFER : PRIVACY
-  const updated = new Date().toLocaleDateString(
-    locale === 'uz' ? 'uz-UZ' : locale === 'ru' ? 'ru-RU' : 'en-GB',
-    { day: '2-digit', month: '2-digit', year: 'numeric' },
-  )
+  const updated = formatDate(new Date(), locale)
 
   return (
     <>

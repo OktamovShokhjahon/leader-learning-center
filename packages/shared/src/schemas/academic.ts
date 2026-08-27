@@ -82,6 +82,25 @@ export const createCourseSchema = z.object({
 })
 export const updateCourseSchema = createCourseSchema.partial()
 
+/**
+ * §9.1 / A4 — `POST /students/:id/freeze { fromDate, toDate, amount, reason }`.
+ * `toDate` in the future is the "auto-unfreeze on end date" contract; a nightly
+ * sweep (alongside `recalculateOverdue`) flips the student back to `active`
+ * once `toDate` has passed.
+ */
+export const freezeStudentSchema = z
+  .object({
+    fromDate: z.coerce.date(),
+    toDate: z.coerce.date(),
+    amount: z.coerce.number().int().min(0).optional(),
+    reason: z.string().trim().min(3, 'required').max(300),
+  })
+  .refine((value) => value.toDate > value.fromDate, {
+    message: 'toDateBeforeFromDate',
+    path: ['toDate'],
+  })
+export type FreezeStudentInput = z.infer<typeof freezeStudentSchema>
+
 /** §23 — `POST /students/:id/transfer { toBranchId | toGroupId }`. */
 export const transferSchema = z
   .object({
@@ -215,6 +234,16 @@ export const attendanceQuerySchema = z.object({
   groupId: objectIdSchema.optional(),
   studentId: objectIdSchema.optional(),
   lessonId: objectIdSchema.optional(),
+  teacherId: objectIdSchema.optional(),
+  /** B1 — `from`/`to` filter on the lesson's own date, not when it was marked. */
+  from: z.coerce.date().optional(),
+  to: z.coerce.date().optional(),
+})
+
+/** B1/H1 — the shared attendance-rate aggregation, per student or per group. */
+export const attendanceRateQuerySchema = z.object({
+  groupId: objectIdSchema.optional(),
+  studentId: objectIdSchema.optional(),
   from: z.coerce.date().optional(),
   to: z.coerce.date().optional(),
 })

@@ -6,6 +6,7 @@ import {
   studentQuerySchema,
   setFeeSchema,
   transferSchema,
+  freezeStudentSchema,
   parseSort,
 } from '@leader/shared/schemas'
 import { ApiError } from '@leader/shared/errors'
@@ -46,6 +47,7 @@ studentRouter.get(
       search?: string
       status?: string
       groupId?: string
+      onlyDebtors?: boolean
     }
 
     const filter: Record<string, unknown> = { deletedAt: null }
@@ -64,6 +66,9 @@ studentRouter.get(
       filter._id = { $in: ids }
     }
 
+    // §9.1 — `overdue` is the workbook's qarzdor / debtor status.
+    if (query.onlyDebtors) filter.status = 'overdue'
+
     const [items, total] = await Promise.all([
       Student.find(filter)
         .sort(parseSort(query.sort))
@@ -73,9 +78,60 @@ studentRouter.get(
       Student.countDocuments(filter),
     ])
 
+    const now = new Date()
+    const studentIds = items.map((student) => student._id)
+    const debts = await Invoice.aggregate<{
+      _id: Types.ObjectId
+      totalDebt: number
+      maxDaysOverdue: number
+      hasOverdue: boolean
+    }>([
+      {
+        $match: {
+          studentId: { $in: studentIds },
+          status: { $in: ['pending', 'partial', 'overdue'] },
+          deletedAt: null,
+          $expr: { $lt: ['$paidAmount', '$finalAmount'] },
+        },
+      },
+      {
+        $project: {
+          studentId: 1,
+          due: { $subtract: ['$finalAmount', '$paidAmount'] },
+          daysOverdue: {
+            $max: [
+              0,
+              { $floor: { $divide: [{ $subtract: [now, '$dueDate'] }, 1000 * 60 * 60 * 24] } },
+            ],
+          },
+          isOverdue: { $cond: [{ $lt: ['$dueDate', now] }, true, false] },
+        },
+      },
+      {
+        $group: {
+          _id: '$studentId',
+          totalDebt: { $sum: '$due' },
+          maxDaysOverdue: { $max: '$daysOverdue' },
+          hasOverdue: { $max: '$isOverdue' },
+        },
+      },
+    ])
+
+    const debtMap = new Map(debts.map((d) => [d._id.toString(), d]))
+
+    const enrichedItems = items.map((student) => {
+      const debtInfo = debtMap.get(student._id.toString())
+      return {
+        ...student,
+        debt: debtInfo?.totalDebt ?? 0,
+        daysOverdue: debtInfo?.maxDaysOverdue ?? 0,
+        isDebtor: student.status === 'overdue',
+      }
+    })
+
     res.json({
       data: {
-        items,
+        items: enrichedItems,
         total,
         page: query.page,
         limit: query.limit,
@@ -155,7 +211,39 @@ studentRouter.get(
       Payment.find({ studentId: student._id }).sort({ receivedAt: -1 }).limit(24).lean(),
     ])
 
-    res.json({ data: { ...student, enrollments, invoices, payments } })
+    const now = new Date()
+    let totalDebt = 0
+    let maxDaysOverdue = 0
+    let hasOverdue = false
+
+    for (const inv of invoices) {
+      if (['pending', 'partial', 'overdue'].includes(inv.status)) {
+        const remaining = Math.max(0, inv.finalAmount - inv.paidAmount)
+        if (remaining > 0) {
+          totalDebt += remaining
+          if (inv.dueDate && new Date(inv.dueDate) < now) {
+            hasOverdue = true
+            const days = Math.max(
+              0,
+              Math.floor((now.getTime() - new Date(inv.dueDate).getTime()) / (1000 * 60 * 60 * 24)),
+            )
+            if (days > maxDaysOverdue) maxDaysOverdue = days
+          }
+        }
+      }
+    }
+
+    res.json({
+      data: {
+        ...student,
+        enrollments,
+        invoices,
+        payments,
+        totalDebt,
+        daysOverdue: maxDaysOverdue,
+        isDebtor: student.status === 'overdue' || hasOverdue,
+      },
+    })
   }),
 )
 
@@ -244,21 +332,39 @@ studentRouter.post(
   }),
 )
 
-/** §9.1 — freezing stops invoice generation without losing the student's history. */
+/**
+ * A4 — freezing stops invoice generation without losing the student's history.
+ * Unlike the old bare status toggle, this records a `fromDate`/`toDate`/
+ * `amount`/`reason` entry so the freeze is visible in payment history and can
+ * auto-reverse on `toDate` (see `autoUnfreezeStudents` in payment.service.ts,
+ * run from the same sweep as `recalculateOverdue`).
+ */
 studentRouter.post(
   '/:id/freeze',
   requirePermission('student.manage'),
+  validateBody(freezeStudentSchema),
   asyncRoute(async (req, res) => {
     const student = await Student.findOne({ _id: req.params.id, deletedAt: null })
     if (!student) throw ApiError.notFound('Student not found')
-    student.status = student.status === 'frozen' ? 'active' : 'frozen'
+
+    const actor = currentUser(req)
+    const { fromDate, toDate, amount, reason } = req.body as {
+      fromDate: Date
+      toDate: Date
+      amount?: number
+      reason: string
+    }
+
+    student.freezePeriods.push({ fromDate, toDate, amount, reason, createdBy: actor._id })
+    student.status = 'frozen'
     await student.save()
+
     await recordAudit({
       action: 'student.freeze',
       entity: 'Student',
       entityId: student.id,
-      actorId: currentUser(req)._id,
-      after: { status: student.status },
+      actorId: actor._id,
+      after: { status: student.status, fromDate, toDate, amount, reason },
       req,
     })
     res.json({ data: student })
@@ -280,6 +386,9 @@ studentRouter.post(
       res.json({ data: student })
       return
     }
+
+    const openPeriod = [...student.freezePeriods].reverse().find((p) => !p.unfrozenAt)
+    if (openPeriod) openPeriod.unfrozenAt = new Date()
 
     student.status = 'active'
     await student.save()

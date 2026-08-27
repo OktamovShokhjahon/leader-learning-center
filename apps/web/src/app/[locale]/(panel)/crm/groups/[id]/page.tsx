@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation'
 import { setRequestLocale, getTranslations } from 'next-intl/server'
 import { isLocale } from '@leader/shared/locales'
 import { PanelPage } from '@/components/panel/primitives'
-import { AttendanceGrid } from '@/components/panel/attendance-grid'
+import { AttendanceWorkspace } from '@/components/panel/attendance-workspace'
 
 export const metadata = { robots: { index: false, follow: false } }
 
@@ -23,7 +23,7 @@ export default async function GroupAttendancePage({
 
   return (
     <PanelPage title={t('title')} subtitle={t('subtitle')} eyebrow={t('eyebrow')}>
-      <AttendanceGrid groupId={id} />
+      <AttendanceWorkspace groupId={id} />
     </PanelPage>
   )
 }

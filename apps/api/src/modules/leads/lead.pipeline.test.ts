@@ -110,6 +110,74 @@ describe('PATCH /leads/:id', () => {
   })
 })
 
+/** E2 — "New Applicant" creation for Manager & SuperAdmin. */
+describe('POST /leads', () => {
+  it('lets a Manager add an applicant by hand', async () => {
+    const branch = await makeBranch()
+    const manager = await makeActor(app, 'manager', branch._id)
+    const course = await Course.create({ slug: 'general-english', name: { uz: 'Umumiy ingliz tili' } })
+
+    const res = await request(app)
+      .post('/api/v1/leads')
+      .set(auth(manager.token))
+      .send({ fullName: 'Kamila Yusupova', phone: '+998907654321', courseSlug: course.slug, source: 'friend' })
+      .expect(201)
+
+    expect(res.body.data.status).toBe('yangi')
+    expect(res.body.data.courseSlug).toBe('general-english')
+    expect(res.body.data.assignedTo).toBe(manager.id)
+
+    const stored = await Lead.findById(res.body.data._id)
+    expect(stored!.history).toHaveLength(1)
+    expect(stored!.history[0]!.action).toBe('created')
+  })
+
+  it('lets a SuperAdmin add an applicant once a single branch is selected', async () => {
+    const branch = await makeBranch()
+    const boss = await makeActor(app, 'superadmin')
+    await selectBranch(app, boss.token, branch.id)
+    const course = await Course.create({ slug: 'ielts', name: { uz: 'IELTS' } })
+
+    await request(app)
+      .post('/api/v1/leads')
+      .set(auth(boss.token))
+      .send({ fullName: 'Sardor Nematov', phone: '+998907654322', courseSlug: course.slug })
+      .expect(201)
+  })
+
+  it('merges into the existing lead when the phone already applied, instead of duplicating it', async () => {
+    const branch = await makeBranch()
+    const manager = await makeActor(app, 'manager', branch._id)
+    const rejected = await makeLead(branch._id, '+998907654323')
+    rejected.status = 'rad_etdi'
+    await rejected.save()
+    const course = await Course.create({ slug: 'math', name: { uz: 'Matematika' } })
+
+    const res = await request(app)
+      .post('/api/v1/leads')
+      .set(auth(manager.token))
+      .send({ fullName: 'Dilnoza Rahimova', phone: '+998907654323', courseSlug: course.slug })
+      .expect(201)
+
+    expect(res.body.data._id).toBe(rejected.id)
+    // A previously refused applicant reapplying goes back to the top of the funnel.
+    expect(res.body.data.status).toBe('yangi')
+    expect(await Lead.countDocuments({ phone: '+998907654323' })).toBe(1)
+  })
+
+  it('refuses a teacher', async () => {
+    const branch = await makeBranch()
+    const teacher = await makeActor(app, 'teacher', branch._id)
+    const course = await Course.create({ slug: 'science', name: { uz: 'Fan' } })
+
+    await request(app)
+      .post('/api/v1/leads')
+      .set(auth(teacher.token))
+      .send({ fullName: 'Test Applicant', phone: '+998907654324', courseSlug: course.slug })
+      .expect(403)
+  })
+})
+
 describe('POST /leads/:id/trial', () => {
   it('books the trial lesson and moves the stage with it', async () => {
     const branch = await makeBranch()

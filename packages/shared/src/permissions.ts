@@ -35,6 +35,9 @@ export const ACTIONS = [
   'attendance.mark',
   'attendance.editAfter48h',
   'attendance.viewOwn',
+  // Grading (C — "Baho")
+  'grade.manage',
+  'grade.viewOwn',
   // Payments
   'payment.accept',
   'payment.approve',
@@ -113,6 +116,10 @@ export const PERMISSIONS: Record<Action, Record<Role, Grant>> = {
   /** Deliberately not given to a Manager — a late edit rewrites history. */
   'attendance.editAfter48h': { superadmin: F, manager: N, teacher: N, student: N, parent: N },
   'attendance.viewOwn': { superadmin: N, manager: N, teacher: N, student: F, parent: F },
+
+  /** Mirrors `attendance.mark` exactly — the same people run the same lesson. */
+  'grade.manage': { superadmin: F, manager: F, teacher: F, student: N, parent: N },
+  'grade.viewOwn': { superadmin: N, manager: N, teacher: N, student: F, parent: F },
 
   'payment.accept': { superadmin: F, manager: F, teacher: N, student: N, parent: N },
   'debtor.view': { superadmin: F, manager: F, teacher: L, student: N, parent: N },

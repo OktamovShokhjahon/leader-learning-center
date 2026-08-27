@@ -154,6 +154,11 @@ export async function generateInvoices(
     }
   }
 
+  const billedStudents = [...new Set(planned.map((row) => row.studentId.toString()))]
+  for (const studentId of billedStudents) {
+    await syncStudentStatus(studentId)
+  }
+
   logger.info({ period, created, skipped }, 'invoice run finished')
   return { period, created, skipped, wouldCreate: planned.length, dryRun: false }
 }
@@ -518,8 +523,10 @@ async function refundPaymentUnsafe(
   return refund
 }
 
+const BILLABLE_STATUSES = ['active', 'pending', 'paid', 'overdue'] as const
+
 /** §9.1 — the workbook's `Status` column, kept in step with what is owed. */
-async function syncStudentStatus(studentId: string, session?: mongoose.ClientSession) {
+export async function syncStudentStatus(studentId: string, session?: mongoose.ClientSession) {
   const student = await Student.findById(studentId).session(session ?? null)
   if (!student || !isBillable(student.status)) return
 
@@ -527,6 +534,7 @@ async function syncStudentStatus(studentId: string, session?: mongoose.ClientSes
     studentId: student._id,
     status: { $in: ['pending', 'partial', 'overdue'] },
     deletedAt: null,
+    $expr: { $lt: ['$paidAmount', '$finalAmount'] },
   })
     .session(session ?? null)
     .lean()
@@ -538,6 +546,35 @@ async function syncStudentStatus(studentId: string, session?: mongoose.ClientSes
   await student.save({ session })
 }
 
+/**
+ * Promote billable students who have past-due invoices to `overdue`.
+ * Does not rewrite a status someone just set in the student card — listing
+ * or opening Qarzdorlar used to flip `overdue` back to `active`/`paid`.
+ *
+ * A5 note: this is deliberately promote-only. `listDebtors` below still gates
+ * its primary student match on `status === 'overdue'` (by design, so a
+ * student can be flagged as a debtor even with zero matching invoice rows —
+ * see the qarzdorlar aggregation), so demoting inline here would remove rows
+ * from the very response a caller is about to read. A full two-way
+ * reconciliation belongs with that aggregation's own redesign, not bolted
+ * onto this sweep.
+ */
+async function syncBillableStudentStatuses(now = new Date()) {
+  const overdueIds = await Invoice.distinct('studentId', {
+    status: { $in: ['pending', 'partial', 'overdue'] },
+    dueDate: { $lt: now },
+    deletedAt: null,
+    $expr: { $lt: ['$paidAmount', '$finalAmount'] },
+  })
+
+  if (overdueIds.length === 0) return
+
+  await Student.updateMany(
+    { _id: { $in: overdueIds }, status: { $in: BILLABLE_STATUSES } },
+    { $set: { status: 'overdue' } },
+  )
+}
+
 /** §11.2 — a human-readable receipt number, sequential within a branch. */
 async function nextReceiptNo(branchId: string): Promise<string> {
   const year = new Date().getUTCFullYear()
@@ -546,6 +583,33 @@ async function nextReceiptNo(branchId: string): Promise<string> {
     isRefund: false,
   })
   return `${year}-${String(count + 1).padStart(6, '0')}`
+}
+
+/**
+ * A4 — "auto-unfreeze on end date." Runs alongside `recalculateOverdue` so a
+ * frozen student who was never manually unfrozen comes back to `active` (and
+ * therefore back into billing and the debtor list) exactly when their
+ * freeze's `toDate` passes, with no extra job to schedule.
+ */
+async function autoUnfreezeStudents(now = new Date()) {
+  const candidates = await Student.find({
+    status: 'frozen',
+    deletedAt: null,
+    freezePeriods: { $elemMatch: { toDate: { $lt: now }, unfrozenAt: null } },
+  })
+
+  for (const student of candidates) {
+    const openPeriod = [...student.freezePeriods]
+      .reverse()
+      .find((period) => !period.unfrozenAt && period.toDate < now)
+    if (!openPeriod) continue
+
+    openPeriod.unfrozenAt = now
+    student.status = 'active'
+    await student.save()
+  }
+
+  return { unfrozen: candidates.length }
 }
 
 /**
@@ -562,7 +626,65 @@ export async function recalculateOverdue(now = new Date()) {
     },
     { $set: { status: 'overdue' } },
   )
-  return { updated: result.modifiedCount }
+  const { unfrozen } = await autoUnfreezeStudents(now)
+  await syncBillableStudentStatuses(now)
+  return { updated: result.modifiedCount, unfrozen }
+}
+
+/**
+ * A5 — balances must be derivable from the ledger, never entered manually.
+ * The transactional write path in `acceptPayment`/`refundPayment` is what
+ * normally guarantees that; the dev-only `acceptPaymentUnsafe`/
+ * `refundPaymentUnsafe` escape hatches skip the transaction and could in
+ * principle leave `Payment` and `Student.balance` out of step.
+ *
+ * The invariant checked: every so'm a student ever paid (net of refunds,
+ * which are stored as negative `Payment.amount`) either landed on an invoice
+ * as `paidAmount`, or sits unapplied as `Student.balance` — there is nowhere
+ * else for it to go. So `Σ Payment.amount − Σ Invoice.paidAmount` must equal
+ * `Student.balance` for every student; anything else is drift.
+ */
+export async function reconcileBalances() {
+  const [paymentSums, invoiceSums] = await Promise.all([
+    Payment.aggregate<{ _id: Types.ObjectId; total: number }>([
+      { $group: { _id: '$studentId', total: { $sum: '$amount' } } },
+    ]),
+    Invoice.aggregate<{ _id: Types.ObjectId; total: number }>([
+      { $match: { deletedAt: null } },
+      { $group: { _id: '$studentId', total: { $sum: '$paidAmount' } } },
+    ]),
+  ])
+
+  const appliedByStudent = new Map(invoiceSums.map((row) => [row._id.toString(), row.total]))
+  const studentIds = paymentSums.map((row) => row._id)
+  const students = await Student.find({ _id: { $in: studentIds } })
+    .select('balance fullName')
+    .lean()
+  const studentsById = new Map(students.map((student) => [student._id.toString(), student]))
+
+  const drift: Array<{
+    studentId: string
+    studentName?: string
+    expectedBalance: number
+    actualBalance: number
+  }> = []
+
+  for (const row of paymentSums) {
+    const sid = row._id.toString()
+    const expectedBalance = row.total - (appliedByStudent.get(sid) ?? 0)
+    const student = studentsById.get(sid)
+    const actualBalance = student?.balance ?? 0
+    if (expectedBalance !== actualBalance) {
+      drift.push({
+        studentId: sid,
+        studentName: student?.fullName,
+        expectedBalance,
+        actualBalance,
+      })
+    }
+  }
+
+  return { checked: paymentSums.length, driftCount: drift.length, drift }
 }
 
 /**
@@ -570,6 +692,8 @@ export async function recalculateOverdue(now = new Date()) {
  * · period · amount due · days overdue · last payment date".
  */
 export async function listDebtors(options: {
+  search?: string
+  courseId?: string
   groupId?: string
   teacherId?: string
   minDaysOverdue?: number
@@ -580,41 +704,88 @@ export async function listDebtors(options: {
   await recalculateOverdue()
 
   const now = new Date()
-
-  const match: Record<string, unknown> = {
-    status: { $in: ['overdue', 'partial', 'pending'] },
-    dueDate: { $lt: now },
+  const studentMatch: Record<string, unknown> = {
+    status: 'overdue',
     deletedAt: null,
-    $expr: { $lt: ['$paidAmount', '$finalAmount'] },
   }
-  if (options.groupId) match.groupId = new Types.ObjectId(options.groupId)
-  // "Kurs puli to'lamaganlar" — nothing paid at all, as opposed to short.
-  if (options.unpaidOnly) match.paidAmount = 0
+  if (options.search?.trim()) {
+    const term = options.search.trim()
+    studentMatch.$or = [
+      { fullName: { $regex: term, $options: 'i' } },
+      { phone: { $regex: term, $options: 'i' } },
+      { parentPhone: { $regex: term, $options: 'i' } },
+    ]
+  }
 
-  const scope = getScope()?.branchId
-  if (scope && scope !== 'ALL') match.branchId = new Types.ObjectId(scope)
+  const invoiceAnd: Record<string, unknown>[] = [
+    { $eq: ['$studentId', '$$sid'] },
+    { $in: ['$status', ['overdue', 'partial', 'pending']] },
+    { $lt: ['$paidAmount', '$finalAmount'] },
+    { $eq: [{ $ifNull: ['$deletedAt', null] }, null] },
+  ]
+  if (options.groupId) invoiceAnd.push({ $eq: ['$groupId', new Types.ObjectId(options.groupId)] })
+  if (options.unpaidOnly) invoiceAnd.push({ $eq: ['$paidAmount', 0] })
 
-  const rows = await Invoice.aggregate([
-    { $match: match },
-    { $lookup: { from: 'students', localField: 'studentId', foreignField: '_id', as: 'student' } },
-    { $unwind: '$student' },
-    { $lookup: { from: 'groups', localField: 'groupId', foreignField: '_id', as: 'group' } },
+  const mustHaveInvoice = Boolean(options.unpaidOnly || options.groupId)
+
+  const rows = await Student.aggregate([
+    { $match: studentMatch },
+    {
+      $lookup: {
+        from: 'invoices',
+        let: { sid: '$_id' },
+        pipeline: [{ $match: { $expr: { $and: invoiceAnd } } }],
+        as: 'invoiceDocs',
+      },
+    },
+    {
+      $unwind: {
+        path: '$invoiceDocs',
+        preserveNullAndEmptyArrays: !mustHaveInvoice,
+      },
+    },
+    {
+      $lookup: {
+        from: 'groups',
+        localField: 'invoiceDocs.groupId',
+        foreignField: '_id',
+        as: 'group',
+      },
+    },
     { $unwind: { path: '$group', preserveNullAndEmptyArrays: true } },
+    ...(options.courseId
+      ? [{ $match: { 'group.courseId': new Types.ObjectId(options.courseId) } }]
+      : []),
     ...(options.teacherId
       ? [{ $match: { 'group.teacherId': new Types.ObjectId(options.teacherId) } }]
       : []),
     {
       $addFields: {
-        due: { $subtract: ['$finalAmount', '$paidAmount'] },
+        due: {
+          $ifNull: [{ $subtract: ['$invoiceDocs.finalAmount', '$invoiceDocs.paidAmount'] }, 0],
+        },
         daysOverdue: {
-          $floor: { $divide: [{ $subtract: [now, '$dueDate'] }, 1000 * 60 * 60 * 24] },
+          $cond: [
+            { $ifNull: ['$invoiceDocs.dueDate', false] },
+            {
+              $max: [
+                0,
+                {
+                  $floor: {
+                    $divide: [{ $subtract: [now, '$invoiceDocs.dueDate'] }, 1000 * 60 * 60 * 24],
+                  },
+                },
+              ],
+            },
+            0,
+          ],
         },
       },
     },
     ...(options.minDaysOverdue
       ? [{ $match: { daysOverdue: { $gte: options.minDaysOverdue } } }]
       : []),
-    { $sort: { daysOverdue: -1 } },
+    { $sort: { daysOverdue: -1, fullName: 1 } },
     {
       $facet: {
         items: [
@@ -622,37 +793,73 @@ export async function listDebtors(options: {
           { $limit: options.limit },
           {
             $project: {
-              invoiceId: '$_id',
-              period: 1,
+              invoiceId: '$invoiceDocs._id',
+              period: '$invoiceDocs.period',
               due: 1,
               daysOverdue: 1,
-              dueDate: 1,
-              paidAmount: 1,
-              finalAmount: 1,
-              studentId: '$student._id',
-              studentName: '$student.fullName',
-              phone: '$student.phone',
-              parentPhone: '$student.parentPhone',
+              dueDate: '$invoiceDocs.dueDate',
+              paidAmount: '$invoiceDocs.paidAmount',
+              finalAmount: '$invoiceDocs.finalAmount',
+              studentId: '$_id',
+              studentName: '$fullName',
+              phone: 1,
+              parentPhone: 1,
+              groupId: '$group._id',
               groupName: '$group.name',
+              courseId: '$group.courseId',
               teacherId: '$group.teacherId',
             },
           },
         ],
         summary: [
-          { $group: { _id: null, total: { $sum: '$due' }, count: { $sum: 1 } } },
+          {
+            $group: {
+              _id: null,
+              total: { $sum: '$due' },
+              count: { $sum: 1 },
+              unpaidCount: {
+                $sum: { $cond: [{ $eq: [{ $ifNull: ['$invoiceDocs.paidAmount', 0] }, 0] }, 1, 0] },
+              },
+              criticalCount: {
+                $sum: { $cond: [{ $gte: ['$daysOverdue', 10] }, 1, 0] },
+              },
+              // G5 — the same 1–3 / 4–9 / 10+ bands the debtors screen already
+              // filters by, pre-counted so the overview donut doesn't need a
+              // separate unpaginated fetch to draw its slices.
+              band1to3Count: {
+                $sum: {
+                  $cond: [{ $and: [{ $gte: ['$daysOverdue', 1] }, { $lt: ['$daysOverdue', 4] }] }, 1, 0],
+                },
+              },
+              band4to9Count: {
+                $sum: {
+                  $cond: [{ $and: [{ $gte: ['$daysOverdue', 4] }, { $lt: ['$daysOverdue', 10] }] }, 1, 0],
+                },
+              },
+            },
+          },
         ],
       },
     },
   ])
 
   const facet = rows[0] ?? { items: [], summary: [] }
-  const summary = facet.summary[0] ?? { total: 0, count: 0 }
+  const summary = facet.summary[0] ?? {
+    total: 0,
+    count: 0,
+    unpaidCount: 0,
+    criticalCount: 0,
+    band1to3Count: 0,
+    band4to9Count: 0,
+  }
 
   const localizeName = (value: unknown): string | undefined => {
     if (!value) return undefined
     if (typeof value === 'string') return value
-    if (typeof value === 'object' && value !== null && 'uz' in value) {
-      return String((value as { uz?: string }).uz ?? '')
+    if (typeof value === 'object' && value !== null) {
+      if ('uz' in value && (value as { uz?: string }).uz) return String((value as { uz?: string }).uz)
+      if ('ru' in value && (value as { ru?: string }).ru) return String((value as { ru?: string }).ru)
+      if ('en' in value && (value as { en?: string }).en) return String((value as { en?: string }).en)
     }
     return undefined
   }
@@ -664,6 +871,10 @@ export async function listDebtors(options: {
     })),
     total: summary.count,
     totalDebt: summary.total,
+    unpaidCount: summary.unpaidCount ?? 0,
+    criticalCount: summary.criticalCount ?? 0,
+    band1to3Count: summary.band1to3Count ?? 0,
+    band4to9Count: summary.band4to9Count ?? 0,
     page: options.page,
     limit: options.limit,
     pages: Math.max(1, Math.ceil(summary.count / options.limit)),

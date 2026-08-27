@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useTranslations } from 'next-intl'
-import { Search, Users, Pencil } from 'lucide-react'
+import { Search, Users, Pencil, Wallet, AlertTriangle } from 'lucide-react'
 import { STUDENT_STATUSES } from '@leader/shared/schemas'
 import { useQuery, type Paginated } from '@/lib/api/use-api'
 import { NewButton, RowAction } from './table-kit'
@@ -18,6 +18,7 @@ import {
   ErrorBox,
   Empty,
   StatusPill,
+  overdueTone,
 } from './primitives'
 import { CeramicTile, initials } from '@/components/ui/ceramic-tile'
 import { cn } from '@/lib/utils'
@@ -30,18 +31,23 @@ type Student = {
   status: string
   monthlyFee: number
   balance: number
+  debt?: number
+  daysOverdue?: number
+  isDebtor?: boolean
 }
 
-/** TZ §9.1 — the student list, filterable by the workbook's `Status` column. */
+/** TZ §9.1 — the student list, filterable by status and debtors. */
 export function StudentsTable() {
   const t = useTranslations('panel.students')
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState<string | null>(null)
+  const [onlyDebtors, setOnlyDebtors] = useState(false)
   const [page, setPage] = useState(1)
 
   const query = new URLSearchParams({ page: String(page), limit: '25' })
   if (search.trim().length >= 2) query.set('search', search.trim())
-  if (status) query.set('status', status)
+  if (onlyDebtors) query.set('status', 'overdue')
+  else if (status) query.set('status', status)
 
   const { data, loading, error, refetch } = useQuery<Paginated<Student>>(`/students?${query}`)
   const [editing, setEditing] = useState<PanelStudent | 'new' | null>(null)
@@ -69,14 +75,40 @@ export function StudentsTable() {
         <NewButton label={t('create')} onClick={() => setEditing('new')} />
 
         <div className="flex flex-wrap gap-1.5">
-          <FilterChip label={t('all')} active={status === null} onClick={() => setStatus(null)} />
+          <FilterChip
+            label={t('all')}
+            active={status === null && !onlyDebtors}
+            onClick={() => {
+              setStatus(null)
+              setOnlyDebtors(false)
+              setPage(1)
+            }}
+          />
+          <button
+            type="button"
+            onClick={() => {
+              setOnlyDebtors((v) => !v)
+              if (!onlyDebtors) setStatus(null)
+              setPage(1)
+            }}
+            className={cn(
+              'inline-flex items-center gap-1.5 rounded-pill border px-3 py-2 text-2xs font-medium transition-colors',
+              onlyDebtors
+                ? 'border-transparent bg-danger text-white'
+                : 'border-border-subtle text-danger hover:border-danger/40 dark:border-danger/30',
+            )}
+          >
+            <AlertTriangle className="size-3" aria-hidden />
+            {t('onlyDebtors')}
+          </button>
           {STUDENT_STATUSES.map((option) => (
             <FilterChip
               key={option}
               label={t(`status.${option}`)}
-              active={status === option}
+              active={status === option && !onlyDebtors}
               onClick={() => {
                 setStatus(option)
+                setOnlyDebtors(false)
                 setPage(1)
               }}
             />
@@ -99,6 +131,7 @@ export function StudentsTable() {
                 <Th>{t('statusLabel')}</Th>
                 <Th className="text-right">{t('fee')}</Th>
                 <Th className="text-right">{t('balance')}</Th>
+                <Th className="text-right">{t('debt')}</Th>
                 <Th className="text-right" />
               </tr>
             </thead>
@@ -116,7 +149,12 @@ export function StudentsTable() {
                         dense
                         className="size-9 shrink-0 rounded-input"
                       />
-                      {student.fullName}
+                      <span className="flex min-w-0 flex-col">
+                        <span className="truncate">{student.fullName}</span>
+                        {student.isDebtor ? (
+                          <span className="text-2xs font-medium text-danger">{t('debtorBadge')}</span>
+                        ) : null}
+                      </span>
                     </Link>
                   </Td>
                   <Td className="font-mono text-2xs text-ink-soft dark:text-navy-200">
@@ -136,11 +174,42 @@ export function StudentsTable() {
                     )}
                   </Td>
                   <Td className="text-right">
-                    <RowAction
-                      label={t('edit')}
-                      Icon={Pencil}
-                      onClick={() => setEditing(student as unknown as PanelStudent)}
-                    />
+                    {student.debt && student.debt > 0 ? (
+                      <div className="flex flex-col items-end gap-0.5">
+                        <Money amount={student.debt} compact className="font-medium text-danger" />
+                        {student.daysOverdue && student.daysOverdue > 0 ? (
+                          <span
+                            className={cn(
+                              'font-mono text-3xs font-medium',
+                              overdueTone(student.daysOverdue),
+                            )}
+                          >
+                            {t('daysLate', { n: student.daysOverdue })}
+                          </span>
+                        ) : null}
+                      </div>
+                    ) : (
+                      <span className="text-ink-muted">—</span>
+                    )}
+                  </Td>
+                  <Td className="text-right">
+                    <div className="flex items-center justify-end gap-1">
+                      {student.debt && student.debt > 0 ? (
+                        <Link
+                          href={`/crm/payments?studentId=${student._id}`}
+                          title={t('takePayment')}
+                          className="inline-flex h-8 items-center gap-1 rounded-pill bg-clay-500/15 px-2.5 text-2xs font-medium text-clay-700 transition-colors hover:bg-clay-500 hover:text-white dark:text-clay-300"
+                        >
+                          <Wallet className="size-3" aria-hidden />
+                          {t('takePayment')}
+                        </Link>
+                      ) : null}
+                      <RowAction
+                        label={t('edit')}
+                        Icon={Pencil}
+                        onClick={() => setEditing(student as unknown as PanelStudent)}
+                      />
+                    </div>
                   </Td>
                 </tr>
               ))}

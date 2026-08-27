@@ -2,11 +2,11 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslations } from 'next-intl'
-import { Search, Loader2, Check, Wallet, X } from 'lucide-react'
+import { Search, Loader2, Check, Wallet, X, Download } from 'lucide-react'
 import { PAYMENT_METHODS, type PaymentMethod } from '@leader/shared/schemas'
 import { parseSoum } from '@leader/shared/money'
 import { useAuth } from '@/lib/auth/auth-context'
-import { request, useMutation } from '@/lib/api/use-api'
+import { request, useMutation, openReceipt, openBlankTab } from '@/lib/api/use-api'
 import { Panel, Money, ErrorBox, Empty } from './primitives'
 import { CeramicTile, initials } from '@/components/ui/ceramic-tile'
 import { cn } from '@/lib/utils'
@@ -225,13 +225,26 @@ export function PaymentScreen() {
                     {t('receiptNo', { no: receipt.payment.receiptNo })}
                   </p>
                 ) : null}
-                <button
-                  type="button"
-                  onClick={close}
-                  className="mt-2 inline-flex h-12 items-center rounded-pill bg-navy-600 px-6 text-xs font-medium text-white"
-                >
-                  {t('done')}
-                </button>
+                <div className="mt-2 flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const tab = openBlankTab()
+                      void getToken().then((token) => openReceipt(receipt.payment._id, token, tab))
+                    }}
+                    className="inline-flex h-12 items-center gap-2 rounded-pill border border-border-subtle px-5 text-xs font-medium text-ink-soft transition-colors hover:border-navy-600/40 dark:text-navy-200"
+                  >
+                    <Download className="size-4" aria-hidden />
+                    {t('downloadReceipt')}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={close}
+                    className="inline-flex h-12 items-center rounded-pill bg-navy-600 px-6 text-xs font-medium text-white"
+                  >
+                    {t('done')}
+                  </button>
+                </div>
               </div>
             ) : (
               <>

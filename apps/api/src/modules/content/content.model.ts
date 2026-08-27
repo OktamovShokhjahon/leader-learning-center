@@ -70,6 +70,14 @@ const videoLessonSchema = new Schema(
     isPublished: { type: Boolean, default: false, index: true },
     /** §17.4 — off by default; a lesson belongs to the people who paid for it. */
     isFree: { type: Boolean, default: false },
+    /**
+     * D1 — explicit per-group access. Empty means "no access until granted"
+     * for anything created after this field existed; `scripts/backfill-lesson-
+     * groups.mjs` seeds it once for lessons that predate the field, from each
+     * lesson's course enrolments at the time, so rollout does not silently
+     * revoke access nobody asked to take away.
+     */
+    groupIds: { type: [Schema.Types.ObjectId], ref: 'Group', default: [], index: true },
 
     createdBy: { type: Schema.Types.ObjectId, ref: 'User' },
     updatedBy: { type: Schema.Types.ObjectId, ref: 'User' },

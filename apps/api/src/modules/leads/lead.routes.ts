@@ -1,8 +1,9 @@
 import { Router } from 'express'
 import { z } from 'zod'
 import {
-  paginationSchema,
   LEAD_STATUSES,
+  leadQuerySchema,
+  createLeadSchema,
   updateLeadSchema,
   trialLessonSchema,
   convertLeadSchema,
@@ -18,7 +19,7 @@ import {
   currentUser,
 } from '../../middleware/auth.js'
 import { Lead } from './lead.model.js'
-import { updateLead, scheduleTrial, convertLead, leadReport } from './lead.pipeline.js'
+import { createManualLead, updateLead, scheduleTrial, convertLead, leadReport } from './lead.pipeline.js'
 
 /**
  * TZ §23 `LEADS` / §7.2 — the applications a Manager works through.
@@ -37,10 +38,7 @@ export const leadRouter = Router()
 
 leadRouter.use(requireAuth)
 
-const leadQuerySchema = paginationSchema.extend({
-  status: z.enum(LEAD_STATUSES).optional(),
-})
-
+/** E1 — search, status/source/owner filters, sort and pagination for the table view. */
 leadRouter.get(
   '/',
   // §4.2 — leads are the front desk's job, so this rides on the same grant as
@@ -52,6 +50,14 @@ leadRouter.get(
     const filter: Record<string, unknown> = { deletedAt: null }
 
     if (query.status) filter.status = query.status
+    if (query.source) filter.source = query.source
+    if (query.assignedTo) filter.assignedTo = query.assignedTo
+    if (query.staleHours) {
+      const cutoff = new Date(Date.now() - query.staleHours * 60 * 60 * 1000)
+      filter.updatedAt = { $lt: cutoff }
+      // "Stale" only means anything for a lead still in play.
+      if (!query.status) filter.status = { $nin: ['oquvchi_boldi', 'rad_etdi'] }
+    }
     if (query.search) {
       filter.$or = [
         { fullName: { $regex: query.search, $options: 'i' } },
@@ -77,6 +83,18 @@ leadRouter.get(
         pages: Math.max(1, Math.ceil(total / query.limit)),
       },
     })
+  }),
+)
+
+/** E2 — Manager & SuperAdmin adding an applicant by hand. */
+leadRouter.post(
+  '/',
+  requirePermission('lead.manage'),
+  requireSingleBranch,
+  validateBody(createLeadSchema),
+  asyncRoute(async (req, res) => {
+    const lead = await createManualLead(currentUser(req), req.body, req)
+    res.status(201).json({ data: lead })
   }),
 )
 

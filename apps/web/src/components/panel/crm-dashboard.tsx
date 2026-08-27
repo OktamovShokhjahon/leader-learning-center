@@ -11,7 +11,7 @@ import { GirihStar } from '@/components/ui/girih-star'
 import { cn } from '@/lib/utils'
 
 type Group = { _id: string; name: string; enrolled: number; capacity: number; schedule?: { startTime: string; endTime: string } }
-type DebtorList = { items: { studentId: string; studentName: string; due?: number; daysOverdue?: number }[]; total: number; totalDebt?: number }
+type DebtorList = { items: { invoiceId?: string; studentId: string; studentName: string; due?: number; daysOverdue?: number }[]; total: number; totalDebt?: number }
 
 /**
  * TZ §1 — "Every day-to-day action must be reachable in at most 2 clicks from
@@ -142,14 +142,14 @@ export function CrmDashboard() {
               <ul>
                 {debtors.data!.items.map((row) => (
                   <li
-                    key={row.studentId}
+                    key={row.invoiceId ?? row.studentId}
                     className="flex items-center justify-between gap-4 border-b border-border-subtle px-5 py-3.5 last:border-b-0"
                   >
                     <span className="truncate text-xs text-ink dark:text-white">
                       {row.studentName}
                     </span>
                     <span className="flex shrink-0 items-center gap-3">
-                      {row.daysOverdue !== undefined ? (
+                      {row.daysOverdue !== undefined && row.daysOverdue > 0 ? (
                         <span className={cn('font-mono text-2xs', overdueTone(row.daysOverdue))}>
                           {t('daysLate', { n: row.daysOverdue })}
                         </span>

@@ -3,11 +3,10 @@ import { ArrowRight, CalendarDays, Newspaper } from 'lucide-react'
 import { pick, type Locale } from '@leader/shared/locales'
 import { Link } from '@/i18n/navigation'
 import { getPosts } from '@/content/posts'
+import { formatDate } from '@/lib/date'
 import { Section, SectionHeading } from '@/components/ui/section'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Reveal } from '../reveal'
-
-const DATE_LOCALE: Record<Locale, string> = { uz: 'uz-UZ', ru: 'ru-RU', en: 'en-GB' }
 
 /**
  * TZ §6.2 §12 / §6.1 — the news list, used both as the home-page teaser
@@ -56,13 +55,7 @@ export async function NewsSection({ limit, heading = true }: { limit?: number; h
                 >
                   <p className="inline-flex items-center gap-2 font-mono text-2xs text-ink-muted">
                     <CalendarDays className="size-3.5" aria-hidden />
-                    <time dateTime={post.publishedAt}>
-                      {new Date(post.publishedAt).toLocaleDateString(DATE_LOCALE[locale], {
-                        day: '2-digit',
-                        month: '2-digit',
-                        year: 'numeric',
-                      })}
-                    </time>
+                    <time dateTime={post.publishedAt}>{formatDate(post.publishedAt, locale)}</time>
                   </p>
                   <h3 className="font-display text-base text-ink dark:text-white">
                     {pick(post.title, locale)}

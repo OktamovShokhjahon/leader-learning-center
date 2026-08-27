@@ -28,7 +28,10 @@ export default async function PanelLayout({
       <div className="flex min-h-dvh flex-col bg-background">
         <Header variant="panel" />
         <PanelNav />
-        <main id="main" className="flex-1 pt-20">
+        {/* The sidebar is fixed, so the content is inset rather than laid out
+            beside it — that keeps `container-site` inside each page working
+            unchanged, and leaves the mobile drawer nothing to push around. */}
+        <main id="main" className="min-w-0 flex-1 pt-20 lg:pl-60">
           {children}
         </main>
       </div>

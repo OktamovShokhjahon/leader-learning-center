@@ -1,16 +1,20 @@
 'use client'
 
 import { useState } from 'react'
-import { useTranslations } from 'next-intl'
-import { Phone, Send, CalendarClock, UserCheck, Inbox } from 'lucide-react'
-import { LEAD_STATUSES, formatPhone } from '@leader/shared/schemas'
+import { useTranslations, useLocale } from 'next-intl'
+import { Phone, Send, CalendarClock, UserCheck, Inbox, LayoutGrid, Table2 } from 'lucide-react'
+import { LEAD_STATUSES, LEAD_SOURCES, formatPhone } from '@leader/shared/schemas'
+import type { Locale } from '@leader/shared/locales'
 import { useQuery, useMutation, type Paginated } from '@/lib/api/use-api'
+import { formatDate } from '@/lib/date'
 import { Loading, ErrorBox, Empty } from './primitives'
 import { Dialog, Field, INPUT, Select, MoneyInput, DateField, Action, DialogError } from './form-kit'
+import { NewButton, SearchBox, useDebounced } from './table-kit'
+import { LeadsTable } from './leads-table'
 import { CeramicTile, initials } from '@/components/ui/ceramic-tile'
 import { cn } from '@/lib/utils'
 
-type Lead = {
+export type Lead = {
   _id: string
   fullName: string
   phone: string
@@ -22,10 +26,12 @@ type Lead = {
   comment?: string
   nextActionAt?: string
   isReturning?: boolean
+  assignedTo?: string
   createdAt: string
 }
 
 type Group = { _id: string; name: string; price: number }
+type Course = { _id: string; slug: string; name: Record<string, string> }
 
 /**
  * TZ §7.2 — the lead kanban.
@@ -41,10 +47,18 @@ type Group = { _id: string; name: string; price: number }
  */
 export function LeadsBoard() {
   const t = useTranslations('panel.leads')
+  const locale = useLocale() as Locale
   const [converting, setConverting] = useState<Lead | null>(null)
   const [detail, setDetail] = useState<Lead | null>(null)
+  const [creating, setCreating] = useState(false)
+  const [view, setView] = useState<'kanban' | 'table'>('kanban')
+  const [search, setSearch] = useState('')
+  const debouncedSearch = useDebounced(search)
 
-  const { data, loading, error, refetch } = useQuery<Paginated<Lead>>('/leads?limit=100')
+  const query = new URLSearchParams({ limit: '100' })
+  if (debouncedSearch.trim().length >= 2) query.set('search', debouncedSearch.trim())
+
+  const { data, loading, error, refetch } = useQuery<Paginated<Lead>>(`/leads?${query}`)
   const { data: funnel } = useQuery<Record<string, number>>('/leads/funnel')
 
   const move = useMutation<{ status: string; rejectReason?: string }, Lead>(
@@ -52,15 +66,60 @@ export function LeadsBoard() {
     'PATCH',
   )
 
-  if (loading) return <Loading />
-  if (error) return <ErrorBox code={error.code} message={error.message} />
-  if (!data || data.items.length === 0) return <Empty title={t('none')} Icon={Inbox} />
-
   // `oquvchi_boldi` and `rad_etdi` are outcomes; they get their own quieter columns.
   const columns = LEAD_STATUSES
 
   return (
     <div className="flex flex-col gap-5">
+      {/* E1 — search plus a table view alongside the kanban; E2 — add one by hand. */}
+      <div className="flex flex-wrap items-center gap-3">
+        <SearchBox value={search} onChange={setSearch} placeholder={t('searchPlaceholder')} />
+        <NewButton label={t('createNew')} onClick={() => setCreating(true)} />
+        <div className="inline-flex gap-1 rounded-pill border border-border-subtle p-1">
+          <button
+            type="button"
+            onClick={() => setView('kanban')}
+            className={cn(
+              'inline-flex items-center gap-2 rounded-pill px-3 py-2 text-2xs font-medium transition-colors',
+              view === 'kanban' ? 'bg-navy-600 text-white' : 'text-ink-soft dark:text-navy-200',
+            )}
+          >
+            <LayoutGrid className="size-3.5" aria-hidden />
+            {t('viewKanban')}
+          </button>
+          <button
+            type="button"
+            onClick={() => setView('table')}
+            className={cn(
+              'inline-flex items-center gap-2 rounded-pill px-3 py-2 text-2xs font-medium transition-colors',
+              view === 'table' ? 'bg-navy-600 text-white' : 'text-ink-soft dark:text-navy-200',
+            )}
+          >
+            <Table2 className="size-3.5" aria-hidden />
+            {t('viewTable')}
+          </button>
+        </div>
+      </div>
+
+      {creating ? (
+        <NewLeadDialog
+          onClose={() => setCreating(false)}
+          onSaved={() => {
+            setCreating(false)
+            void refetch()
+          }}
+        />
+      ) : null}
+
+      {view === 'table' ? (
+        <LeadsTable search={debouncedSearch} onOpen={setDetail} />
+      ) : loading ? (
+        <Loading />
+      ) : error ? (
+        <ErrorBox code={error.code} message={error.message} />
+      ) : !data || data.items.length === 0 ? (
+        <Empty title={t('none')} Icon={Inbox} />
+      ) : (
       <div className="grid gap-4 overflow-x-auto pb-2 lg:grid-cols-3 xl:grid-cols-6">
         {columns.map((status) => {
           const cards = data.items.filter((lead) => lead.status === status)
@@ -114,7 +173,7 @@ export function LeadsBoard() {
                         {lead.nextActionAt ? (
                           <span className="inline-flex items-center gap-1 text-2xs text-ink-muted">
                             <CalendarClock className="size-3" aria-hidden />
-                            {new Date(lead.nextActionAt).toLocaleDateString()}
+                            {formatDate(lead.nextActionAt, locale)}
                           </span>
                         ) : null}
                       </span>
@@ -126,6 +185,7 @@ export function LeadsBoard() {
           )
         })}
       </div>
+      )}
 
       {detail ? (
         <LeadDetail
@@ -371,6 +431,85 @@ function ConvertDialog({
               ...(monthlyFee !== null ? { monthlyFee } : {}),
               createLogin,
               ...(createLogin ? { password } : {}),
+            })
+            if (result) onSaved()
+          }}
+        />
+      </div>
+    </Dialog>
+  )
+}
+
+/** E2 — "New Applicant" creation for Manager & SuperAdmin, `POST /leads`. */
+export function NewLeadDialog({ onClose, onSaved }: { onClose: () => void; onSaved: () => void }) {
+  const t = useTranslations('panel.leads')
+  const [fullName, setFullName] = useState('')
+  const [phone, setPhone] = useState('')
+  const [courseSlug, setCourseSlug] = useState('')
+  const [source, setSource] = useState('')
+  const [comment, setComment] = useState('')
+
+  const { data: courses } = useQuery<Paginated<Course>>('/courses?limit=100&sort=order')
+  const create = useMutation<Record<string, unknown>, Lead>('/leads')
+
+  const ready = fullName.trim().length >= 3 && phone.trim().length >= 9 && courseSlug
+
+  return (
+    <Dialog title={t('createNew')} onClose={onClose}>
+      <div className="flex flex-col gap-4">
+        <Field label={t('fullName')} required>
+          <input value={fullName} onChange={(event) => setFullName(event.target.value)} className={INPUT} />
+        </Field>
+        <Field label={t('phone')} required>
+          <input
+            value={phone}
+            onChange={(event) => setPhone(event.target.value)}
+            placeholder="+998 90 123 45 67"
+            className={cn(INPUT, 'font-mono')}
+          />
+        </Field>
+        <Field label={t('course')} required>
+          <Select
+            value={courseSlug}
+            onChange={setCourseSlug}
+            placeholder={t('chooseCourse')}
+            options={(courses?.items ?? []).map((course) => ({
+              value: course.slug,
+              label: course.name?.uz || course.slug,
+            }))}
+          />
+        </Field>
+        <Field label={t('sourceLabel')}>
+          <Select
+            value={source}
+            onChange={setSource}
+            placeholder={t('chooseSource')}
+            options={LEAD_SOURCES.map((option) => ({ value: option, label: t(`sourceOption.${option}`) }))}
+          />
+        </Field>
+        <Field label={t('comment')}>
+          <textarea
+            value={comment}
+            onChange={(event) => setComment(event.target.value)}
+            rows={3}
+            className={INPUT}
+          />
+        </Field>
+
+        {create.error ? <DialogError error={create.error} /> : null}
+
+        <Action
+          label={t('createNew')}
+          tone="primary"
+          pending={create.pending}
+          disabled={!ready}
+          onClick={async () => {
+            const result = await create.mutate({
+              fullName: fullName.trim(),
+              phone: phone.trim(),
+              courseSlug,
+              ...(source ? { source } : {}),
+              ...(comment.trim() ? { comment: comment.trim() } : {}),
             })
             if (result) onSaved()
           }}

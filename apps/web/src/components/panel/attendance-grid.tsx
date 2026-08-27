@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useTranslations } from 'next-intl'
-import { Check, Save, Loader2, CalendarX, Users2 } from 'lucide-react'
+import { Check, Save, Loader2, CalendarX, Users2, AlertTriangle, MessageSquare } from 'lucide-react'
 import type { AttendanceStatus } from '@leader/shared/schemas'
 import { useQuery, useMutation } from '@/lib/api/use-api'
 import { Panel, Loading, ErrorBox, Empty, StatusPill } from './primitives'
@@ -13,7 +13,11 @@ type RosterStudent = {
   fullName: string
   phone?: string
   status: AttendanceStatus
+  reason?: string
   marked: boolean
+  hasDebt?: boolean
+  daysOverdue?: number
+  debt?: number
 }
 
 type Roster = {
@@ -45,11 +49,17 @@ export function AttendanceGrid({ groupId }: { groupId: string }) {
     `/groups/${groupId}/roster?date=${date}`,
   )
   const { mutate, pending, error: saveError } = useMutation<
-    { lessonId: string; entries: { studentId: string; status: AttendanceStatus }[] },
+    {
+      lessonId: string
+      entries: { studentId: string; status: AttendanceStatus; reason?: string }[]
+    },
     { marked: number }
   >('/groups/attendance')
 
   const [draft, setDraft] = useState<Record<string, AttendanceStatus>>({})
+  /** B1 — the per-entry comment field (§10.1's "izoh"), keyed by student. */
+  const [reasons, setReasons] = useState<Record<string, string>>({})
+  const [noteOpenFor, setNoteOpenFor] = useState<string | null>(null)
   const [saved, setSaved] = useState(false)
 
   /**
@@ -66,6 +76,13 @@ export function AttendanceGrid({ groupId }: { groupId: string }) {
     if (!data) return
     setDraft(
       Object.fromEntries(data.students.map((student) => [student.studentId, student.status])),
+    )
+    setReasons(
+      Object.fromEntries(
+        data.students
+          .filter((student) => student.reason)
+          .map((student) => [student.studentId, student.reason!]),
+      ),
     )
     setSaved(false)
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -90,7 +107,11 @@ export function AttendanceGrid({ groupId }: { groupId: string }) {
     if (!data?.lesson) return
     const result = await mutate({
       lessonId: data.lesson._id,
-      entries: Object.entries(draft).map(([studentId, status]) => ({ studentId, status })),
+      entries: Object.entries(draft).map(([studentId, status]) => ({
+        studentId,
+        status,
+        ...(reasons[studentId]?.trim() ? { reason: reasons[studentId]!.trim() } : {}),
+      })),
     })
     if (result) {
       setSaved(true)
@@ -165,39 +186,88 @@ export function AttendanceGrid({ groupId }: { groupId: string }) {
           <ul>
             {data.students.map((student) => {
               const status = draft[student.studentId] ?? 'present'
+              const hasNote = Boolean(reasons[student.studentId]?.trim())
               return (
                 <li key={student.studentId} className="border-b border-border-subtle last:border-b-0">
-                  {/*
-                    The whole row is the target, not a small chip: §25.6 asks for
-                    44 px touch targets, and this is used on a phone at the
-                    classroom door.
-                  */}
-                  <button
-                    type="button"
-                    onClick={() => cycle(student.studentId)}
-                    className="flex w-full items-center justify-between gap-4 px-5 py-3.5 text-left transition-colors hover:bg-navy-50/60 dark:hover:bg-navy-800/50"
-                  >
-                    <span className="flex min-w-0 flex-col">
-                      <span className="truncate text-sm font-medium text-ink dark:text-white">
-                        {student.fullName}
+                  <div className="flex w-full items-center gap-1 px-2">
+                    {/*
+                      The whole row is the target, not a small chip: §25.6 asks for
+                      44 px touch targets, and this is used on a phone at the
+                      classroom door.
+                    */}
+                    <button
+                      type="button"
+                      onClick={() => cycle(student.studentId)}
+                      className="flex flex-1 items-center justify-between gap-4 px-3 py-3.5 text-left transition-colors hover:bg-navy-50/60 dark:hover:bg-navy-800/50"
+                    >
+                      <span className="flex min-w-0 flex-col">
+                        <span className="truncate text-sm font-medium text-ink dark:text-white">
+                          {student.fullName}
+                        </span>
+                        <span className="flex flex-wrap items-center gap-1.5">
+                          {student.phone ? (
+                            <span className="font-mono text-2xs text-ink-muted">{student.phone}</span>
+                          ) : null}
+                          {student.hasDebt ? (
+                            <span className="inline-flex items-center gap-1 text-2xs font-medium text-danger">
+                              <AlertTriangle className="size-3" aria-hidden />
+                              {t('debtorBadge')}
+                              {student.daysOverdue && student.daysOverdue > 0
+                                ? ` · ${student.daysOverdue}`
+                                : null}
+                            </span>
+                          ) : null}
+                        </span>
                       </span>
-                      {student.phone ? (
-                        <span className="font-mono text-2xs text-ink-muted">{student.phone}</span>
-                      ) : null}
-                    </span>
 
-                    <span
+                      <span
+                        className={cn(
+                          'shrink-0 rounded-pill px-3 py-1.5 text-2xs font-medium transition-colors',
+                          status === 'present' && 'bg-success/12 text-success',
+                          status === 'absent' && 'bg-danger/12 text-danger',
+                          status === 'late' && 'bg-warning/15 text-warning',
+                          status === 'excused' && 'bg-info/12 text-info',
+                        )}
+                      >
+                        {t(`status.${status}`)}
+                      </span>
+                    </button>
+
+                    {/* B1 — the per-entry comment ("izoh"), independent of the status cycle. */}
+                    <button
+                      type="button"
+                      title={t('note')}
+                      aria-label={t('note')}
+                      onClick={() =>
+                        setNoteOpenFor(noteOpenFor === student.studentId ? null : student.studentId)
+                      }
                       className={cn(
-                        'shrink-0 rounded-pill px-3 py-1.5 text-2xs font-medium transition-colors',
-                        status === 'present' && 'bg-success/12 text-success',
-                        status === 'absent' && 'bg-danger/12 text-danger',
-                        status === 'late' && 'bg-warning/15 text-warning',
-                        status === 'excused' && 'bg-info/12 text-info',
+                        'inline-flex size-9 shrink-0 items-center justify-center rounded-pill transition-colors',
+                        hasNote
+                          ? 'text-glaze-700 dark:text-glaze-300'
+                          : 'text-ink-muted hover:bg-navy-50 dark:hover:bg-navy-800',
                       )}
                     >
-                      {t(`status.${status}`)}
-                    </span>
-                  </button>
+                      <MessageSquare className="size-4" aria-hidden fill={hasNote ? 'currentColor' : 'none'} />
+                    </button>
+                  </div>
+
+                  {noteOpenFor === student.studentId ? (
+                    <div className="px-5 pb-3.5">
+                      <textarea
+                        value={reasons[student.studentId] ?? ''}
+                        onChange={(event) =>
+                          setReasons((current) => ({
+                            ...current,
+                            [student.studentId]: event.target.value,
+                          }))
+                        }
+                        placeholder={t('notePlaceholder')}
+                        rows={2}
+                        className="w-full rounded-input border border-border-subtle bg-background p-2.5 text-xs text-ink outline-none focus:border-glaze-500 dark:text-white"
+                      />
+                    </div>
+                  ) : null}
                 </li>
               )
             })}

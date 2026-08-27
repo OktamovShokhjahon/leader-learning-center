@@ -78,6 +78,13 @@ export const createVideoLessonSchema = z.object({
    * course. Off by default: §17.4 scopes content to the people who paid for it.
    */
   isFree: z.boolean().default(false),
+  /**
+   * D1 — the explicit access allow-list: which groups may watch this lesson.
+   * Default empty, meaning "no access until granted" for a lesson created
+   * after this field existed. Editable after creation (D1's "access list
+   * editable later").
+   */
+  groupIds: z.array(objectIdSchema).max(200).default([]),
 })
 export type CreateVideoLessonInput = z.infer<typeof createVideoLessonSchema>
 

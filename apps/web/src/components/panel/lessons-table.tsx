@@ -36,7 +36,11 @@ type Lesson = {
   order: number
   isPublished: boolean
   isFree: boolean
+  groupIds?: string[]
 }
+
+type GroupOption = { _id: string; name: string }
+type ExistingVideo = { videoId: string; title?: Localized; durationMinutes?: number; usedBy: number }
 
 const idOf = (value: unknown): string =>
   typeof value === 'string' ? value : ((value as { _id?: string })?._id ?? '')
@@ -235,6 +239,17 @@ function LessonDialog({
   const [order, setOrder] = useState(lesson?.order ?? 0)
   const [isPublished, setIsPublished] = useState(lesson?.isPublished ?? false)
   const [isFree, setIsFree] = useState(lesson?.isFree ?? false)
+  /** D1 — the explicit access allow-list; empty means nobody can watch yet. */
+  const [groupIds, setGroupIds] = useState<string[]>(lesson?.groupIds ?? [])
+  /** D2 — reuse an already-uploaded file instead of uploading a duplicate. */
+  const [reuseMode, setReuseMode] = useState(false)
+
+  const { data: courseGroups } = useQuery<Paginated<GroupOption>>(
+    courseId ? `/groups?courseId=${courseId}&limit=200&status=active` : null,
+  )
+  const { data: existingVideos } = useQuery<ExistingVideo[]>(
+    provider === 'file' ? '/content/lessons/videos' : null,
+  )
 
   const save = useMutation<Record<string, unknown>, Lesson>(
     creating ? '/content/lessons' : `/content/lessons/${lesson._id}`,
@@ -315,12 +330,53 @@ function LessonDialog({
           required
         >
           {provider === 'file' ? (
-            <FileUpload
-              label={t('videoFile')}
-              accept="video/mp4,video/webm,video/quicktime,.mp4,.webm,.mov"
-              value={videoId}
-              onUploaded={(url) => setVideoId(url)}
-            />
+            <div className="flex flex-col gap-2">
+              {/* D2 — one uploaded file, referenced by several lessons: no need
+                  to re-upload the same lecture for a second course or group. */}
+              {(existingVideos?.length ?? 0) > 0 ? (
+                <div className="flex gap-1 rounded-pill border border-border-subtle p-1 self-start">
+                  <button
+                    type="button"
+                    onClick={() => setReuseMode(false)}
+                    className={cn(
+                      'rounded-pill px-3 py-1.5 text-2xs font-medium transition-colors',
+                      !reuseMode ? 'bg-navy-600 text-white' : 'text-ink-soft dark:text-navy-200',
+                    )}
+                  >
+                    {t('uploadNew')}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setReuseMode(true)}
+                    className={cn(
+                      'rounded-pill px-3 py-1.5 text-2xs font-medium transition-colors',
+                      reuseMode ? 'bg-navy-600 text-white' : 'text-ink-soft dark:text-navy-200',
+                    )}
+                  >
+                    {t('reuseExisting')}
+                  </button>
+                </div>
+              ) : null}
+
+              {reuseMode ? (
+                <Select
+                  value={videoId}
+                  onChange={setVideoId}
+                  placeholder={t('chooseVideo')}
+                  options={(existingVideos ?? []).map((video) => ({
+                    value: video.videoId,
+                    label: `${video.title?.[locale] || video.title?.uz || video.videoId} · ${t('usedBy', { n: video.usedBy })}`,
+                  }))}
+                />
+              ) : (
+                <FileUpload
+                  label={t('videoFile')}
+                  accept="video/mp4,video/webm,video/quicktime,.mp4,.webm,.mov"
+                  value={videoId}
+                  onUploaded={(url) => setVideoId(url)}
+                />
+              )}
+            </div>
           ) : (
             <input
               value={videoId}
@@ -331,6 +387,37 @@ function LessonDialog({
             />
           )}
         </Field>
+
+        {/* D1 — access is explicit: nobody can watch until a group is checked. */}
+        {!isFree ? (
+          <Field label={t('accessGroups')} hint={t('accessGroupsHint')}>
+            {!courseId ? (
+              <p className="text-2xs text-ink-muted">{t('chooseCourseFirst')}</p>
+            ) : (courseGroups?.items?.length ?? 0) === 0 ? (
+              <p className="text-2xs text-ink-muted">{t('noGroupsForCourse')}</p>
+            ) : (
+              <div className="flex flex-col gap-2 rounded-input border border-border-subtle p-3">
+                {(courseGroups?.items ?? []).map((group) => (
+                  <label key={group._id} className="flex items-center gap-2 text-xs text-ink dark:text-white">
+                    <input
+                      type="checkbox"
+                      checked={groupIds.includes(group._id)}
+                      onChange={(event) =>
+                        setGroupIds((current) =>
+                          event.target.checked
+                            ? [...current, group._id]
+                            : current.filter((id) => id !== group._id),
+                        )
+                      }
+                      className="size-4 rounded accent-navy-600"
+                    />
+                    {group.name}
+                  </label>
+                ))}
+              </div>
+            )}
+          </Field>
+        ) : null}
 
         <Field label={t('order')} hint={t('orderHint')}>
           <input
@@ -367,6 +454,7 @@ function LessonDialog({
               order,
               isPublished,
               isFree,
+              groupIds: isFree ? [] : groupIds,
             })
             if (result) onSaved()
           }}

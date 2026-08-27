@@ -10,6 +10,7 @@ import { Section } from '@/components/ui/section'
 import { LeadFormSection } from '@/components/site/sections/lead-form-section'
 import { JsonLd, breadcrumbJsonLd, articleJsonLd } from '@/lib/json-ld'
 import { pageMetadata } from '@/lib/page-meta'
+import { formatDate } from '@/lib/date'
 
 export const revalidate = 300
 
@@ -64,12 +65,7 @@ export default async function PostPage({ params }: Props) {
         <article className="container-site max-w-3xl">
           <p className="mb-8 inline-flex items-center gap-2 font-mono text-2xs text-ink-muted">
             <CalendarDays className="size-4" aria-hidden />
-            <time dateTime={post.publishedAt}>
-              {published.toLocaleDateString(
-                locale === 'uz' ? 'uz-UZ' : locale === 'ru' ? 'ru-RU' : 'en-GB',
-                { day: '2-digit', month: '2-digit', year: 'numeric' },
-              )}
-            </time>
+            <time dateTime={post.publishedAt}>{formatDate(published, locale)}</time>
           </p>
 
           <div className="flex flex-col gap-5">

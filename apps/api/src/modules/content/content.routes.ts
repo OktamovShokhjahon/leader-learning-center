@@ -15,7 +15,7 @@ import { asyncRoute } from '../../middleware/error-handler.js'
 import { requireAuth, requireRole, currentUser } from '../../middleware/auth.js'
 import { recordAudit, diff } from '../audit/audit.service.js'
 import { TeacherProfile, VideoLesson, WatchLog } from './content.model.js'
-import { Course, Enrollment, Group } from '../groups/group.model.js'
+import { Course, Enrollment } from '../groups/group.model.js'
 import { Student } from '../students/student.model.js'
 
 /**
@@ -36,37 +36,36 @@ contentRouter.use(requireAuth)
 /* ── Reading: the student's side (§17.4) ──────────────────────────────── */
 
 /**
- * The courses this account may watch, resolved from their own enrolments.
+ * D1 — the groups this account is actively enrolled in, resolved from their
+ * own enrolments. A lesson's `groupIds` allow-list is checked against this,
+ * not against the course, so two groups sharing a course can be granted
+ * access independently.
  *
  * A student holds no `student.manage` grant, so they cannot list students to
  * find themselves — the same reason `SessionUser` carries `studentId`.
  */
-async function watchableCourseIds(userId: unknown): Promise<string[]> {
+async function watchableGroupIds(userId: unknown): Promise<string[]> {
   const student = await Student.findOne({ userId, deletedAt: null }).select('_id').lean()
   if (!student) return []
 
   const enrolments = await Enrollment.find({ studentId: student._id, status: 'active' })
     .select('groupId')
     .lean()
-  if (enrolments.length === 0) return []
-
-  const groups = await Group.find({ _id: { $in: enrolments.map((e) => e.groupId) } })
-    .select('courseId')
-    .lean()
-  return groups.map((group) => group.courseId?.toString()).filter(Boolean) as string[]
+  return enrolments.map((e) => e.groupId.toString())
 }
 
 contentRouter.get(
   '/lessons/mine',
   asyncRoute(async (req, res) => {
     const actor = currentUser(req)
-    const courseIds = await watchableCourseIds(actor._id)
+    const groupIds = await watchableGroupIds(actor._id)
 
-    // A free lesson is visible to anyone signed in; the rest need the course.
+    // A free lesson is visible to anyone signed in; the rest need an explicit
+    // grant on one of the student's own groups (D1).
     const lessons = await VideoLesson.find({
       deletedAt: null,
       isPublished: true,
-      $or: [{ isFree: true }, { courseId: { $in: courseIds } }],
+      $or: [{ isFree: true }, { groupIds: { $in: groupIds } }],
     })
       .sort({ courseId: 1, order: 1 })
       .lean()
@@ -157,6 +156,48 @@ contentRouter.get(
         limit: query.limit,
         pages: Math.max(1, Math.ceil(total / query.limit)),
       },
+    })
+  }),
+)
+
+/**
+ * D2 — "one uploaded video, referenced by several lessons." This lists the
+ * distinct files already uploaded so the create/edit form can offer "reuse an
+ * existing video" instead of only "upload a new one" — the storage side
+ * already supports reuse (`videoId` was never unique), the gap was purely
+ * that the UI had no way to find a file that was already there.
+ */
+contentRouter.get(
+  '/lessons/videos',
+  bossOnly,
+  asyncRoute(async (_req, res) => {
+    const rows = await VideoLesson.aggregate<{
+      _id: string
+      title: unknown
+      durationMinutes: number
+      usedBy: number
+    }>([
+      { $match: { provider: 'file', deletedAt: null } },
+      { $sort: { createdAt: -1 } },
+      {
+        $group: {
+          _id: '$videoId',
+          title: { $first: '$title' },
+          durationMinutes: { $first: '$durationMinutes' },
+          usedBy: { $sum: 1 },
+        },
+      },
+      { $sort: { usedBy: -1 } },
+      { $limit: 200 },
+    ])
+
+    res.json({
+      data: rows.map((row) => ({
+        videoId: row._id,
+        title: row.title,
+        durationMinutes: row.durationMinutes,
+        usedBy: row.usedBy,
+      })),
     })
   }),
 )

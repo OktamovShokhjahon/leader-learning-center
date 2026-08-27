@@ -10,6 +10,24 @@ import { branchScopePlugin } from '../../middleware/branch-scope.js'
  * read by it (§5.1). A student always belongs to exactly one branch; a transfer
  * moves them and is recorded in the audit log.
  */
+/**
+ * A4 — a freeze is a record (from/to/amount/reason), not a bare status flip,
+ * so it can be shown in payment history and auto-reversed on `toDate`.
+ * Append-only, mirroring the `Payment` ledger's immutability: unfreezing
+ * early sets `unfrozenAt` rather than deleting the row.
+ */
+const freezePeriodSchema = new Schema(
+  {
+    fromDate: { type: Date, required: true },
+    toDate: { type: Date, required: true },
+    amount: Number,
+    reason: { type: String, required: true },
+    createdBy: { type: Schema.Types.ObjectId, ref: 'User' },
+    unfrozenAt: Date,
+  },
+  { timestamps: true },
+)
+
 const studentSchema = new Schema(
   {
     branchId: { type: Schema.Types.ObjectId, ref: 'Branch', required: true, index: true },
@@ -47,6 +65,8 @@ const studentSchema = new Schema(
 
     notes: String,
     documents: { type: [{ name: String, url: String, uploadedAt: Date }], default: [] },
+    /** A4 — history of freeze periods; the active one is the last with no `unfrozenAt`. */
+    freezePeriods: { type: [freezePeriodSchema], default: [] },
 
     createdBy: { type: Schema.Types.ObjectId, ref: 'User' },
     updatedBy: { type: Schema.Types.ObjectId, ref: 'User' },

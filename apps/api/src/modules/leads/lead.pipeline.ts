@@ -1,12 +1,14 @@
 import { ApiError, ERROR_CODES } from '@leader/shared/errors'
-import type { UpdateLeadInput, ConvertLeadInput } from '@leader/shared/schemas'
+import type { UpdateLeadInput, ConvertLeadInput, CreateLeadInput } from '@leader/shared/schemas'
 import { Lead } from './lead.model.js'
 import { Student } from '../students/student.model.js'
-import { Group } from '../groups/group.model.js'
+import { Group, Course } from '../groups/group.model.js'
+import { Branch } from '../branches/branch.model.js'
 import { User } from '../users/user.model.js'
 import { enrollStudent } from '../groups/group.service.js'
 import { hashPassword } from '../auth/password.service.js'
 import { recordAudit, type RequestMeta } from '../audit/audit.service.js'
+import { getScope } from '../../middleware/branch-scope.js'
 import type { UserDocument } from '../users/user.model.js'
 
 /**
@@ -25,6 +27,87 @@ import type { UserDocument } from '../users/user.model.js'
 
 /** §7.2 — the statuses that mean this lead is finished with, either way. */
 const TERMINAL: readonly string[] = ['oquvchi_boldi', 'rad_etdi']
+
+/**
+ * E2 — a Manager or SuperAdmin adding an applicant directly, rather than one
+ * arriving through the public form. Reuses the same by-phone merge as
+ * `createPublicLead` so a manually-added returning applicant does not
+ * duplicate an existing lead — it is the same funnel either way.
+ */
+export async function createManualLead(
+  actor: UserDocument,
+  input: CreateLeadInput,
+  req: RequestMeta,
+) {
+  const branchId = getScope()?.branchId
+  if (!branchId || branchId === 'ALL') {
+    throw ApiError.badRequest('Switch to a single branch before adding an applicant')
+  }
+  const branch = await Branch.findById(branchId)
+  if (!branch) throw ApiError.notFound('Branch not found')
+
+  const course = await Course.findOne({ slug: input.courseSlug, deletedAt: null })
+  if (!course) throw ApiError.badRequest('Unknown course')
+
+  const existing = await Lead.findOne({ phone: input.phone, deletedAt: null })
+  if (existing) {
+    existing.courseId = course._id
+    existing.courseSlug = course.slug
+    if (input.comment) existing.comment = input.comment
+    existing.isReturning = true
+    // A lead already closed out either way goes back to the top of the funnel.
+    if (TERMINAL.includes(existing.status)) existing.status = 'yangi'
+    existing.history.push({
+      at: new Date(),
+      actorId: actor._id,
+      action: 'manual_reapply',
+      note: `Added manually for ${course.slug}`,
+    })
+    await existing.save()
+
+    await recordAudit({
+      action: 'lead.create',
+      actorId: actor._id,
+      actorName: actor.fullName,
+      entity: 'Lead',
+      entityId: existing._id,
+      branchId: existing.branchId,
+      after: { phone: existing.phone, courseSlug: existing.courseSlug, merged: true },
+      req,
+    })
+    return existing
+  }
+
+  const lead = await Lead.create({
+    branchId: branch._id,
+    branchSlug: branch.slug,
+    fullName: input.fullName,
+    phone: input.phone,
+    age: input.age,
+    schoolClass: input.schoolClass,
+    courseId: course._id,
+    courseSlug: course.slug,
+    source: input.source,
+    comment: input.comment,
+    status: 'yangi',
+    assignedTo: actor._id,
+    createdBy: actor._id,
+    history: [{ at: new Date(), actorId: actor._id, action: 'created', note: 'Added manually by staff' }],
+  })
+
+  await recordAudit({
+    action: 'lead.create',
+    actorId: actor._id,
+    actorName: actor.fullName,
+    entity: 'Lead',
+    entityId: lead._id,
+    branchId: lead.branchId,
+    after: { phone: lead.phone, courseSlug: lead.courseSlug },
+    req,
+  })
+
+  return lead
+}
 
 export async function updateLead(
   actor: UserDocument,

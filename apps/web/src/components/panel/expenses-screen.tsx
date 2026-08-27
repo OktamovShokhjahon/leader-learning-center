@@ -6,6 +6,7 @@ import { Receipt, Plus, Check, X, ShieldAlert } from 'lucide-react'
 import type { Locale } from '@leader/shared/locales'
 import { can } from '@leader/shared/permissions'
 import { useQuery, useMutation, type Paginated } from '@/lib/api/use-api'
+import { formatDate } from '@/lib/date'
 import { useAuth } from '@/lib/auth/auth-context'
 import { Panel, TableShell, Th, Td, Money, Loading, ErrorBox, Empty, StatusPill } from './primitives'
 import { FilterChip, Pagination } from './table-kit'
@@ -136,7 +137,7 @@ export function ExpensesScreen() {
               {data.items.map((expense) => (
                 <tr key={expense._id} className="hover:bg-navy-50/50 dark:hover:bg-navy-800/40">
                   <Td className="font-mono text-2xs text-ink-muted">
-                    {new Date(expense.spentAt).toLocaleDateString()}
+                    {formatDate(expense.spentAt, locale)}
                   </Td>
                   <Td>
                     <span className="inline-flex items-center gap-2">
