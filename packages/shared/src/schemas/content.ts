@@ -1,5 +1,8 @@
 import { z } from 'zod'
 import { paginationSchema, objectIdSchema, localizedSchema, slugSchema } from './common.js'
+import { phoneSchema } from './lead.js'
+import { passwordSchema } from './auth.js'
+import { LOCALES } from '../locales.js'
 
 /**
  * TZ §22 `teachers(profile)` and §17.3 Video.
@@ -16,6 +19,25 @@ import { paginationSchema, objectIdSchema, localizedSchema, slugSchema } from '.
 
 /* ── Teacher profiles ─────────────────────────────────────────────────── */
 
+/**
+ * The login to open alongside a new teacher card.
+ *
+ * A teacher account is opened here and nowhere else, so the fields that used to
+ * live on the Accounts screen — phone, password, branch — travel with the
+ * profile. It stays optional: the centre still puts faces on the site before
+ * those people ever sign in, and a card created that way can be given a login
+ * later through the same field.
+ */
+export const teacherAccountSchema = z.object({
+  phone: phoneSchema,
+  password: passwordSchema,
+  /** §4.1 — a teacher role always names the branch it applies in. */
+  branchId: objectIdSchema,
+  email: z.string().email('invalidEmail').optional().or(z.literal('')),
+  locale: z.enum(LOCALES).default('uz'),
+})
+export type TeacherAccountInput = z.input<typeof teacherAccountSchema>
+
 export const createTeacherProfileSchema = z.object({
   slug: slugSchema,
   fullName: z.string().trim().min(3, 'nameTooShort').max(120, 'nameTooLong'),
@@ -31,6 +53,8 @@ export const createTeacherProfileSchema = z.object({
   /** §6.2 — a profile can exist without being on the public site yet. */
   isPublic: z.boolean().default(true),
   order: z.coerce.number().int().default(0),
+  /** Opens the teacher login in the same act. Ignored when `userId` is set. */
+  account: teacherAccountSchema.optional(),
 })
 export type CreateTeacherProfileInput = z.infer<typeof createTeacherProfileSchema>
 

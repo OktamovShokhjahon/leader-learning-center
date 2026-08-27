@@ -31,13 +31,26 @@ type RoleDraft = { role: Role; branchId: string }
  * What a fresh role row starts as.
  *
  * A SuperAdmin may grant every role, so the first entry of their grantable list
- * is `superadmin` — a terrible default for a form whose usual job is opening a
- * teacher account. Preferring the lowest rank means the dangerous choice is one
- * the boss has to make on purpose.
+ * is `superadmin` — a terrible default for a form that opens ordinary
+ * accounts. Preferring the lowest rank means the dangerous choice is one the
+ * boss has to make on purpose.
  */
 function defaultRole(grantable: Role[]): Role {
   const byRank = [...grantable].sort((a, b) => ROLE_RANK[a] - ROLE_RANK[b])
-  return byRank.find((role) => role === 'teacher') ?? byRank[0] ?? 'student'
+  return byRank.find((role) => role === 'student') ?? byRank[0] ?? 'student'
+}
+
+/**
+ * A teacher account is opened on the Teachers screen, never here.
+ *
+ * A teacher who exists as a login and not as a card is invisible to the public
+ * site, which is the one thing a teacher record is for. Opening the account
+ * from the card makes that impossible. Editing is untouched: an account that
+ * already holds the role keeps it on the menu below, so a branch change or a
+ * password reset still happens here.
+ */
+function creatableRoles(grantable: Role[]): Role[] {
+  return grantable.filter((role) => role !== 'teacher')
 }
 
 /**
@@ -128,8 +141,9 @@ function CreateForm({
   const [password, setPassword] = useState('')
   const [email, setEmail] = useState('')
   const [locale, setLocale] = useState<Locale>('uz')
+  const creatable = useMemo(() => creatableRoles(grantable), [grantable])
   const [roles, setRoles] = useState<RoleDraft[]>(() => {
-    const role = defaultRole(grantable)
+    const role = defaultRole(creatableRoles(grantable))
     return [{ role, branchId: role === 'superadmin' ? '' : (branches[0]?._id ?? '') }]
   })
 
@@ -213,10 +227,12 @@ function CreateForm({
       <RoleEditor
         roles={roles}
         setRoles={setRoles}
-        grantable={grantable}
+        grantable={creatable}
         branches={branches}
         label={t('rolesLabel')}
       />
+
+      <p className="-mt-1 text-2xs text-ink-muted">{t('teacherElsewhere')}</p>
 
       {error ? <DialogError error={error} /> : null}
 

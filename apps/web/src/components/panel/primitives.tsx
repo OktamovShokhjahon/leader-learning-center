@@ -74,13 +74,23 @@ export function ErrorBox({ code, message }: { code?: string; message?: string })
   )
 }
 
-export function Empty({ title, Icon = Inbox }: { title: string; Icon?: LucideIcon }) {
+export function Empty({
+  title,
+  hint,
+  Icon = Inbox,
+}: {
+  title: string
+  /** The one thing to do next, when an empty screen has an obvious one. */
+  hint?: string
+  Icon?: LucideIcon
+}) {
   return (
     <div className="flex flex-col items-center gap-3 rounded-card border border-dashed border-border-subtle bg-surface/50 py-14 text-center">
       <span className="inline-flex size-12 items-center justify-center rounded-pill bg-glaze-50 text-glaze-600 dark:bg-navy-800 dark:text-glaze-300">
         <Icon className="size-5" aria-hidden />
       </span>
       <p className="text-xs text-ink-soft dark:text-navy-200">{title}</p>
+      {hint ? <p className="max-w-sm text-2xs text-ink-muted">{hint}</p> : null}
     </div>
   )
 }

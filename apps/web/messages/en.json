@@ -404,10 +404,9 @@
       "students": "Students",
       "payments": "Take payment",
       "debtors": "Debtors",
-      "finance": "Finance",
+      "finance": "Statistics",
       "cabinet": "Cabinet",
       "account": "My account",
-      "approvals": "Approvals",
       "modules": "Modules",
       "tests": "Tests",
       "staff": "Accounts",
@@ -489,9 +488,9 @@
         "subtitle": "Overdue payments and how to reach them."
       },
       "finance": {
-        "eyebrow": "Finance",
-        "title": "Financial overview",
-        "subtitle": "SuperAdmin only."
+        "eyebrow": "Statistics",
+        "title": "Centre statistics",
+        "subtitle": "Students, income, expenses and collection. SuperAdmin only."
       },
       "account": {
         "eyebrow": "Account",
@@ -516,11 +515,6 @@
         "eyebrow": "Result",
         "title": "Test result",
         "subtitle": "Correct answers in green, mistakes in red."
-      },
-      "approvals": {
-        "eyebrow": "Front desk",
-        "title": "Approve payments",
-        "subtitle": "Review the payments waiting on you."
       },
       "tests": {
         "eyebrow": "Online",
@@ -586,6 +580,11 @@
         "eyebrow": "Cabinet",
         "title": "Library",
         "subtitle": "Materials available to you."
+      },
+      "teacherProfiles": {
+        "eyebrow": "Public site",
+        "title": "Teachers",
+        "subtitle": "The faces on the site, and the logins behind them."
       }
     },
     "dashboard": {
@@ -815,7 +814,35 @@
       "bucket_notYetDue": "Not yet due",
       "bucket_1": "1–7 days",
       "bucket_8": "8–30 days",
-      "bucket_30+": "30+ days"
+      "bucket_30+": "30+ days",
+      "sectionSchool": "The school",
+      "sectionMoney": "Money in and out",
+      "sectionCollection": "Collection",
+      "sectionDetail": "Detail",
+      "countStudents": "Students",
+      "countStudentsHint": "currently studying",
+      "countGroups": "Groups",
+      "countGroupsHint": "active",
+      "countCourses": "Courses",
+      "countCoursesHint": "in the catalogue",
+      "countTeachers": "Teachers",
+      "countTeachersHint": "with an active account",
+      "income": "Income",
+      "incomeHint": "payments received",
+      "expenses": "Expenses",
+      "expensesHint": "approved this month",
+      "profit": "Profit",
+      "profitHint": "income minus expenses",
+      "margin": "{n}% margin",
+      "incomeVsExpense": "Income vs expenses",
+      "expenseBreakdown": "Expenses by category",
+      "expensesByCategory": "Expenses by category",
+      "noExpenses": "No approved expenses this month",
+      "uncategorised": "Uncategorised",
+      "category": "Category",
+      "records": "Records",
+      "amount": "Amount",
+      "share": "Share"
     },
     "cabinet": {
       "status": "Status",
@@ -912,22 +939,6 @@
       "yourAnswer": "your answer",
       "notAnswered": "This question was left unanswered."
     },
-    "approvals": {
-      "scopeNote": "You approve payments. The centre’s overall finances — revenue, profit and payroll — are open to the SuperAdmin only.",
-      "none": "No payments are waiting for approval.",
-      "count": "{n} waiting",
-      "approve": "Approve",
-      "reject": "Reject",
-      "unknownStudent": "Unknown student",
-      "method": {
-        "naqd": "Cash",
-        "plastik": "Card",
-        "bank": "Bank",
-        "payme": "Payme",
-        "click": "Click",
-        "uzum": "Uzum"
-      }
-    },
     "import": {
       "dropTitle": "Upload a test file",
       "dropHint": "A Moodle-format .txt file (= correct answer, ~ wrong) or an Excel sheet. Drop the file here.",
@@ -1006,7 +1017,8 @@
         "teacher": "Teacher",
         "student": "Student",
         "parent": "Parent"
-      }
+      },
+      "teacherElsewhere": "A teacher account is opened on the Teachers screen, together with the card the site shows."
     },
     "form": {
       "close": "Close",
@@ -1477,7 +1489,65 @@
       "allBranchesHint": "For reports; nothing can be created in this mode",
       "pickOne": "Pick a branch"
     },
-    "passwordPolicy": "Your password is issued and rotated by the centre administration. You cannot change it yourself — if you have forgotten it, ask an administrator."
+    "passwordPolicy": "Your password is issued and rotated by the centre administration. You cannot change it yourself — if you have forgotten it, ask an administrator.",
+    "teacherProfiles": {
+      "searchPlaceholder": "Search by name…",
+      "create": "Add a teacher",
+      "save": "Save changes",
+      "edit": "Edit",
+      "delete": "Remove",
+      "none": "No teachers yet",
+      "noneHint": "Add a teacher here and their card appears on the site.",
+      "count": "{n} teachers",
+      "name": "Full name",
+      "role": "Title",
+      "subjects": "Subjects",
+      "certificates": "Certificates",
+      "experience": "Experience",
+      "years": "{n} yrs",
+      "visibility": "On the site",
+      "visible": "Visible",
+      "hidden": "Hidden",
+      "accountColumn": "Signs in",
+      "cardSection": "Card",
+      "cardSectionHint": "What a visitor sees on the teachers page.",
+      "photo": "Photo",
+      "photoHint": "Shown on the card. JPG, PNG or WebP, square works best.",
+      "photoRemove": "Remove photo",
+      "slug": "Site address",
+      "slugHint": "Appears in the page address. It stays put once the card is published.",
+      "bio": "About",
+      "bioHint": "A short paragraph in the teacher’s own terms — what they teach and how.",
+      "listHint": "Comma separated.",
+      "order": "Position",
+      "orderHint": "Lower numbers come first on the site.",
+      "publicToggle": "Show on the site",
+      "publicHint": "Off keeps the card in the panel and off the public pages.",
+      "accountSection": "Account",
+      "accountSectionHint": "Teacher logins are opened here. The Accounts screen manages them afterwards.",
+      "modeOpen": "Open a login",
+      "modeLink": "Link an account",
+      "modeNone": "No login yet",
+      "modeNoneHint": "The card goes on the site now. Add a login here whenever the teacher needs one.",
+      "phone": "Phone",
+      "phoneHint": "This is what the teacher signs in with.",
+      "password": "Password",
+      "passwordHint": "At least 8 characters. Give it to the teacher — they can change it later.",
+      "email": "Email",
+      "branch": "Branch",
+      "branchHint": "The branch this teacher works in.",
+      "chooseBranch": "Choose a branch",
+      "locale": "Interface language",
+      "account": "Existing account",
+      "accountHint": "For a teacher whose login was opened before this screen existed.",
+      "chooseAccount": "Choose an account",
+      "accountNone": "No login",
+      "accountInactive": "Deactivated",
+      "accountManageHint": "Reset the password or change the branch on the Accounts screen.",
+      "accountInactiveHint": "This login is deactivated. Reactivate it on the Accounts screen.",
+      "deleteTitle": "Remove teacher",
+      "deleteBody": "“{name}” comes off the site. Their login is kept — deactivate it on the Accounts screen."
+    }
   },
   "validation": {
     "required": "Please fill in this field.",

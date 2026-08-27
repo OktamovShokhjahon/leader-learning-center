@@ -3,6 +3,7 @@ import {
   createTeacherProfileSchema,
   updateTeacherProfileSchema,
   teacherQuerySchema,
+  type CreateTeacherProfileInput,
   createVideoLessonSchema,
   updateVideoLessonSchema,
   videoLessonQuerySchema,
@@ -13,9 +14,10 @@ import { ApiError } from '@leader/shared/errors'
 import { validateBody, validateQuery } from '../../middleware/validate.js'
 import { asyncRoute } from '../../middleware/error-handler.js'
 import { requireAuth, requireRole, currentUser } from '../../middleware/auth.js'
-import { recordAudit, diff } from '../audit/audit.service.js'
+import { recordAudit, diff, type RequestMeta } from '../audit/audit.service.js'
 import { TeacherProfile, VideoLesson, WatchLog } from './content.model.js'
 import { Course, Enrollment } from '../groups/group.model.js'
+import { createUser, updateUser } from '../users/user.service.js'
 import { Student } from '../students/student.model.js'
 
 /**
@@ -297,6 +299,9 @@ contentRouter.get(
         .sort(parseSort(query.sort === '-createdAt' ? 'order' : query.sort))
         .skip((query.page - 1) * query.limit)
         .limit(query.limit)
+        // The roster answers "can this teacher sign in?" in the same row as the
+        // card, so the linked login travels with it — name, phone, active or not.
+        .populate('userId', 'fullName phone isActive')
         .lean(),
       TeacherProfile.countDocuments(filter),
     ])
@@ -313,24 +318,73 @@ contentRouter.get(
   }),
 )
 
+/**
+ * Open the teacher's login for a card being saved.
+ *
+ * The account is a `User` like any other — `createUser` still enforces §4.2
+ * (which roles the actor may grant) and §8 (password strength, duplicate
+ * phone), so nothing is weakened by opening it from this screen instead of the
+ * Accounts one. What changes is that the card and the login are one act, and a
+ * teacher can no longer exist as a login with no face on the site.
+ */
+async function openAccount(
+  actor: ReturnType<typeof currentUser>,
+  account: NonNullable<CreateTeacherProfileInput['account']>,
+  fullName: string,
+  photo: string | undefined,
+  req: RequestMeta,
+) {
+  return createUser(
+    actor,
+    {
+      fullName,
+      phone: account.phone,
+      password: account.password,
+      ...(account.email ? { email: account.email } : {}),
+      ...(photo ? { photo } : {}),
+      locale: account.locale ?? 'uz',
+      roles: [{ role: 'teacher', branchId: account.branchId }],
+    },
+    req,
+  )
+}
+
 contentRouter.post(
   '/teachers',
   bossOnly,
   validateBody(createTeacherProfileSchema),
   asyncRoute(async (req, res) => {
     const actor = currentUser(req)
-    if (await TeacherProfile.exists({ slug: req.body.slug, deletedAt: null })) {
-      throw ApiError.conflict('A teacher with this address already exists', { slug: req.body.slug })
+    const { account, ...input } = req.body as CreateTeacherProfileInput
+
+    // Checked before the account exists: a slug clash after `createUser` would
+    // leave a login behind with no card to reach it from.
+    if (await TeacherProfile.exists({ slug: input.slug, deletedAt: null })) {
+      throw ApiError.conflict('A teacher with this address already exists', { slug: input.slug })
+    }
+    if (account && input.userId) {
+      throw ApiError.badRequest('Link an existing account or open a new one, not both')
     }
 
-    const profile = await TeacherProfile.create({ ...req.body, createdBy: actor._id })
+    const user = account
+      ? await openAccount(actor, account, input.fullName, input.photo, req)
+      : null
+
+    const profile = await TeacherProfile.create({
+      ...input,
+      ...(user ? { userId: user._id } : {}),
+      // A teacher opened with a branch belongs on that branch's page (§6.2).
+      branchIds:
+        account && input.branchIds.length === 0 ? [account.branchId] : input.branchIds,
+      createdBy: actor._id,
+    })
     await recordAudit({
       action: 'teacher.create',
       actorId: actor._id,
       actorName: actor.fullName,
       entity: 'TeacherProfile',
       entityId: profile._id,
-      after: { slug: profile.slug, fullName: profile.fullName },
+      after: { slug: profile.slug, fullName: profile.fullName, account: Boolean(user) },
       req,
     })
     res.status(201).json({ data: profile })
@@ -352,11 +406,44 @@ contentRouter.patch(
       }
     }
 
+    const { account, ...input } = req.body as Partial<CreateTeacherProfileInput>
+
+    // A card saved without a login can be given one later, from the same field.
+    // An existing login is never replaced here — that is a role change, and §8
+    // puts it behind the Accounts screen where it signs every device out.
+    let opened = false
+    if (account) {
+      if (profile.userId) throw ApiError.conflict('This teacher already has an account')
+      const user = await openAccount(
+        actor,
+        account,
+        input.fullName ?? profile.fullName,
+        input.photo ?? profile.photo ?? undefined,
+        req,
+      )
+      profile.userId = user._id
+      opened = true
+    }
+
     const before = profile.toObject()
-    profile.set({ ...req.body, updatedBy: actor._id })
+    profile.set({ ...input, updatedBy: actor._id })
     await profile.save()
 
-    const changes = diff(before as Record<string, unknown>, req.body)
+    // The name and the face on the card are the same person's name and face on
+    // the account, so a rename here is not left half-applied.
+    if (profile.userId && !opened && (input.fullName || input.photo)) {
+      await updateUser(
+        actor,
+        String(profile.userId),
+        {
+          ...(input.fullName ? { fullName: input.fullName } : {}),
+          ...(input.photo ? { photo: input.photo } : {}),
+        },
+        req,
+      )
+    }
+
+    const changes = diff(before as Record<string, unknown>, input)
     await recordAudit({
       action: 'teacher.update',
       actorId: actor._id,
@@ -364,7 +451,7 @@ contentRouter.patch(
       entity: 'TeacherProfile',
       entityId: profile._id,
       before: changes.before,
-      after: changes.after,
+      after: { ...changes.after, ...(opened ? { account: true } : {}) },
       req,
     })
     res.json({ data: profile })

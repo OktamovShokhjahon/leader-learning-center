@@ -126,15 +126,11 @@ check('manager may now set a group price', managerPriced.status === 201,
 check('the price the manager set is the price stored',
   managerPriced.body.data?.price === 400000, `price=${managerPriced.body.data?.price}`)
 
-// ── Manager approves a payment, but still cannot refund one (ADR 0004) ────
+// ── A Manager still cannot refund a payment (ADR 0004) ────────────────────
 const managerRefund = await call('/payments/000000000000000000000000/refund', {
   token: manager, method: 'POST', body: { reason: 'should never be allowed' },
 })
 check('manager cannot refund', managerRefund.status === 403, `got ${managerRefund.status}`)
-
-const managerApprovals = await call('/payments/pending-approval', { token: manager })
-check('manager may reach the approval queue', managerApprovals.status === 200,
-  `got ${managerApprovals.status}`)
 
 // ── Invoices (§11.1) ──────────────────────────────────────────────────────
 const period = new Date().toISOString().slice(0, 7)

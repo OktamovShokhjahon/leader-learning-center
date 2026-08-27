@@ -404,10 +404,9 @@
       "students": "O‘quvchilar",
       "payments": "To‘lov qabul qilish",
       "debtors": "Qarzdorlar",
-      "finance": "Moliya",
+      "finance": "Statistika",
       "cabinet": "Kabinet",
       "account": "Hisobim",
-      "approvals": "Tasdiqlash",
       "modules": "Modullar",
       "tests": "Testlar",
       "staff": "Hisoblar",
@@ -489,9 +488,9 @@
         "subtitle": "Muddati o‘tgan to‘lovlar va aloqa."
       },
       "finance": {
-        "eyebrow": "Moliya",
-        "title": "Moliyaviy ko‘rsatkichlar",
-        "subtitle": "Faqat SuperAdmin uchun."
+        "eyebrow": "Statistika",
+        "title": "Markaz statistikasi",
+        "subtitle": "O‘quvchilar, daromad, xarajat va to‘lov yig‘ilishi. Faqat SuperAdmin uchun."
       },
       "account": {
         "eyebrow": "Hisob",
@@ -516,11 +515,6 @@
         "eyebrow": "Natija",
         "title": "Test natijasi",
         "subtitle": "To‘g‘ri javoblar yashil, xatolar qizil."
-      },
-      "approvals": {
-        "eyebrow": "Kassa",
-        "title": "To‘lovlarni tasdiqlash",
-        "subtitle": "Kutayotgan to‘lovlarni ko‘rib chiqing."
       },
       "tests": {
         "eyebrow": "Onlayn",
@@ -586,6 +580,11 @@
         "eyebrow": "Kabinet",
         "title": "Kutubxona",
         "subtitle": "Sizga ochiq materiallar."
+      },
+      "teacherProfiles": {
+        "eyebrow": "Ommaviy sayt",
+        "title": "O‘qituvchilar",
+        "subtitle": "Saytdagi yuzlar va ular ortidagi hisoblar."
       }
     },
     "dashboard": {
@@ -815,7 +814,35 @@
       "bucket_notYetDue": "Muddati kelmagan",
       "bucket_1": "1–7 kun",
       "bucket_8": "8–30 kun",
-      "bucket_30+": "30+ kun"
+      "bucket_30+": "30+ kun",
+      "sectionSchool": "O‘quv markazi",
+      "sectionMoney": "Daromad va xarajat",
+      "sectionCollection": "To‘lov yig‘ilishi",
+      "sectionDetail": "Tafsilotlar",
+      "countStudents": "O‘quvchilar",
+      "countStudentsHint": "hozir o‘qiyapti",
+      "countGroups": "Guruhlar",
+      "countGroupsHint": "faol",
+      "countCourses": "Kurslar",
+      "countCoursesHint": "katalogda",
+      "countTeachers": "O‘qituvchilar",
+      "countTeachersHint": "faol hisobga ega",
+      "income": "Daromad",
+      "incomeHint": "qabul qilingan to‘lovlar",
+      "expenses": "Xarajatlar",
+      "expensesHint": "shu oyda tasdiqlangan",
+      "profit": "Foyda",
+      "profitHint": "daromad minus xarajat",
+      "margin": "rentabellik {n}%",
+      "incomeVsExpense": "Daromad va xarajat",
+      "expenseBreakdown": "Xarajatlar toifalar bo‘yicha",
+      "expensesByCategory": "Xarajatlar toifalar bo‘yicha",
+      "noExpenses": "Bu oyda tasdiqlangan xarajat yo‘q",
+      "uncategorised": "Toifasiz",
+      "category": "Toifa",
+      "records": "Yozuvlar",
+      "amount": "Summa",
+      "share": "Ulush"
     },
     "cabinet": {
       "status": "Holat",
@@ -912,22 +939,6 @@
       "yourAnswer": "sizning javobingiz",
       "notAnswered": "Bu savolga javob berilmagan."
     },
-    "approvals": {
-      "scopeNote": "Siz to‘lovlarni tasdiqlaysiz. Markazning umumiy moliyaviy ko‘rsatkichlari — daromad, foyda va ish haqi — faqat SuperAdmin uchun ochiq.",
-      "none": "Tasdiqlashni kutayotgan to‘lov yo‘q.",
-      "count": "{n} ta kutilmoqda",
-      "approve": "Tasdiqlash",
-      "reject": "Rad etish",
-      "unknownStudent": "Noma’lum o‘quvchi",
-      "method": {
-        "naqd": "Naqd",
-        "plastik": "Plastik",
-        "bank": "Bank",
-        "payme": "Payme",
-        "click": "Click",
-        "uzum": "Uzum"
-      }
-    },
     "import": {
       "dropTitle": "Test faylini yuklang",
       "dropHint": "Moodle formatidagi .txt fayl (= to‘g‘ri javob, ~ noto‘g‘ri) yoki Excel jadval. Faylni shu yerga tashlang.",
@@ -1006,7 +1017,8 @@
         "teacher": "O‘qituvchi",
         "student": "O‘quvchi",
         "parent": "Ota-ona"
-      }
+      },
+      "teacherElsewhere": "O‘qituvchi hisobi «O‘qituvchilar» bo‘limida, saytdagi kartochka bilan birga ochiladi."
     },
     "form": {
       "close": "Yopish",
@@ -1477,7 +1489,65 @@
       "allBranchesHint": "Hisobotlar uchun; bu holatda yozib bo‘lmaydi",
       "pickOne": "Filialni tanlang"
     },
-    "passwordPolicy": "Parol markaz ma’muriyati tomonidan beriladi va almashtiriladi. O‘zingiz o‘zgartira olmaysiz — parolni unutgan bo‘lsangiz, administratorga murojaat qiling."
+    "passwordPolicy": "Parol markaz ma’muriyati tomonidan beriladi va almashtiriladi. O‘zingiz o‘zgartira olmaysiz — parolni unutgan bo‘lsangiz, administratorga murojaat qiling.",
+    "teacherProfiles": {
+      "searchPlaceholder": "Ism bo‘yicha qidirish…",
+      "create": "O‘qituvchi qo‘shish",
+      "save": "Saqlash",
+      "edit": "Tahrirlash",
+      "delete": "Olib tashlash",
+      "none": "Hozircha o‘qituvchi yo‘q",
+      "noneHint": "Shu yerdan o‘qituvchi qo‘shing — kartochkasi saytda darhol chiqadi.",
+      "count": "{n} ta o‘qituvchi",
+      "name": "Ism-familiya",
+      "role": "Lavozimi",
+      "subjects": "Fanlar",
+      "certificates": "Sertifikatlar",
+      "experience": "Tajriba",
+      "years": "{n} yil",
+      "visibility": "Saytda",
+      "visible": "Ko‘rinadi",
+      "hidden": "Yashirin",
+      "accountColumn": "Kirish",
+      "cardSection": "Kartochka",
+      "cardSectionHint": "Tashrifchi o‘qituvchilar sahifasida ko‘radigan narsa.",
+      "photo": "Surat",
+      "photoHint": "Kartochkada ko‘rinadi. JPG, PNG yoki WebP, kvadrat bo‘lgani yaxshi.",
+      "photoRemove": "Suratni olib tashlash",
+      "slug": "Saytdagi manzil",
+      "slugHint": "Sahifa manziliga kiradi. Kartochka chiqqach o‘zgarmaydi.",
+      "bio": "O‘qituvchi haqida",
+      "bioHint": "Qisqa matn: nima o‘qitadi va darsni qanday olib boradi.",
+      "listHint": "Vergul bilan ajrating.",
+      "order": "O‘rni",
+      "orderHint": "Kichik raqam saytda yuqorida turadi.",
+      "publicToggle": "Saytda ko‘rsatish",
+      "publicHint": "O‘chirilsa, kartochka panelda qoladi va saytga chiqmaydi.",
+      "accountSection": "Hisob",
+      "accountSectionHint": "O‘qituvchi hisobi shu yerda ochiladi. Keyin uni «Hisoblar» bo‘limi boshqaradi.",
+      "modeOpen": "Hisob ochish",
+      "modeLink": "Mavjud hisobni bog‘lash",
+      "modeNone": "Hozircha hisobsiz",
+      "modeNoneHint": "Kartochka hozir saytga chiqadi. Hisobni kerak bo‘lganda shu yerdan ochasiz.",
+      "phone": "Telefon",
+      "phoneHint": "O‘qituvchi shu raqam bilan tizimga kiradi.",
+      "password": "Parol",
+      "passwordHint": "Kamida 8 belgi. O‘qituvchiga bering — keyin o‘zi almashtira oladi.",
+      "email": "Email",
+      "branch": "Filial",
+      "branchHint": "O‘qituvchi ishlaydigan filial.",
+      "chooseBranch": "Filialni tanlang",
+      "locale": "Interfeys tili",
+      "account": "Mavjud hisob",
+      "accountHint": "Hisobi bu ekran paydo bo‘lgunga qadar ochilgan o‘qituvchi uchun.",
+      "chooseAccount": "Hisobni tanlang",
+      "accountNone": "Hisob yo‘q",
+      "accountInactive": "O‘chirilgan",
+      "accountManageHint": "Parolni tiklash yoki filialni almashtirish «Hisoblar» bo‘limida.",
+      "accountInactiveHint": "Bu hisob o‘chirilgan. Uni «Hisoblar» bo‘limida qayta yoqasiz.",
+      "deleteTitle": "O‘qituvchini olib tashlash",
+      "deleteBody": "«{name}» saytdan chiqib ketadi. Hisobi saqlanadi — uni «Hisoblar» bo‘limida o‘chiring."
+    }
   },
   "validation": {
     "required": "Bu maydonni to‘ldiring.",

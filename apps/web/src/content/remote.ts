@@ -30,6 +30,20 @@ function apiBase(): string | null {
   return base?.trim() ? base.replace(/\/+$/, '') : null
 }
 
+/**
+ * A photo uploaded in the panel is stored as `/uploads/<file>`, and that path
+ * is served by the API, not by this app — so a card rendered here has to point
+ * at the API host or the image 404s. An absolute URL entered by hand is left
+ * alone, and with no API configured the path is returned unchanged so a local
+ * `public/` file still resolves.
+ */
+function mediaUrl(path: string | null | undefined): string | null {
+  if (!path) return null
+  if (/^https?:\/\//.test(path)) return path
+  const base = apiBase()
+  return base ? `${base}${path.startsWith('/') ? path : `/${path}`}` : path
+}
+
 async function readPublic<T>(path: string): Promise<T[] | null> {
   const base = apiBase()
   if (!base) return null
@@ -123,7 +137,7 @@ export async function fetchTeachers(): Promise<Teacher[]> {
       subjects: row.subjects ?? [],
       certificates: row.certificates ?? [],
       experienceYears: row.experienceYears ?? 0,
-      photo: row.photo ?? null,
+      photo: mediaUrl(row.photo),
       // Not exposed publicly — the endpoint deliberately omits branch ids so a
       // public face is never mapped onto an internal record.
       branchSlugs: [],

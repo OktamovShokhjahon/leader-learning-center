@@ -124,12 +124,26 @@ export async function TeachersSection({
                 className="group flex h-full flex-col overflow-hidden rounded-card border border-border-subtle bg-surface transition-all duration-200 hover:-translate-y-1 hover:border-glaze-300 hover:shadow-float"
               >
                 <div className="flex gap-4 p-5">
-                  <CeramicTile
-                    seed={teacher.slug}
-                    label={initials(teacher.fullName)}
-                    dense
-                    className="size-20 shrink-0 rounded-input"
-                  />
+                  {/* The centre's own photograph when there is one; the woven
+                      tile when there is not, so a card is never a grey box.
+                      Plain <img>: the API host is configured at runtime and
+                      cannot be listed in next/image's remote patterns. */}
+                  {teacher.photo ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={teacher.photo}
+                      alt=""
+                      loading="lazy"
+                      className="size-20 shrink-0 rounded-input object-cover"
+                    />
+                  ) : (
+                    <CeramicTile
+                      seed={teacher.slug}
+                      label={initials(teacher.fullName)}
+                      dense
+                      className="size-20 shrink-0 rounded-input"
+                    />
+                  )}
                   <div className="flex min-w-0 flex-col gap-1">
                     <h3 className="font-display text-base leading-tight tracking-[-0.02em] text-ink dark:text-white">
                       {teacher.fullName}

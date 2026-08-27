@@ -11,7 +11,6 @@ import {
   CalendarCheck,
   CalendarClock,
   PieChart,
-  BadgeCheck,
   FileCheck2,
   UserRound,
   Video,
@@ -88,7 +87,6 @@ const GROUPS: NavGroup[] = [
     items: [
       { href: '/crm/payments', key: 'payments', Icon: Wallet, action: 'payment.accept' },
       { href: '/crm/debtors', key: 'debtors', Icon: AlertTriangle, action: 'debtor.view' },
-      { href: '/crm/approvals', key: 'approvals', Icon: BadgeCheck, action: 'payment.approve' },
       { href: '/crm/expenses', key: 'expenses', Icon: Receipt, action: 'expense.create' },
       { href: '/crm/fines', key: 'fines', Icon: Gavel, action: 'fine.issue' },
       { href: '/boss/payroll', key: 'payroll', Icon: Banknote, roles: ['superadmin'] },

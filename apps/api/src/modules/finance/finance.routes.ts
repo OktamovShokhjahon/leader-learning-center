@@ -7,8 +7,10 @@ import { requireAuth, requireRole } from '../../middleware/auth.js'
 import { getScope, withAllBranches } from '../../middleware/branch-scope.js'
 import { Invoice, Payment } from '../payments/invoice.model.js'
 import { Student } from '../students/student.model.js'
-import { Group } from '../groups/group.model.js'
+import { Group, Course } from '../groups/group.model.js'
 import { Branch } from '../branches/branch.model.js'
+import { Expense, ExpenseCategory } from '../expenses/expense.model.js'
+import { User } from '../users/user.model.js'
 import { currentPeriod } from '../payments/payment.service.js'
 
 /**
@@ -248,5 +250,97 @@ financeRouter.get(
     })
 
     res.json({ data: { period, branches: rows.sort((a, b) => b.collected - a.collected) } })
+  }),
+)
+
+/**
+ * The whole centre in one response: what came in, what went out, what is left,
+ * and how big the school actually is.
+ *
+ * `/overview` above answers "are students paying?" — it is invoices and
+ * receivables, and it never mentions the money the centre *spends*. So the
+ * finance screen could show a healthy collection rate on a month that lost
+ * money, which is the wrong picture to give the person who signs the salaries.
+ * Income and expense are both totalled here, from the same two ledgers the
+ * rest of the CRM writes to (`Payment` and approved `Expense`), so profit is
+ * derived rather than typed anywhere (H1).
+ */
+financeRouter.get(
+  '/statistics',
+  validateQuery(financeQuerySchema),
+  asyncRoute(async (req, res) => {
+    const query = res.locals.query as { period?: string }
+    const period = query.period ?? currentPeriod()
+    const { start, end } = monthBounds(period)
+
+    const scope = getScope()?.branchId
+    const branchId = scope && scope !== 'ALL' ? new Types.ObjectId(scope) : undefined
+
+    const [income, expenseRows, students, groups, courses, teachers] = await Promise.all([
+      collectedIn(period, branchId),
+
+      // Only approved expenses are real money out — a draft or a rejected one
+      // is a proposal, and counting it would understate profit (§13.3).
+      Expense.aggregate<{ _id: Types.ObjectId | null; total: number; count: number }>([
+        {
+          $match: {
+            deletedAt: null,
+            status: 'approved',
+            spentAt: { $gte: start, $lte: end },
+            ...(branchId ? { branchId } : {}),
+          },
+        },
+        { $group: { _id: '$categoryId', total: { $sum: '$amount' }, count: { $sum: 1 } } },
+        { $sort: { total: -1 } },
+      ]),
+
+      Student.countDocuments({
+        status: { $in: ['active', 'paid', 'overdue', 'pending'] },
+        deletedAt: null,
+        ...(branchId ? { branchId } : {}),
+      }),
+      Group.countDocuments({ status: 'active', deletedAt: null, ...(branchId ? { branchId } : {}) }),
+      // A course is a product offered by every branch (§5.3), so it is never
+      // branch-scoped — the count is the catalogue, whichever branch is active.
+      Course.countDocuments({ deletedAt: null }),
+      // `users` carries no branch-scope plugin either; a teacher's branch lives
+      // inside their `roles` array, so the filter has to reach in there.
+      User.countDocuments({
+        deletedAt: null,
+        isActive: true,
+        roles: { $elemMatch: { role: 'teacher', ...(branchId ? { branchId } : {}) } },
+      }),
+    ])
+
+    const categories = await ExpenseCategory.find({}).select('name slug color icon').lean()
+    const byCategory = expenseRows.map((row) => {
+      const category = categories.find((item) => item._id.toString() === row._id?.toString())
+      return {
+        categoryId: row._id,
+        name: category?.name ?? null,
+        slug: category?.slug ?? null,
+        color: category?.color ?? null,
+        total: row.total,
+        count: row.count,
+      }
+    })
+
+    const expenseTotal = expenseRows.reduce((sum, row) => sum + row.total, 0)
+    const net = income.total - expenseTotal
+
+    res.json({
+      data: {
+        period,
+        income: { total: income.total, count: income.count },
+        expenses: { total: expenseTotal, byCategory },
+        profit: {
+          net,
+          // Margin is meaningless with no income, and dividing by zero would
+          // hand the UI an `Infinity` to render.
+          marginPercent: income.total > 0 ? Math.round((net / income.total) * 100) : null,
+        },
+        counts: { students, groups, courses, teachers },
+      },
+    })
   }),
 )
