@@ -58,10 +58,10 @@ export function ScheduleGrid() {
   }, [weekStart])
 
   const { data: teachers } = useQuery<Paginated<StaffOption>>(
-    '/users?role=teacher&limit=200&status=active',
+    '/users?role=teacher&limit=100&status=active',
   )
-  const { data: rooms } = useQuery<Paginated<RoomOption>>('/rooms?limit=200')
-  const { data: groups } = useQuery<Paginated<GroupOption>>('/groups?limit=200&status=active')
+  const { data: rooms } = useQuery<Paginated<RoomOption>>('/rooms?limit=100')
+  const { data: groups } = useQuery<Paginated<GroupOption>>('/groups?limit=100&status=active')
 
   const query = new URLSearchParams({
     from: weekStart.toISOString().slice(0, 10),

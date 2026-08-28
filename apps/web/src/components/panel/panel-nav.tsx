@@ -11,9 +11,8 @@ import {
   CalendarCheck,
   CalendarClock,
   PieChart,
-  FileCheck2,
   UserRound,
-  Video,
+  MonitorPlay,
   UserSquare2,
   UsersRound,
   Inbox,
@@ -79,7 +78,6 @@ const GROUPS: NavGroup[] = [
       { href: '/crm/groups', key: 'groups', Icon: CalendarCheck, action: 'attendance.mark' },
       { href: '/crm/schedule', key: 'schedule', Icon: CalendarClock, action: 'attendance.mark' },
       { href: '/crm/students', key: 'students', Icon: Users, action: 'student.manage' },
-      { href: '/crm/tests', key: 'tests', Icon: FileCheck2, action: 'test.manage' },
     ],
   },
   {
@@ -102,10 +100,11 @@ const GROUPS: NavGroup[] = [
       // §4.2 note 7 — a teacher's `content.manage` is for their own materials, not
       // for the centre's catalogue, so this one asks for the full grant.
       { href: '/crm/courses', key: 'courses', Icon: BookOpen, action: 'content.manage', full: true },
-      // §17.3 the video lesson catalogue, §21.1 the public teacher cards — both
-      // the boss's alone, enforced at the router mount on the API.
-      { href: '/boss/lessons', key: 'lessons', Icon: Video, roles: ['superadmin'] },
-      { href: '/boss/library', key: 'libraryBoss', Icon: BookOpen, roles: ['superadmin'] },
+      // §17.3 the video catalogue, the test importer and the library were three
+      // screens with three different access rules; they are one lesson now.
+      // The boss's alone, enforced at the router mount on the API.
+      { href: '/boss/online', key: 'online', Icon: MonitorPlay, roles: ['superadmin'] },
+      // §21.1 the public teacher cards.
       { href: '/boss/teachers', key: 'teacherProfiles', Icon: UserSquare2, roles: ['superadmin'] },
     ],
   },
@@ -113,8 +112,7 @@ const GROUPS: NavGroup[] = [
     key: 'cabinet',
     items: [
       { href: '/cabinet', key: 'cabinet', Icon: GraduationCap, roles: ['student', 'parent'] },
-      { href: '/cabinet/library', key: 'library', Icon: BookOpen, roles: ['student', 'parent'] },
-      { href: '/cabinet/lessons', key: 'videoLessons', Icon: Video, roles: ['student', 'parent'] },
+      { href: '/cabinet/online', key: 'onlineStudent', Icon: MonitorPlay, roles: ['student', 'parent'] },
     ],
   },
   {

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useTranslations } from 'next-intl'
-import { Search, Plus } from 'lucide-react'
+import { Search, Plus, ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 /**
@@ -38,6 +38,68 @@ export function FilterChip({
       {tone ? <span className={cn('size-1.5 rounded-pill', tone)} aria-hidden /> : null}
       {label}
     </button>
+  )
+}
+
+/**
+ * One filter, as a dropdown, sized to sit in the toolbar beside the search box.
+ *
+ * A chip row is right while the options fit on one line; past that it wraps
+ * into a second and third row and the toolbar stops reading as a toolbar. A
+ * native `<select>` rather than a custom listbox: this opens as the phone's own
+ * picker, and it is already keyboard- and screen-reader-complete.
+ *
+ * `tone` lets the closed control carry the colour of what is selected, so a
+ * list narrowed to something urgent still says so at a glance.
+ */
+export function FilterSelect<T extends string>({
+  label,
+  value,
+  onChange,
+  options,
+  allLabel,
+  tone = 'default',
+}: {
+  /** Names the filter for assistive tech; the closed control shows the value. */
+  label: string
+  value: T | null
+  onChange: (value: T | null) => void
+  options: { value: T; label: string }[]
+  /** The "no filter" option, first in the list. */
+  allLabel: string
+  tone?: 'default' | 'danger'
+}) {
+  return (
+    <span
+      className={cn(
+        'relative inline-flex h-12 shrink-0 items-center rounded-pill border transition-colors',
+        tone === 'danger'
+          ? 'border-transparent bg-danger text-white'
+          : value
+            ? 'border-transparent bg-navy-600 text-white'
+            : 'border-border-subtle bg-surface text-ink-soft dark:text-navy-200',
+      )}
+    >
+      <select
+        aria-label={label}
+        value={value ?? ''}
+        onChange={(event) => onChange((event.target.value || null) as T | null)}
+        className="h-full cursor-pointer appearance-none rounded-pill bg-transparent py-0 pl-5 pr-10 text-xs font-medium text-current outline-none focus-visible:ring-2 focus-visible:ring-glaze-500"
+      >
+        <option value="" className="text-ink">
+          {allLabel}
+        </option>
+        {options.map((option) => (
+          <option key={option.value} value={option.value} className="text-ink">
+            {option.label}
+          </option>
+        ))}
+      </select>
+      <ChevronDown
+        className="pointer-events-none absolute right-4 size-3.5 opacity-70"
+        aria-hidden
+      />
+    </span>
   )
 }
 

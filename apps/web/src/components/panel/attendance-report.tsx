@@ -54,9 +54,9 @@ export function AttendanceReport({ initialGroupId }: { initialGroupId?: string }
   const [from, setFrom] = useState(() => isoDaysAgo(30))
   const [to, setTo] = useState(() => isoDaysAgo(0))
 
-  const { data: groups } = useQuery<Paginated<GroupOption>>('/groups?limit=200&status=active')
+  const { data: groups } = useQuery<Paginated<GroupOption>>('/groups?limit=100&status=active')
   const { data: teachers } = useQuery<Paginated<StaffOption>>(
-    '/users?role=teacher&limit=200&status=active',
+    '/users?role=teacher&limit=100&status=active',
   )
   const { data: roster } = useQuery<{ students: RosterStudent[] } | RosterStudent[]>(
     groupId ? `/groups/${groupId}/roster` : null,

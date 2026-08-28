@@ -108,7 +108,8 @@
     "teachers": {
       "eyebrow": "Team",
       "title": "Our teachers",
-      "experience": "{years} years of experience"
+      "experience": "{years} years of experience",
+      "experienceUnit": "years teaching"
     },
     "how": {
       "eyebrow": "How it starts",
@@ -735,7 +736,6 @@
     "students": {
       "searchPlaceholder": "Name or phone…",
       "all": "All",
-      "onlyDebtors": "Debtors",
       "debtorBadge": "Debtor",
       "debt": "Debt",
       "takePayment": "Pay",
@@ -759,7 +759,10 @@
         "dropped": "Dropped"
       },
       "create": "New student",
-      "edit": "Edit"
+      "edit": "Edit",
+      "statusAll": "All statuses",
+      "export": "Export to Excel",
+      "exportFailed": "Export failed. Please try again."
     },
     "groups": {
       "none": "No groups",
@@ -842,7 +845,14 @@
       "category": "Category",
       "records": "Records",
       "amount": "Amount",
-      "share": "Share"
+      "share": "Share",
+      "studentsPerGroup": "Students per group",
+      "enrolledTotal": "{n} enrolled",
+      "noGroups": "No active groups with students",
+      "group": "Group",
+      "capacity": "Capacity",
+      "fill": "Fill",
+      "otherSlice": "Other ({n})"
     },
     "cabinet": {
       "status": "Status",

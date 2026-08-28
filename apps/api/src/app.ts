@@ -31,6 +31,7 @@ import { fineRouter, fineRuleRouter } from './modules/fines/fine.routes.js'
 import { payrollRouter } from './modules/payroll/payroll.routes.js'
 import { uploadRouter } from './modules/uploads/upload.routes.js'
 import { materialRouter } from './modules/materials/material.routes.js'
+import { onlineRouter } from './modules/online/online.routes.js'
 
 export function createApp() {
   const app = express()
@@ -129,6 +130,8 @@ export function createApp() {
   app.use('/api/v1/payroll', payrollRouter)
   app.use('/api/v1/uploads', uploadRouter)
   app.use('/api/v1/materials', materialRouter)
+  // Online darslar — the video, its test and its handouts as one record.
+  app.use('/api/v1/online', onlineRouter)
 
   // TODO: /notifications, /exams (§23).
 

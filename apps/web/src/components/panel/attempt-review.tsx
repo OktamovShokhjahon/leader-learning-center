@@ -30,7 +30,7 @@ type Review = {
     passed: boolean
     submittedAt: string
   }
-  module: { _id: string; title: Localized; order: number }
+  lesson: { _id: string; title: Localized; order: number }
   questions: ReviewQuestion[]
 }
 
@@ -50,13 +50,13 @@ export function AttemptReview({ attemptId }: { attemptId: string }) {
   const reduceMotion = useReducedMotion()
   const [openKey, setOpenKey] = useState<string | null>(null)
 
-  const { data, loading, error } = useQuery<Review>(`/tests/attempts/${attemptId}`)
+  const { data, loading, error } = useQuery<Review>(`/online/attempts/${attemptId}`)
 
   if (loading) return <Loading />
   if (error) return <ErrorBox code={error.code} message={error.message} />
   if (!data) return null
 
-  const { attempt, module, questions } = data
+  const { attempt, lesson, questions } = data
 
   return (
     <div className="flex flex-col gap-6">
@@ -109,7 +109,7 @@ export function AttemptReview({ attemptId }: { attemptId: string }) {
 
         {!attempt.passed ? (
           <Link
-            href={`/cabinet/tests/${module._id}`}
+            href={`/cabinet/online/${lesson._id}`}
             className="mt-2 inline-flex h-12 items-center gap-2 rounded-pill bg-clay-500 px-6 text-xs font-medium text-white transition-colors hover:bg-clay-400"
           >
             <RotateCcw className="size-4" aria-hidden />

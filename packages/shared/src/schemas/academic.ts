@@ -65,6 +65,16 @@ export const studentQuerySchema = paginationSchema.extend({
   groupId: objectIdSchema.optional(),
   /** §11.3 — the qarzdor filter, reused by the debtor page. */
   onlyDebtors: z.coerce.boolean().optional(),
+  /**
+   * A comma-separated id list. Used to resolve names for an already-chosen
+   * set — a picker that shows chips has ids in hand but no names for the ones
+   * that are not in the current search result.
+   */
+  ids: z
+    .string()
+    .trim()
+    .regex(/^[a-f\d]{24}(?:,[a-f\d]{24})*$/i, 'invalidId')
+    .optional(),
 })
 
 /* ── Courses ───────────────────────────────────────────────────────────── */

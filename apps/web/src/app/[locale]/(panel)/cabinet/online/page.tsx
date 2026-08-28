@@ -2,12 +2,13 @@ import { notFound } from 'next/navigation'
 import { getTranslations } from 'next-intl/server'
 import { isLocale } from '@leader/shared/locales'
 import { PanelPage } from '@/components/panel/primitives'
-import { RequirePermission } from '@/components/panel/require-permission'
-import { VideoLessons } from '@/components/panel/video-lessons'
+import { OnlineLessons } from '@/components/panel/online-lessons'
 
 /**
- * Per-user and behind a login, so never prerendered — see the note in the
- * `(panel)` layout.
+ * The student's online darslar — the video, the handouts and the test in one
+ * chain per course. Replaces the three cabinet screens it merges.
+ *
+ * Per-user and behind a login, so never prerendered.
  */
 export const dynamic = 'force-dynamic'
 
@@ -21,14 +22,12 @@ export default async function Page({ params }: Props) {
   const t = await getTranslations('panel.pages')
 
   return (
-    <RequirePermission roles={['student', 'parent', 'teacher', 'manager', 'superadmin']}>
-      <PanelPage
-        title={t('videoLessons.title')}
-        subtitle={t('videoLessons.subtitle')}
-        eyebrow={t('videoLessons.eyebrow')}
-      >
-        <VideoLessons />
-      </PanelPage>
-    </RequirePermission>
+    <PanelPage
+      title={t('onlineStudent.title')}
+      subtitle={t('onlineStudent.subtitle')}
+      eyebrow={t('onlineStudent.eyebrow')}
+    >
+      <OnlineLessons />
+    </PanelPage>
   )
 }

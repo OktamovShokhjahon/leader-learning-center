@@ -2,10 +2,11 @@
 
 import { useState } from 'react'
 import { useTranslations } from 'next-intl'
-import { Search, Users, Pencil, Wallet, AlertTriangle } from 'lucide-react'
+import { Search, Users, Pencil, Wallet, Download } from 'lucide-react'
 import { STUDENT_STATUSES } from '@leader/shared/schemas'
-import { useQuery, type Paginated } from '@/lib/api/use-api'
-import { NewButton, RowAction } from './table-kit'
+import { useQuery, downloadAuthenticatedFile, type Paginated } from '@/lib/api/use-api'
+import { useAuth } from '@/lib/auth/auth-context'
+import { NewButton, RowAction, FilterSelect } from './table-kit'
 import { StudentDialog, type PanelStudent } from './student-dialog'
 import { Link } from '@/i18n/navigation'
 import {
@@ -36,21 +37,55 @@ type Student = {
   isDebtor?: boolean
 }
 
-/** TZ §9.1 — the student list, filterable by status and debtors. */
+/**
+ * TZ §9.1 — the student list.
+ *
+ * One status filter, not two: "Debtors" had its own button beside a `overdue`
+ * chip that issued the identical query, so the same list was reachable two ways
+ * and neither told you the other was on.
+ */
 export function StudentsTable() {
   const t = useTranslations('panel.students')
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState<string | null>(null)
-  const [onlyDebtors, setOnlyDebtors] = useState(false)
   const [page, setPage] = useState(1)
 
   const query = new URLSearchParams({ page: String(page), limit: '25' })
   if (search.trim().length >= 2) query.set('search', search.trim())
-  if (onlyDebtors) query.set('status', 'overdue')
-  else if (status) query.set('status', status)
+  if (status) query.set('status', status)
 
   const { data, loading, error, refetch } = useQuery<Paginated<Student>>(`/students?${query}`)
   const [editing, setEditing] = useState<PanelStudent | 'new' | null>(null)
+  const { getToken } = useAuth()
+
+  const [exporting, setExporting] = useState(false)
+  const [exportFailed, setExportFailed] = useState(false)
+
+  /**
+   * Downloads the list as it is filtered, not the whole table — the same
+   * `search` and `status` go to the export route, minus the paging.
+   *
+   * The route needs the bearer token (§8 keeps tokens out of cookies), so the
+   * workbook is fetched with the header and handed to the browser as an
+   * `<a download>` — no popup for a blocker to refuse, and the file keeps the
+   * name the route dated it with.
+   */
+  const exportWorkbook = async () => {
+    const params = new URLSearchParams()
+    if (search.trim().length >= 2) params.set('search', search.trim())
+    if (status) params.set('status', status)
+    setExporting(true)
+    setExportFailed(false)
+    const token = await getToken()
+    const saved = await downloadAuthenticatedFile(
+      `/students/export?${params}`,
+      token,
+      'students.xlsx',
+    )
+    setExporting(false)
+    // A workbook that never arrives used to fail in silence.
+    setExportFailed(!saved)
+  }
 
   return (
     <div className="flex flex-col gap-5">
@@ -74,46 +109,38 @@ export function StudentsTable() {
 
         <NewButton label={t('create')} onClick={() => setEditing('new')} />
 
-        <div className="flex flex-wrap gap-1.5">
-          <FilterChip
-            label={t('all')}
-            active={status === null && !onlyDebtors}
-            onClick={() => {
-              setStatus(null)
-              setOnlyDebtors(false)
-              setPage(1)
-            }}
-          />
-          <button
-            type="button"
-            onClick={() => {
-              setOnlyDebtors((v) => !v)
-              if (!onlyDebtors) setStatus(null)
-              setPage(1)
-            }}
-            className={cn(
-              'inline-flex items-center gap-1.5 rounded-pill border px-3 py-2 text-2xs font-medium transition-colors',
-              onlyDebtors
-                ? 'border-transparent bg-danger text-white'
-                : 'border-border-subtle text-danger hover:border-danger/40 dark:border-danger/30',
-            )}
-          >
-            <AlertTriangle className="size-3" aria-hidden />
-            {t('onlyDebtors')}
-          </button>
-          {STUDENT_STATUSES.map((option) => (
-            <FilterChip
-              key={option}
-              label={t(`status.${option}`)}
-              active={status === option && !onlyDebtors}
-              onClick={() => {
-                setStatus(option)
-                setOnlyDebtors(false)
-                setPage(1)
-              }}
-            />
-          ))}
-        </div>
+        <FilterSelect
+          label={t('statusLabel')}
+          value={status}
+          allLabel={t('statusAll')}
+          // Debtors is the list this screen is opened for, so the control wears
+          // the alarm rather than hiding it behind a closed dropdown.
+          tone={status === 'overdue' ? 'danger' : 'default'}
+          options={STUDENT_STATUSES.map((option) => ({
+            value: option,
+            label: t(`status.${option}`),
+          }))}
+          onChange={(next) => {
+            setStatus(next)
+            setPage(1)
+          }}
+        />
+
+        <button
+          type="button"
+          onClick={() => void exportWorkbook()}
+          disabled={exporting}
+          className="inline-flex h-12 shrink-0 items-center gap-2 rounded-pill border border-border-subtle bg-surface px-4 text-xs font-medium text-ink-soft transition-colors hover:border-glaze-500 hover:text-glaze-700 disabled:cursor-wait disabled:opacity-60 dark:text-navy-200"
+        >
+          <Download className="size-4" aria-hidden />
+          {t('export')}
+        </button>
+
+        {exportFailed ? (
+          <span role="alert" className="text-2xs text-danger">
+            {t('exportFailed')}
+          </span>
+        ) : null}
       </div>
 
       {loading ? <Loading /> : null}
@@ -266,31 +293,5 @@ function StudentsDialogs({
         refetch()
       }}
     />
-  )
-}
-
-function FilterChip({
-  label,
-  active,
-  onClick,
-}: {
-  label: string
-  active: boolean
-  onClick: () => void
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-pressed={active}
-      className={cn(
-        'rounded-pill border px-3 py-2 text-2xs font-medium transition-colors',
-        active
-          ? 'border-transparent bg-navy-600 text-white'
-          : 'border-border-subtle text-ink-muted hover:text-navy-700 dark:hover:text-white',
-      )}
-    >
-      {label}
-    </button>
   )
 }

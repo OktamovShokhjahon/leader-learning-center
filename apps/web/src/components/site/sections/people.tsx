@@ -115,7 +115,9 @@ export async function TeachersSection({
         {teachers.length === 0 ? (
           <EmptyState Icon={Award} title={tc('contentPending')} />
         ) : (
-          <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          /* Two across until xl, so a face is large enough to read as a
+             person rather than a thumbnail. */
+          <ul className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
             {teachers.map((teacher, index) => (
               <Reveal
                 as="li"
@@ -123,7 +125,14 @@ export async function TeachersSection({
                 delay={Math.min(index, 5) * 0.06}
                 className="group flex h-full flex-col overflow-hidden rounded-card border border-border-subtle bg-surface transition-all duration-200 hover:-translate-y-1 hover:border-glaze-300 hover:shadow-float"
               >
-                <div className="flex gap-4 p-5">
+                {/*
+                  §25.3 — the portrait is set in a pishtaq, the tall portal that
+                  fronts every Khiva madrasa: a doubled rule inset from the edge
+                  with the field recessed inside it. The same device frames the
+                  hero, so a teacher arrives on the page the way the page itself
+                  does, and the tall 4:5 field is the shape a portrait wants.
+                */}
+                <div className="relative aspect-[4/5] w-full overflow-hidden">
                   {/* The centre's own photograph when there is one; the woven
                       tile when there is not, so a card is never a grey box.
                       Plain <img>: the API host is configured at runtime and
@@ -133,41 +142,63 @@ export async function TeachersSection({
                     <img
                       src={teacher.photo}
                       alt=""
-                      loading="lazy"
-                      className="size-20 shrink-0 rounded-input object-cover"
+                      loading={index < 3 ? 'eager' : 'lazy'}
+                      className="size-full object-cover object-top transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.04] motion-reduce:transform-none motion-reduce:transition-none"
                     />
                   ) : (
                     <CeramicTile
                       seed={teacher.slug}
                       label={initials(teacher.fullName)}
-                      dense
-                      className="size-20 shrink-0 rounded-input"
+                      className="size-full transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.04] motion-reduce:transform-none motion-reduce:transition-none"
                     />
                   )}
-                  <div className="flex min-w-0 flex-col gap-1">
-                    <h3 className="font-display text-base leading-tight tracking-[-0.02em] text-ink dark:text-white">
-                      {teacher.fullName}
-                    </h3>
-                    <p className="text-xs text-glaze-700 dark:text-glaze-300">
-                      {pick(teacher.role, locale)}
-                    </p>
-                    {teacher.experienceYears > 0 ? (
-                      <p className="font-mono text-2xs text-ink-muted">
-                        {t('experience', { years: teacher.experienceYears })}
-                      </p>
-                    ) : null}
-                  </div>
+                  {/* The portal itself: it holds still while the field breathes. */}
+                  <span className="portal pointer-events-none absolute inset-3 rounded-input" aria-hidden />
                 </div>
 
-                <p className="flex-1 px-5 text-xs leading-relaxed text-ink-soft dark:text-navy-200">
+                {/*
+                  The inscription band. On a madrasa the calligraphic band runs
+                  beneath the portal and names who built it; here it names who
+                  teaches, with the years of teaching set as the figure a parent
+                  is actually scanning for.
+                */}
+                <div className="flex items-start justify-between gap-4 px-6 pt-5">
+                  <div className="flex min-w-0 flex-col gap-1.5">
+                    <h3 className="font-display text-xl leading-tight tracking-[-0.025em] text-ink dark:text-white">
+                      {teacher.fullName}
+                    </h3>
+                    {/* A short glaze mark that draws itself out on hover — the
+                        one micro-interaction on the card. */}
+                    <span
+                      aria-hidden
+                      className="h-px w-8 bg-glaze-500 transition-[width] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:w-16 motion-reduce:transition-none"
+                    />
+                    <p className="text-sm text-glaze-700 dark:text-glaze-300">
+                      {pick(teacher.role, locale)}
+                    </p>
+                  </div>
+
+                  {teacher.experienceYears > 0 ? (
+                    <p className="flex shrink-0 flex-col items-end leading-none">
+                      <span className="font-display text-3xl tracking-[-0.04em] text-clay-500">
+                        {teacher.experienceYears}
+                      </span>
+                      <span className="mt-1 font-mono text-2xs uppercase tracking-[0.14em] text-ink-muted">
+                        {t('experienceUnit')}
+                      </span>
+                    </p>
+                  ) : null}
+                </div>
+
+                <p className="flex-1 px-6 pt-4 text-sm leading-relaxed text-ink-soft dark:text-navy-200">
                   {pick(teacher.bio, locale)}
                 </p>
 
-                <ul className="flex flex-wrap gap-1.5 p-5 pt-4">
+                <ul className="flex flex-wrap gap-1.5 p-6 pt-5">
                   {teacher.certificates.map((certificate) => (
                     <li
                       key={certificate}
-                      className="rounded-pill bg-glaze-50 px-2.5 py-1 font-mono text-2xs text-glaze-800 dark:bg-navy-800 dark:text-glaze-200"
+                      className="rounded-pill bg-glaze-50 px-3 py-1.5 font-mono text-2xs text-glaze-800 dark:bg-navy-800 dark:text-glaze-200"
                     >
                       {certificate}
                     </li>

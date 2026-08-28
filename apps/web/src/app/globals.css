@@ -111,6 +111,32 @@
   --border-subtle: rgb(11 27 43 / 0.1);
 
   /*
+   * Categorical chart series — for slicing a total by *identity* (expense
+   * category, group), where the colours only have to be told apart.
+   *
+   * Deliberately not the brand ramps: navy, glaze and aqua are three shades of
+   * one blue, and a palette built from them fails the separation checks
+   * outright — #2ba3bc against #4483b2 measures ΔE 8.9 to *normal* vision,
+   * under the 15 floor, so two adjacent wedges would read as one. These are
+   * the validated eight-hue categorical set, in its documented order, which
+   * clears the lightness, chroma, CVD and normal-vision gates against both
+   * surfaces below. Status colours (success/warning/danger/info) stay reserved
+   * for status and are never borrowed as "series 5".
+   *
+   * Three light steps sit under 3:1 against white, so anything using them
+   * must carry the relief the checker asks for — the donut ships a direct
+   * percentage on every wedge plus a legend, and the sums repeat in a table.
+   */
+  --chart-1: #2a78d6;
+  --chart-2: #eb6834;
+  --chart-3: #1baf7a;
+  --chart-4: #eda100;
+  --chart-5: #e87ba4;
+  --chart-6: #008300;
+  --chart-7: #4a3aa7;
+  --chart-8: #e34948;
+
+  /*
    * The girih lattice, as an inline SVG mask. A 96px cell holding one whole
    * eight-point star at the centre and a quarter star at each corner, each star
    * being two 36px squares sharing a centre with one turned 45°.
@@ -123,6 +149,19 @@
   --foreground: #e8eef4;
   --surface: var(--color-navy-900);
   --border-subtle: rgb(232 238 244 / 0.12);
+
+  /*
+   * The same eight hues re-stepped for the dark surface — not an automatic
+   * flip of the light values. Validated as a set against `--surface` above.
+   */
+  --chart-1: #3987e5;
+  --chart-2: #d95926;
+  --chart-3: #199e70;
+  --chart-4: #c98500;
+  --chart-5: #d55181;
+  --chart-6: #008300;
+  --chart-7: #9085e9;
+  --chart-8: #e66767;
 }
 
 @layer base {

@@ -1,4 +1,5 @@
 import { Router } from 'express'
+import XLSX from 'xlsx'
 import { Types } from 'mongoose'
 import {
   createStudentSchema,
@@ -48,9 +49,12 @@ studentRouter.get(
       status?: string
       groupId?: string
       onlyDebtors?: boolean
+      ids?: string
     }
 
     const filter: Record<string, unknown> = { deletedAt: null }
+    // Resolving a known set of ids back to names, for a picker showing chips.
+    if (query.ids) filter._id = { $in: query.ids.split(',') }
     if (query.status) filter.status = query.status
     if (query.search) {
       // Name or phone — the front desk searches by whichever they have.
@@ -194,6 +198,115 @@ studentRouter.get(
         debt: debtBy.get(student._id.toString()) ?? 0,
       })),
     })
+  }),
+)
+
+/**
+ * §23 — `GET /students/export`, as a real `.xlsx` workbook.
+ *
+ * It was a CSV named as one: Excel opened it, but every fee and balance arrived
+ * as text, so the centre could not sum a column without retyping it. A workbook
+ * keeps the money numeric and the header a header.
+ *
+ * The filters are the list's filters, read from the same query schema, so what
+ * downloads is what is on the screen — exporting "Qarzdorlar" gives the debtors
+ * and not all four thousand students.
+ *
+ * It has to stay above `/:id`: Express matches in order, and registered after
+ * it the download was read as a student whose id is "export".
+ */
+studentRouter.get(
+  '/export',
+  requirePermission('student.manage'),
+  validateQuery(studentQuerySchema),
+  asyncRoute(async (_req, res) => {
+    const query = res.locals.query as {
+      search?: string
+      status?: string
+      groupId?: string
+      onlyDebtors?: boolean
+    }
+
+    const filter: Record<string, unknown> = { deletedAt: null }
+    if (query.status) filter.status = query.status
+    if (query.search) {
+      filter.$or = [
+        { fullName: { $regex: query.search, $options: 'i' } },
+        { phone: { $regex: query.search, $options: 'i' } },
+      ]
+    }
+    if (query.groupId) {
+      const ids = await Enrollment.find({ groupId: query.groupId, status: 'active' })
+        .distinct('studentId')
+        .lean?.()
+      filter._id = { $in: ids }
+    }
+    // §9.1 — `overdue` is the workbook's qarzdor / debtor status.
+    if (query.onlyDebtors) filter.status = 'overdue'
+
+    const students = await Student.find(filter).sort({ fullName: 1 }).limit(10_000).lean()
+
+    // The column order mirrors the centre's own workbook (§7.1), so an exported
+    // file drops straight back into the sheet they already use.
+    const header = [
+      'F.I',
+      'Telefon',
+      'Ota-ona',
+      'Ota-ona telefoni',
+      'Status',
+      'Kelgan sanasi',
+      'Sinf',
+      'Yosh',
+      'Chek',
+      'Chegirma %',
+      'Balans',
+    ]
+
+    // Money and counts stay numbers. That is the point of the format: a column
+    // the centre can select and see a total for.
+    const rows = students.map((student) => [
+      student.fullName,
+      student.phone ?? '',
+      student.parentName ?? '',
+      student.parentPhone ?? '',
+      student.status,
+      student.joinedAt ? new Date(student.joinedAt).toISOString().slice(0, 10) : '',
+      student.schoolClass ?? '',
+      student.age ?? null,
+      student.monthlyFee ?? 0,
+      student.discountPercent ?? 0,
+      student.balance ?? 0,
+    ])
+
+    const sheet = XLSX.utils.aoa_to_sheet([header, ...rows])
+    // Without widths every name column opens at eight characters and the first
+    // thing anyone does is drag the borders.
+    sheet['!cols'] = [
+      { wch: 28 },
+      { wch: 16 },
+      { wch: 24 },
+      { wch: 16 },
+      { wch: 12 },
+      { wch: 14 },
+      { wch: 8 },
+      { wch: 6 },
+      { wch: 12 },
+      { wch: 11 },
+      { wch: 14 },
+    ]
+
+    const book = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(book, sheet, 'O\u2018quvchilar')
+    const buffer = XLSX.write(book, { type: 'buffer', bookType: 'xlsx' }) as Buffer
+
+    // Dated, so yesterday's export is still there after today's.
+    const stamp = new Date().toISOString().slice(0, 10)
+    res.setHeader(
+      'content-type',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    )
+    res.setHeader('content-disposition', `attachment; filename="students-${stamp}.xlsx"`)
+    res.send(buffer)
   }),
 )
 
@@ -412,66 +525,5 @@ studentRouter.post(
   asyncRoute(async (req, res) => {
     const result = await transferStudent(currentUser(req), String(req.params.id), req.body, req)
     res.json({ data: result })
-  }),
-)
-
-/**
- * §23 — `GET /students/export  xlsx`.
- *
- * Streamed rather than buffered: a centre with several thousand students would
- * otherwise hold the whole workbook in memory to send it.
- */
-studentRouter.get(
-  '/export',
-  requirePermission('student.manage'),
-  validateQuery(studentQuerySchema),
-  asyncRoute(async (_req, res) => {
-    const query = res.locals.query
-    const filter: Record<string, unknown> = { deletedAt: null }
-    if (query.status) filter.status = query.status
-
-    const students = await Student.find(filter).sort({ fullName: 1 }).limit(10_000).lean()
-
-    // The column order mirrors the centre's own workbook (§7.1), so an exported
-    // file drops straight back into the sheet they already use.
-    const header = [
-      'F.I',
-      'Telefon',
-      'Ota-ona',
-      'Ota-ona telefoni',
-      'Status',
-      'Kelgan sanasi',
-      'Sinf',
-      'Yosh',
-      'Chek',
-      'Chegirma %',
-      'Balans',
-    ]
-
-    const rows = students.map((student) => [
-      student.fullName,
-      student.phone ?? '',
-      student.parentName ?? '',
-      student.parentPhone ?? '',
-      student.status,
-      student.joinedAt ? new Date(student.joinedAt).toISOString().slice(0, 10) : '',
-      student.schoolClass ?? '',
-      student.age ?? '',
-      student.monthlyFee ?? 0,
-      student.discountPercent ?? 0,
-      student.balance ?? 0,
-    ])
-
-    // CSV with a BOM: Excel on a Windows machine opens UTF-8 as cp1251 without
-    // one, and every O‘zbek name comes out mangled.
-    const escape = (cell: unknown) => {
-      const text = String(cell ?? '')
-      return /[",\n;]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text
-    }
-    const csv = [header, ...rows].map((row) => row.map(escape).join(';')).join('\r\n')
-
-    res.setHeader('content-type', 'text/csv; charset=utf-8')
-    res.setHeader('content-disposition', 'attachment; filename="students.csv"')
-    res.send(`﻿${csv}`)
   }),
 )

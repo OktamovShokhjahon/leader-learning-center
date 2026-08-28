@@ -17,7 +17,7 @@ import {
   Scale,
 } from 'lucide-react'
 import type { Locale } from '@leader/shared/locales'
-import { useQuery } from '@/lib/api/use-api'
+import { useQuery, type Paginated } from '@/lib/api/use-api'
 import {
   Panel,
   TableShell,
@@ -60,6 +60,8 @@ type Comparison = {
   }[]
 }
 
+type GroupRow = { _id: string; name: string; enrolled: number; capacity: number }
+
 type Statistics = {
   period: string
   income: { total: number; count: number }
@@ -79,21 +81,25 @@ type Statistics = {
 }
 
 /**
- * A palette for expense categories, used only when a category carries no
- * colour of its own. Category colours are author-chosen (§13.2), so they are
- * respected first; this is the fallback so a fresh install still reads as a
- * chart rather than a row of identical wedges.
+ * The validated categorical series (see `--chart-*` in globals.css), assigned
+ * in fixed order so a slice keeps its colour as the data around it changes.
  */
-const CATEGORY_FALLBACK = [
-  'var(--color-navy-600)',
-  'var(--color-glaze-600)',
-  'var(--color-clay-500)',
-  'var(--color-aqua-500)',
-  'var(--color-navy-400)',
-  'var(--color-glaze-400)',
-  'var(--color-clay-700)',
-  'var(--color-aqua-700)',
+const SERIES = [
+  'var(--chart-1)',
+  'var(--chart-2)',
+  'var(--chart-3)',
+  'var(--chart-4)',
+  'var(--chart-5)',
+  'var(--chart-6)',
+  'var(--chart-7)',
+  'var(--chart-8)',
 ]
+
+/**
+ * A donut stops being readable well before it runs out of colours, so the
+ * long tail folds into one "Other" wedge rather than sprouting new hues.
+ */
+const MAX_SLICES = 6
 
 /**
  * TZ §15 — the statistics dashboard, SuperAdmin only.
@@ -120,6 +126,7 @@ export function FinanceDashboard() {
   const revenue = useQuery<Revenue>('/finance/revenue')
   const comparison = useQuery<Comparison>('/finance/branches-comparison')
   const stats = useQuery<Statistics>('/finance/statistics')
+  const groups = useQuery<Paginated<GroupRow>>('/groups?limit=100&status=active')
 
   if (overview.loading) return <Loading />
   if (overview.error) return <ErrorBox code={overview.error.code} message={overview.error.message} />
@@ -153,13 +160,52 @@ export function FinanceDashboard() {
       ]
     : []
 
-  const expenseSlices: DonutSlice[] = (stats.data?.expenses.byCategory ?? []).map(
-    (row, index) => ({
+  /**
+   * Keep the biggest `MAX_SLICES` and roll the rest into one wedge, so the
+   * ring never carries more categories than it can distinguish.
+   */
+  const foldTail = (rows: { key: string; label: string; value: number }[]): DonutSlice[] => {
+    const sorted = [...rows].sort((a, b) => b.value - a.value)
+    const head = sorted.slice(0, MAX_SLICES)
+    const tail = sorted.slice(MAX_SLICES)
+    const slices: DonutSlice[] = head.map((row, index) => ({
+      ...row,
+      color: SERIES[index % SERIES.length]!,
+    }))
+    if (tail.length > 0) {
+      slices.push({
+        key: '__other',
+        label: t('otherSlice', { n: tail.length }),
+        value: tail.reduce((sum, row) => sum + row.value, 0),
+        color: SERIES[MAX_SLICES % SERIES.length]!,
+      })
+    }
+    return slices
+  }
+
+  const expenseSlices = foldTail(
+    (stats.data?.expenses.byCategory ?? []).map((row, index) => ({
       key: row.categoryId ?? row.slug ?? String(index),
       label: localized(row.name) ?? row.slug ?? t('uncategorised'),
       value: row.total,
-      color: row.color ?? CATEGORY_FALLBACK[index % CATEGORY_FALLBACK.length]!,
-    }),
+    })),
+  )
+
+  // The table swatch must be the colour the donut actually drew, so the two
+  // are read off one map rather than each recomputing an index.
+  const expenseSliceColor = new Map(expenseSlices.map((slice) => [slice.key, slice.color]))
+  const otherColor = expenseSlices.find((slice) => slice.key === '__other')?.color
+
+  // Students per group. Read off the same `/groups` list the Groups screen
+  // renders, so the two can never disagree about how many are enrolled (H1).
+  const groupSlices = foldTail(
+    (groups.data?.items ?? [])
+      .filter((group) => group.enrolled > 0)
+      .map((group) => ({ key: group._id, label: group.name, value: group.enrolled })),
+  )
+  const groupedStudents = (groups.data?.items ?? []).reduce(
+    (sum, group) => sum + group.enrolled,
+    0,
   )
 
   return (
@@ -205,6 +251,59 @@ export function FinanceDashboard() {
             last
           />
         </ul>
+
+        {/* Students per group — where the headcount above actually sits. */}
+        <Panel
+          title={t('studentsPerGroup')}
+          action={
+            groupSlices.length > 0 ? (
+              <span className="text-2xs text-ink-muted">
+                {t('enrolledTotal', { n: groupedStudents })}
+              </span>
+            ) : undefined
+          }
+        >
+          <div className="grid gap-4 p-4 lg:grid-cols-2">
+            {groupSlices.length === 0 ? (
+              <div className="lg:col-span-2">
+                <Empty title={t('noGroups')} />
+              </div>
+            ) : (
+              <>
+                <DonutChart data={groupSlices} height={240} />
+                {/* The sums beside the ring: a wedge gives the proportion,
+                    and a head teacher also needs the actual headcount. */}
+                <TableShell>
+                  <thead>
+                    <tr>
+                      <Th>{t('group')}</Th>
+                      <Th className="text-right">{t('students')}</Th>
+                      <Th className="text-right">{t('capacity')}</Th>
+                      <Th className="text-right">{t('fill')}</Th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(groups.data?.items ?? [])
+                      .filter((group) => group.enrolled > 0)
+                      .sort((a, b) => b.enrolled - a.enrolled)
+                      .map((group) => (
+                        <tr key={group._id}>
+                          <Td className="font-medium text-ink dark:text-white">{group.name}</Td>
+                          <Td className="text-right font-mono text-ink-soft">{group.enrolled}</Td>
+                          <Td className="text-right font-mono text-ink-muted">{group.capacity}</Td>
+                          <Td className="text-right font-mono text-ink-soft">
+                            {group.capacity > 0
+                              ? `${Math.round((group.enrolled / group.capacity) * 100)}%`
+                              : '—'}
+                          </Td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </TableShell>
+              </>
+            )}
+          </div>
+        </Panel>
       </Section>
 
       {/* ── The money in and out ────────────────────────────────────────── */}
@@ -435,7 +534,9 @@ export function FinanceDashboard() {
                           className="inline-block size-2.5 shrink-0 rounded-pill"
                           style={{
                             background:
-                              row.color ?? CATEGORY_FALLBACK[index % CATEGORY_FALLBACK.length],
+                              expenseSliceColor.get(row.categoryId ?? row.slug ?? String(index)) ??
+                              otherColor ??
+                              'var(--color-ink-muted)',
                           }}
                         />
                         {localized(row.name) ?? row.slug ?? t('uncategorised')}

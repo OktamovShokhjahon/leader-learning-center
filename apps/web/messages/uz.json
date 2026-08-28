@@ -108,7 +108,8 @@
     "teachers": {
       "eyebrow": "Jamoa",
       "title": "O'qituvchilarimiz",
-      "experience": "{years} yil tajriba"
+      "experience": "{years} yil tajriba",
+      "experienceUnit": "yillik tajriba"
     },
     "how": {
       "eyebrow": "Qanday boshlanadi",
@@ -735,7 +736,6 @@
     "students": {
       "searchPlaceholder": "Ism yoki telefon…",
       "all": "Barchasi",
-      "onlyDebtors": "Qarzdorlar",
       "debtorBadge": "Qarzdor",
       "debt": "Qarz",
       "takePayment": "To‘lov",
@@ -759,7 +759,10 @@
         "dropped": "Tark etgan"
       },
       "create": "Yangi o‘quvchi",
-      "edit": "Tahrirlash"
+      "edit": "Tahrirlash",
+      "statusAll": "Barcha holatlar",
+      "export": "Excelga eksport",
+      "exportFailed": "Yuklab bo‘lmadi. Qayta urinib ko‘ring."
     },
     "groups": {
       "none": "Guruh yo‘q",
@@ -842,7 +845,14 @@
       "category": "Toifa",
       "records": "Yozuvlar",
       "amount": "Summa",
-      "share": "Ulush"
+      "share": "Ulush",
+      "studentsPerGroup": "Guruhlar bo‘yicha o‘quvchilar",
+      "enrolledTotal": "{n} ta yozilgan",
+      "noGroups": "O‘quvchisi bor faol guruh yo‘q",
+      "group": "Guruh",
+      "capacity": "Sig‘imi",
+      "fill": "To‘ldirilgan",
+      "otherSlice": "Boshqalar ({n})"
     },
     "cabinet": {
       "status": "Holat",

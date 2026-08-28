@@ -3,9 +3,12 @@ import { getTranslations } from 'next-intl/server'
 import { isLocale } from '@leader/shared/locales'
 import { PanelPage } from '@/components/panel/primitives'
 import { RequirePermission } from '@/components/panel/require-permission'
-import { LessonsTable } from '@/components/panel/lessons-table'
+import { OnlineLessonsTable } from '@/components/panel/online-lessons-table'
 
 /**
+ * Online darslar — the one authoring screen for the video, its test and its
+ * handouts. Replaces `/boss/lessons`, `/crm/tests` and `/boss/library`.
+ *
  * Per-user and behind a login, so never prerendered — see the note in the
  * `(panel)` layout.
  */
@@ -23,11 +26,11 @@ export default async function Page({ params }: Props) {
   return (
     <RequirePermission roles={['superadmin']}>
       <PanelPage
-        title={t('lessons.title')}
-        subtitle={t('lessons.subtitle')}
-        eyebrow={t('lessons.eyebrow')}
+        title={t('online.title')}
+        subtitle={t('online.subtitle')}
+        eyebrow={t('online.eyebrow')}
       >
-        <LessonsTable />
+        <OnlineLessonsTable />
       </PanelPage>
     </RequirePermission>
   )

@@ -175,6 +175,55 @@ export async function openAuthenticatedFile(
   }
 }
 
+/**
+ * Save an authenticated API response as a file, under the name the route gave
+ * it in `content-disposition`.
+ *
+ * A workbook is a download, not something to read in a tab, and routing it
+ * through `openBlankTab` cost both: the popup blocker can refuse the tab
+ * outright, and a blob: URL that survives it downloads as a UUID rather than
+ * `students-2026-08-28.xlsx`. An `<a download>` needs no popup and keeps the
+ * name.
+ */
+export async function downloadAuthenticatedFile(
+  path: string,
+  token: string | null,
+  fallbackName: string,
+): Promise<boolean> {
+  try {
+    const response = await apiFetch(path, token)
+    if (!response.ok) return false
+    const blob = await response.blob()
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = filenameFromResponse(response) ?? fallbackName
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    setTimeout(() => URL.revokeObjectURL(url), 60_000)
+    return true
+  } catch {
+    return false
+  }
+}
+
+/** Read `filename="..."` (or RFC 5987 `filename*`) off a download response. */
+function filenameFromResponse(response: Response): string | null {
+  const header = response.headers.get('content-disposition')
+  if (!header) return null
+  const encoded = /filename[*]=(?:UTF-8'')?([^;]+)/i.exec(header)
+  if (encoded?.[1]) {
+    try {
+      return decodeURIComponent(encoded[1].trim().replace(/^"|"$/g, ''))
+    } catch {
+      // Fall through to the plain `filename=` below.
+    }
+  }
+  const plain = /filename="?([^";]+)"?/i.exec(header)
+  return plain?.[1]?.trim() ?? null
+}
+
 /** A2 — open a payment's PDF receipt in a tab already opened via `openBlankTab`. */
 export function openReceipt(paymentId: string, token: string | null, tab?: Window | null): Promise<boolean> {
   return openAuthenticatedFile(`/payments/${paymentId}/receipt.pdf`, token, tab)

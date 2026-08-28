@@ -108,7 +108,8 @@
     "teachers": {
       "eyebrow": "Команда",
       "title": "Наши преподаватели",
-      "experience": "{years} лет опыта"
+      "experience": "{years} лет опыта",
+      "experienceUnit": "лет стажа"
     },
     "how": {
       "eyebrow": "Как это начинается",
@@ -735,7 +736,6 @@
     "students": {
       "searchPlaceholder": "Имя или телефон…",
       "all": "Все",
-      "onlyDebtors": "Должники",
       "debtorBadge": "Должник",
       "debt": "Долг",
       "takePayment": "Оплата",
@@ -759,7 +759,10 @@
         "dropped": "Ушёл"
       },
       "create": "Новый ученик",
-      "edit": "Изменить"
+      "edit": "Изменить",
+      "statusAll": "Все статусы",
+      "export": "Экспорт в Excel",
+      "exportFailed": "Не удалось выгрузить. Попробуйте ещё раз."
     },
     "groups": {
       "none": "Групп нет",
@@ -842,7 +845,14 @@
       "category": "Категория",
       "records": "Записей",
       "amount": "Сумма",
-      "share": "Доля"
+      "share": "Доля",
+      "studentsPerGroup": "Ученики по группам",
+      "enrolledTotal": "{n} записано",
+      "noGroups": "Нет активных групп с учениками",
+      "group": "Группа",
+      "capacity": "Вместимость",
+      "fill": "Заполнение",
+      "otherSlice": "Прочие ({n})"
     },
     "cabinet": {
       "status": "Статус",

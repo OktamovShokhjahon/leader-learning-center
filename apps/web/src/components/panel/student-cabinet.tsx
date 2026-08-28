@@ -23,7 +23,6 @@ import { Link } from '@/i18n/navigation'
 import { Panel, Money, Loading, ErrorBox, Empty, StatusPill } from './primitives'
 import { CeramicTile, initials } from '@/components/ui/ceramic-tile'
 import { cn } from '@/lib/utils'
-import { ModuleList } from './module-list'
 
 type GradeRow = {
   _id: string
@@ -470,13 +469,19 @@ export function StudentCabinet({ studentId }: { studentId: string }) {
       </Panel>
 
       {/*
-        The online track (§16 extended): modules unlock at the pass mark.
-        Shown only when the student is enrolled on a course that has any.
+        The online track (§16 extended) now lives on its own screen, where the
+        video, the handouts and the test sit together as one lesson. The chain
+        is drawn there rather than duplicated here.
       */}
       {courseId ? (
         <Panel title={t('modules')}>
           <div className="p-5">
-            <ModuleList courseId={courseId} />
+            <Link
+              href="/cabinet/online"
+              className="inline-flex h-12 items-center gap-2 rounded-pill border border-navy-600/25 px-5 text-xs font-medium text-navy-700 transition-colors hover:bg-navy-50 dark:text-navy-100 dark:hover:bg-navy-800"
+            >
+              {t('openOnline')}
+            </Link>
           </div>
         </Panel>
       ) : null}
